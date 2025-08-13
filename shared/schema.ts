@@ -1,12 +1,38 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, timestamp, uuid, boolean, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User authentication table
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: varchar("username").unique().notNull(),
+  associateCode: varchar("associate_code").notNull(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  email: varchar("email"), // Optional email
+  role: varchar("role").default("associate"), // "admin" or "associate"
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 export const salesAssociates = pgTable("sales_associates", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   email: text("email").unique(),
+  userId: uuid("user_id").references(() => users.id), // Link to authenticated user
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -96,7 +122,22 @@ export const insertSaleSchema = createInsertSchema(sales).omit({
   saleDate: true,
 });
 
+// User insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(3),
+  associateCode: z.string().min(4),
+});
+
 // Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export type SalesAssociate = typeof salesAssociates.$inferSelect;
 export type InsertSalesAssociate = z.infer<typeof insertSalesAssociateSchema>;
 

@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, isAuthenticated, requireAdmin } from "./replitAuth";
 import { 
   insertSalesAssociateSchema,
   insertSupplierSchema,
@@ -10,6 +11,8 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication routes
+  await setupAuth(app);
   // Dashboard Stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {

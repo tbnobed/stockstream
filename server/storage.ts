@@ -1,8 +1,11 @@
 import {
+  users,
   salesAssociates,
   suppliers,
   inventoryItems,
   sales,
+  type User,
+  type UpsertUser,
   type SalesAssociate,
   type InsertSalesAssociate,
   type Supplier,
@@ -18,6 +21,10 @@ import { db } from "./db";
 import { eq, sql, desc, lt, and } from "drizzle-orm";
 
 export interface IStorage {
+  // User operations
+  getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   // Sales Associates
   getSalesAssociates(): Promise<SalesAssociate[]>;
   getSalesAssociate(id: string): Promise<SalesAssociate | undefined>;
@@ -51,6 +58,25 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .returning();
+    return user;
+  }
+
   async getSalesAssociates(): Promise<SalesAssociate[]> {
     return db.select().from(salesAssociates).where(eq(salesAssociates.isActive, true));
   }
