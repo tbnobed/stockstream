@@ -177,12 +177,12 @@ export default function Associates() {
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                               <span className="text-primary-foreground font-semibold text-sm">
-                                {associate.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                                {associate.name ? associate.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'NA'}
                               </span>
                             </div>
                             <div>
                               <h4 className="font-semibold text-secondary" data-testid={`associate-name-${associate.id}`}>
-                                {associate.name}
+                                {associate.name || "Unknown Associate"}
                               </h4>
                               <div className="text-sm text-muted-foreground">
                                 Code: {associate.associateCode}
@@ -230,7 +230,7 @@ export default function Associates() {
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
                             <h4 className="text-lg font-semibold text-secondary mb-1" data-testid={`associate-name-${associate.id}`}>
-                              {associate.name}
+                              {associate.name || "Unknown Associate"}
                             </h4>
                             <div className="text-sm font-mono text-blue-600 dark:text-blue-400 mb-2">
                               Code: {associate.associateCode}
