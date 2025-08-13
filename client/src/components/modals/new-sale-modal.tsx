@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { insertSaleSchema, type InsertSale } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 
 const saleFormSchema = insertSaleSchema.extend({
@@ -30,9 +31,12 @@ interface NewSaleModalProps {
 export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = (user as any)?.role === 'admin';
 
-  const { data: associates } = useQuery({
+  const { data: associates = [] } = useQuery({
     queryKey: ["/api/associates"],
+    enabled: isAdmin, // Only fetch associates if user is admin
   });
 
   const form = useForm<SaleFormData>({
@@ -48,6 +52,13 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       salesAssociateId: "",
     },
   });
+
+  // Auto-populate the logged-in associate
+  useEffect(() => {
+    if (user && open) {
+      form.setValue("salesAssociateId", (user as any).id);
+    }
+  }, [user, open, form]);
 
   const createSaleMutation = useMutation({
     mutationFn: async (data: InsertSale) => {
@@ -161,6 +172,9 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
               <X size={16} />
             </Button>
           </DialogTitle>
+          <DialogDescription id="dialog-description">
+            Process a new sale transaction by scanning or entering item details
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
@@ -277,20 +291,31 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Sales Associate</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  {isAdmin ? (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-sales-associate">
+                          <SelectValue placeholder="Select associate" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {associates?.map((associate: any) => (
+                          <SelectItem key={associate.id} value={associate.id}>
+                            {associate.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
                     <FormControl>
-                      <SelectTrigger data-testid="select-sales-associate">
-                        <SelectValue placeholder="Select associate" />
-                      </SelectTrigger>
+                      <Input
+                        value={`${(user as any)?.firstName} ${(user as any)?.lastName}`.trim()}
+                        readOnly
+                        className="bg-muted"
+                        data-testid="input-current-associate"
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {associates?.map((associate: any) => (
-                        <SelectItem key={associate.id} value={associate.id}>
-                          {associate.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
