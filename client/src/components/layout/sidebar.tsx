@@ -6,9 +6,12 @@ import {
   QrCode, 
   Users, 
   Warehouse,
-  Package
+  Package,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
@@ -20,6 +23,7 @@ const navigation = [
 
 export default function Sidebar() {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
 
   return (
     <div className="w-64 bg-surface shadow-lg border-r border-border">
@@ -57,14 +61,30 @@ export default function Sidebar() {
       </nav>
       
       <div className="absolute bottom-0 w-64 p-4 border-t border-border">
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <Users className="text-primary-foreground" size={16} />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center flex-1 min-w-0">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <Users className="text-primary-foreground" size={16} />
+            </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <p className="text-sm font-medium text-secondary truncate">
+                {(user as any)?.firstName} {(user as any)?.lastName}
+              </p>
+              <p className="text-xs text-muted-foreground capitalize">
+                {(user as any)?.role || 'User'}
+              </p>
+            </div>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-secondary">System Admin</p>
-            <p className="text-xs text-muted-foreground">Administrator</p>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={logout}
+            className="ml-2 p-1.5 h-auto"
+            title="Log out"
+            data-testid="button-logout"
+          >
+            <LogOut size={16} />
+          </Button>
         </div>
       </div>
     </div>
