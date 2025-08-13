@@ -164,61 +164,118 @@ export default function Associates() {
                 No sales associates found. Add your first associate to get started.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:space-y-0">
                 {associates.map((associate: any) => {
                   const salesCount = getAssociateSales(associate.id).length;
                   const revenue = getAssociateRevenue(associate.id);
                   
                   return (
-                    <Card key={associate.id} className="p-6 border-border">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h4 className="text-lg font-semibold text-secondary mb-1" data-testid={`associate-name-${associate.id}`}>
-                            {associate.name}
-                          </h4>
-                          <div className="text-sm font-mono text-blue-600 dark:text-blue-400 mb-2">
-                            Code: {associate.associateCode}
-                          </div>
-                          {associate.email && (
-                            <div className="flex items-center text-sm text-muted-foreground mb-2">
-                              <Mail className="mr-1" size={14} />
-                              {associate.email}
+                    <Card key={associate.id} className="p-4 md:p-6 border-border">
+                      {/* Mobile Layout */}
+                      <div className="block md:hidden">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                              <span className="text-primary-foreground font-semibold text-sm">
+                                {associate.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                              </span>
                             </div>
-                          )}
-                          <Badge variant={associate.isActive ? "default" : "secondary"}>
+                            <div>
+                              <h4 className="font-semibold text-secondary" data-testid={`associate-name-${associate.id}`}>
+                                {associate.name}
+                              </h4>
+                              <div className="text-sm text-muted-foreground">
+                                Code: {associate.associateCode}
+                              </div>
+                            </div>
+                          </div>
+                          <Badge variant={associate.isActive ? "default" : "secondary"} className="text-xs">
                             {associate.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </div>
-                        <Button variant="ghost" size="sm" data-testid={`associate-menu-${associate.id}`}>
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Total Sales</span>
-                          <span className="text-sm font-medium text-secondary">{salesCount}</span>
+
+                        {associate.email && (
+                          <div className="flex items-center text-sm text-muted-foreground mb-3">
+                            <Mail className="mr-2" size={14} />
+                            <span className="truncate">{associate.email}</span>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-3 gap-2 text-sm mb-3">
+                          <div className="text-center p-2 bg-muted rounded">
+                            <div className="font-semibold text-secondary">{salesCount}</div>
+                            <div className="text-xs text-muted-foreground">Sales</div>
+                          </div>
+                          <div className="text-center p-2 bg-muted rounded">
+                            <div className="font-semibold text-accent text-xs">
+                              {formatCurrency(revenue)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">Revenue</div>
+                          </div>
+                          <div className="text-center p-2 bg-muted rounded">
+                            <div className="font-semibold text-secondary text-xs">
+                              {salesCount > 0 ? formatCurrency(revenue / salesCount) : "$0.00"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">Avg Sale</div>
+                          </div>
                         </div>
                         
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Revenue</span>
-                          <span className="text-sm font-medium text-secondary">
-                            {formatCurrency(revenue)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Avg. Sale</span>
-                          <span className="text-sm font-medium text-secondary">
-                            {salesCount > 0 ? formatCurrency(revenue / salesCount) : "$0.00"}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 pt-4 border-t border-border">
                         <Button variant="outline" size="sm" className="w-full" data-testid={`view-associate-${associate.id}`}>
                           View Details
                         </Button>
+                      </div>
+
+                      {/* Desktop Layout */}
+                      <div className="hidden md:block">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-semibold text-secondary mb-1" data-testid={`associate-name-${associate.id}`}>
+                              {associate.name}
+                            </h4>
+                            <div className="text-sm font-mono text-blue-600 dark:text-blue-400 mb-2">
+                              Code: {associate.associateCode}
+                            </div>
+                            {associate.email && (
+                              <div className="flex items-center text-sm text-muted-foreground mb-2">
+                                <Mail className="mr-1" size={14} />
+                                {associate.email}
+                              </div>
+                            )}
+                            <Badge variant={associate.isActive ? "default" : "secondary"}>
+                              {associate.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                          <Button variant="ghost" size="sm" data-testid={`associate-menu-${associate.id}`}>
+                            <MoreHorizontal size={16} />
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Total Sales</span>
+                            <span className="text-sm font-medium text-secondary">{salesCount}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Revenue</span>
+                            <span className="text-sm font-medium text-secondary">
+                              {formatCurrency(revenue)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Avg. Sale</span>
+                            <span className="text-sm font-medium text-secondary">
+                              {salesCount > 0 ? formatCurrency(revenue / salesCount) : "$0.00"}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <Button variant="outline" size="sm" className="w-full" data-testid={`view-associate-${associate.id}`}>
+                            View Details
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   );
