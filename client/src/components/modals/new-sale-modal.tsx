@@ -299,7 +299,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {associates?.map((associate: any) => (
+                        {associates.map((associate: any) => (
                           <SelectItem key={associate.id} value={associate.id}>
                             {associate.name}
                           </SelectItem>
