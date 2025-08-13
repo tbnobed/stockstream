@@ -130,7 +130,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 export const loginSchema = z.object({
-  username: z.string().min(3),
   associateCode: z.string().min(4),
 });
 

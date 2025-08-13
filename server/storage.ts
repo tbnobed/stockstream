@@ -5,7 +5,7 @@ import {
   inventoryItems,
   sales,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type SalesAssociate,
   type InsertSalesAssociate,
   type Supplier,
@@ -24,8 +24,11 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByAssociateCode(associateCode: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  // Sales Associates
+  // Associates (users with associate role)
+  getAssociates(): Promise<User[]>;
+  // Sales Associates (legacy table)
   getSalesAssociates(): Promise<SalesAssociate[]>;
   getSalesAssociate(id: string): Promise<SalesAssociate | undefined>;
   createSalesAssociate(associate: InsertSalesAssociate): Promise<SalesAssociate>;
@@ -69,12 +72,21 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByAssociateCode(associateCode: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.associateCode, associateCode));
+    return user || undefined;
+  }
+
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
       .returning();
     return user;
+  }
+
+  async getAssociates(): Promise<User[]> {
+    return db.select().from(users).where(eq(users.role, 'associate'));
   }
 
   async getSalesAssociates(): Promise<SalesAssociate[]> {

@@ -14,15 +14,16 @@ export interface JWTPayload {
 }
 
 export function generateToken(user: { id: string; username: string; role: string }): string {
-  return jwt.sign(
-    {
-      userId: user.id,
-      username: user.username,
-      role: user.role,
-    },
-    JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
-  );
+  const payload = {
+    userId: user.id,
+    username: user.username,
+    role: user.role,
+  };
+  
+  return jwt.sign(payload, JWT_SECRET, { 
+    expiresIn: JWT_EXPIRES_IN,
+    algorithm: 'HS256'
+  } as jwt.SignOptions);
 }
 
 export function verifyToken(token: string): JWTPayload | null {
@@ -84,19 +85,15 @@ export async function setupAuth(app: Express) {
   // Login endpoint
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, associateCode } = req.body;
+      const { associateCode } = req.body;
       
-      if (!username || !associateCode) {
-        return res.status(400).json({ message: "Username and associate code required" });
+      if (!associateCode) {
+        return res.status(400).json({ message: "Associate code required" });
       }
 
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserByAssociateCode(associateCode);
       if (!user || !user.isActive) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      if (user.associateCode !== associateCode) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: "Invalid associate code" });
       }
 
       const token = generateToken({
@@ -113,6 +110,7 @@ export async function setupAuth(app: Express) {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          associateCode: user.associateCode,
         }
       });
     } catch (error) {

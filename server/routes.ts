@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, requireAdmin } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireAdmin, generateAssociateCode } from "./replitAuth";
 import { 
   insertSalesAssociateSchema,
   insertSupplierSchema,
@@ -23,27 +23,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Sales Associates
-  app.get("/api/associates", async (req, res) => {
+  // Associates (Users with associate role)
+  app.get("/api/associates", isAuthenticated, async (req, res) => {
     try {
-      const associates = await storage.getSalesAssociates();
+      const associates = await storage.getAssociates();
       res.json(associates);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch sales associates" });
+      res.status(500).json({ message: "Failed to fetch associates" });
     }
   });
 
-  app.post("/api/associates", async (req, res) => {
+  app.post("/api/associates", isAuthenticated, requireAdmin, async (req, res) => {
     try {
-      const associate = insertSalesAssociateSchema.parse(req.body);
-      const newAssociate = await storage.createSalesAssociate(associate);
-      res.status(201).json(newAssociate);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid data", errors: error.errors });
-      } else {
-        res.status(500).json({ message: "Failed to create sales associate" });
+      const { name, email } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Name is required" });
       }
+
+      // Generate associate code and username
+      const associateCode = generateAssociateCode();
+      const username = name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 1000);
+      
+      const userData = {
+        username,
+        associateCode,
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ').slice(1).join(' ') || '',
+        email: email || null,
+        role: 'associate',
+        isActive: true,
+      };
+
+      const newUser = await storage.createUser(userData);
+      res.status(201).json({
+        id: newUser.id,
+        name: `${newUser.firstName} ${newUser.lastName}`.trim(),
+        email: newUser.email,
+        associateCode: newUser.associateCode,
+        isActive: newUser.isActive,
+      });
+    } catch (error) {
+      console.error("Create associate error:", error);
+      res.status(500).json({ message: "Failed to create associate" });
     }
   });
 

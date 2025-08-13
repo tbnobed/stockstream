@@ -20,8 +20,8 @@ export function useAuth() {
     retry: false,
   });
 
-  const login = async (username: string, associateCode: string): Promise<{ user: User; token: string }> => {
-    const response = await apiRequest("POST", "/api/auth/login", { username, associateCode });
+  const login = async (associateCode: string): Promise<{ user: User; token: string }> => {
+    const response = await apiRequest("POST", "/api/auth/login", { associateCode });
     const data = await response.json();
     
     localStorage.setItem("auth_token", data.token);

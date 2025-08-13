@@ -19,25 +19,23 @@ export default function Associates() {
   const [showAddModal, setShowAddModal] = useState(false);
   const { toast } = useToast();
 
-  const { data: associates, isLoading } = useQuery({
+  const { data: associates = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/associates"],
   });
 
-  const { data: sales } = useQuery({
+  const { data: sales = [] } = useQuery<any[]>({
     queryKey: ["/api/sales"],
   });
 
-  const form = useForm<InsertSalesAssociate>({
-    resolver: zodResolver(insertSalesAssociateSchema),
+  const form = useForm<{name: string; email?: string}>({
     defaultValues: {
       name: "",
       email: "",
-      isActive: true,
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertSalesAssociate) => {
+    mutationFn: async (data: {name: string; email?: string}) => {
       const response = await apiRequest("POST", "/api/associates", data);
       return response.json();
     },
@@ -59,12 +57,12 @@ export default function Associates() {
     },
   });
 
-  const onSubmit = (data: InsertSalesAssociate) => {
+  const onSubmit = (data: {name: string; email?: string}) => {
     createMutation.mutate(data);
   };
 
   const getAssociateSales = (associateId: string) => {
-    return sales?.filter((sale: any) => sale.salesAssociateId === associateId) || [];
+    return sales.filter((sale: any) => sale.associateId === associateId);
   };
 
   const getAssociateRevenue = (associateId: string) => {
@@ -161,7 +159,7 @@ export default function Associates() {
           <div className="p-6">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading associates...</div>
-            ) : !associates?.length ? (
+            ) : !associates.length ? (
               <div className="text-center py-8 text-muted-foreground">
                 No sales associates found. Add your first associate to get started.
               </div>
@@ -178,6 +176,9 @@ export default function Associates() {
                           <h4 className="text-lg font-semibold text-secondary mb-1" data-testid={`associate-name-${associate.id}`}>
                             {associate.name}
                           </h4>
+                          <div className="text-sm font-mono text-blue-600 dark:text-blue-400 mb-2">
+                            Code: {associate.associateCode}
+                          </div>
                           {associate.email && (
                             <div className="flex items-center text-sm text-muted-foreground mb-2">
                               <Mail className="mr-1" size={14} />
