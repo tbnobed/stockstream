@@ -63,64 +63,64 @@ export default function Dashboard() {
         onAddInventory={() => setShowAddInventoryModal(true)}
       />
 
-      <main className="flex-1 overflow-y-auto p-6 bg-background">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
         {/* Stats Cards */}
         <div className={cn(
-          "grid gap-6 mb-8",
-          isAdmin ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-3"
+          "grid gap-4 md:gap-6 mb-6 md:mb-8",
+          isAdmin ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
         )}>
           {isAdmin && (
-            <Card className="p-6 border-border">
+            <Card className="p-4 md:p-6 border-border">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                  <p className="text-3xl font-bold text-secondary mt-2" data-testid="stat-total-revenue">
+                <div className="flex-1">
+                  <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Revenue</p>
+                  <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-total-revenue">
                     {statsLoading ? "Loading..." : formatCurrency(stats?.totalRevenue || 0)}
                   </p>
-                  <p className="text-sm text-accent mt-1 flex items-center">
-                    <ArrowUpRight className="mr-1" size={12} />
+                  <p className="text-xs md:text-sm text-accent mt-1 flex items-center">
+                    <ArrowUpRight className="mr-1" size={10} />
                     +12.5% from last month
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                  <DollarSign className="text-accent" size={24} />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="text-accent" size={20} />
                 </div>
               </div>
             </Card>
           )}
 
-          <Card className="p-6 border-border">
+          <Card className="p-4 md:p-6 border-border">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Items</p>
-                <p className="text-3xl font-bold text-secondary mt-2" data-testid="stat-total-items">
+              <div className="flex-1">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Items</p>
+                <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-total-items">
                   {statsLoading ? "Loading..." : (stats?.totalItems || 0).toLocaleString()}
                 </p>
-                <p className="text-sm text-primary mt-1 flex items-center">
-                  <ArrowUpRight className="mr-1" size={12} />
+                <p className="text-xs md:text-sm text-primary mt-1 flex items-center">
+                  <ArrowUpRight className="mr-1" size={10} />
                   +8 new items added
                 </p>
               </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Package className="text-primary" size={24} />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Package className="text-primary" size={20} />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-border">
+          <Card className="p-4 md:p-6 border-border">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Sales Today</p>
-                <p className="text-3xl font-bold text-secondary mt-2" data-testid="stat-sales-today">
+              <div className="flex-1">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Sales Today</p>
+                <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-sales-today">
                   {statsLoading ? "Loading..." : stats?.salesToday || 0}
                 </p>
-                <p className="text-sm text-accent mt-1 flex items-center">
-                  <ArrowUpRight className="mr-1" size={12} />
+                <p className="text-xs md:text-sm text-accent mt-1 flex items-center">
+                  <ArrowUpRight className="mr-1" size={10} />
                   +15% vs yesterday
                 </p>
               </div>
-              <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-                <ShoppingCart className="text-warning" size={24} />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="text-warning" size={20} />
               </div>
             </div>
           </Card>

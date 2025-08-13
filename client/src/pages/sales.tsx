@@ -52,12 +52,12 @@ export default function Sales() {
         onNewSale={() => setShowNewSaleModal(true)}
       />
 
-      <main className="flex-1 overflow-y-auto p-6 bg-background">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
         {/* Search and Actions */}
-        <Card className="p-6 mb-6 border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 flex-1">
-              <div className="relative flex-1 max-w-md">
+        <Card className="p-4 md:p-6 mb-4 md:mb-6 border-border">
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4 flex-1">
+              <div className="relative flex-1 md:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
                 <Input
                   placeholder="Search by order ID, item, or associate..."
@@ -67,20 +67,20 @@ export default function Sales() {
                   data-testid="input-search-sales"
                 />
               </div>
-              <Button variant="outline" data-testid="button-filter-sales">
+              <Button variant="outline" size="sm" data-testid="button-filter-sales">
                 Filter
               </Button>
             </div>
-            <Button variant="outline" data-testid="button-export-sales">
-              <Download className="mr-2" size={16} />
-              Export
+            <Button variant="outline" size="sm" data-testid="button-export-sales">
+              <Download className="mr-0 md:mr-2" size={16} />
+              <span className="hidden sm:inline ml-2">Export</span>
             </Button>
           </div>
         </Card>
 
         {/* Sales Transactions */}
         <Card className="border-border">
-          <div className="px-6 py-4 border-b border-border">
+          <div className="px-4 md:px-6 py-4 border-b border-border">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-secondary">Sales Transactions</h3>
               <p className="text-sm text-muted-foreground">
@@ -88,7 +88,7 @@ export default function Sales() {
               </p>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading sales...</div>
             ) : !filteredSales?.length ? (
@@ -96,8 +96,72 @@ export default function Sales() {
                 {searchTerm ? "No sales match your search" : "No sales found"}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <>
+                {/* Mobile Card Layout */}
+                <div className="block md:hidden space-y-4">
+                  {filteredSales.map((sale: any) => (
+                    <Card key={sale.id} className="p-4 border-border">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold text-secondary" data-testid={`sale-order-${sale.id}`}>
+                            #{sale.orderNumber}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(sale.saleDate)}
+                          </p>
+                        </div>
+                        <Badge variant={
+                          sale.paymentMethod === "cash" ? "default" : "secondary"
+                        }>
+                          {sale.paymentMethod === "cash" ? "Cash" : "Venmo"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2 mb-3">
+                        <div>
+                          <p className="font-medium text-secondary">{sale.item.name}</p>
+                          <p className="text-sm text-muted-foreground">SKU: {sale.item.sku}</p>
+                        </div>
+                        
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Quantity:</span>
+                          <span className="font-medium">{sale.quantity}</span>
+                        </div>
+                        
+                        {isAdmin && (
+                          <>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Unit Price:</span>
+                              <span className="font-medium">{formatCurrency(Number(sale.unitPrice))}</span>
+                            </div>
+                            <div className="flex justify-between text-sm font-semibold">
+                              <span className="text-muted-foreground">Total:</span>
+                              <span className="text-accent">{formatCurrency(Number(sale.totalAmount))}</span>
+                            </div>
+                          </>
+                        )}
+                        
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Associate:</span>
+                          <span className="font-medium">{sale.salesAssociate.name}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2 pt-3 border-t">
+                        <Button variant="outline" size="sm" className="flex-1" data-testid={`view-sale-${sale.id}`}>
+                          View
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1" data-testid={`receipt-sale-${sale.id}`}>
+                          Receipt
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
                   <thead>
                     <tr className="text-left text-sm font-medium text-muted-foreground">
                       <th className="pb-3">Order ID</th>
@@ -170,8 +234,9 @@ export default function Sales() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </Card>

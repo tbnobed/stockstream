@@ -37,7 +37,7 @@ export default function Sidebar() {
   const navigation = getNavigationForRole((user as any)?.role || 'associate');
 
   return (
-    <div className="w-64 bg-surface shadow-lg border-r border-border">
+    <div className="w-64 bg-surface shadow-lg border-r border-border hidden md:flex md:flex-col">
       <div className="p-6 border-b border-border">
         <h1 className="text-xl font-bold text-secondary flex items-center">
           <Box className="mr-3 text-primary" size={24} />

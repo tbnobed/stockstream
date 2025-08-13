@@ -18,10 +18,10 @@ export default function Inventory() {
   });
 
   const filteredItems = inventoryItems?.filter((item: any) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.type?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -44,10 +44,10 @@ export default function Inventory() {
         onAddInventory={() => setShowAddModal(true)}
       />
 
-      <main className="flex-1 overflow-y-auto p-6 bg-background">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
         {/* Search and Filters */}
-        <Card className="p-6 mb-6 border-border">
-          <div className="flex items-center space-x-4">
+        <Card className="p-4 md:p-6 mb-4 md:mb-6 border-border">
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
@@ -58,21 +58,23 @@ export default function Inventory() {
                 data-testid="input-search-inventory"
               />
             </div>
-            <Button variant="outline" data-testid="button-filter">
-              Filter
-            </Button>
-            <Button variant="outline" data-testid="button-export">
-              Export
-            </Button>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" data-testid="button-filter">
+                Filter
+              </Button>
+              <Button variant="outline" size="sm" data-testid="button-export">
+                Export
+              </Button>
+            </div>
           </div>
         </Card>
 
         {/* Inventory Items */}
         <Card className="border-border">
-          <div className="px-6 py-4 border-b border-border">
+          <div className="px-4 md:px-6 py-4 border-b border-border">
             <h3 className="text-lg font-semibold text-secondary">Inventory Items</h3>
           </div>
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading inventory...</div>
             ) : !filteredItems?.length ? (
@@ -80,21 +82,81 @@ export default function Inventory() {
                 {searchTerm ? "No items match your search" : "No inventory items found"}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-sm font-medium text-muted-foreground">
-                      <th className="pb-3">SKU</th>
-                      <th className="pb-3">Item</th>
-                      <th className="pb-3">Type</th>
-                      <th className="pb-3">Size</th>
-                      <th className="pb-3">Color</th>
-                      <th className="pb-3">Price</th>
-                      <th className="pb-3">Stock</th>
-                      <th className="pb-3">Status</th>
-                      <th className="pb-3">Actions</th>
-                    </tr>
-                  </thead>
+              <>
+                {/* Mobile Card Layout */}
+                <div className="block md:hidden space-y-4">
+                  {filteredItems.map((item: any) => {
+                    const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
+                    
+                    return (
+                      <Card key={item.id} className="p-4 border-border">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="font-semibold text-secondary" data-testid={`item-name-${item.id}`}>
+                              {item.name}
+                            </h4>
+                            <p className="text-sm font-mono text-muted-foreground">
+                              SKU: {item.sku}
+                            </p>
+                          </div>
+                          <Badge variant={
+                            stockStatus === "low" ? "destructive" :
+                            stockStatus === "medium" ? "secondary" : "default"
+                          }>
+                            {stockStatus === "low" && <AlertTriangle className="mr-1" size={12} />}
+                            {stockStatus === "low" ? "Low Stock" :
+                             stockStatus === "medium" ? "Medium" : "In Stock"}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                          <div>
+                            <p className="text-muted-foreground">Type</p>
+                            <p className="font-medium capitalize">{item.type}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Price</p>
+                            <p className="font-medium">{formatCurrency(Number(item.price))}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Stock</p>
+                            <p className="font-medium">{item.quantity} / {item.minStockLevel} min</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Details</p>
+                            <p className="font-medium">{item.size || "N/A"} - {item.color || "N/A"}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2 pt-3 border-t">
+                          <Button variant="outline" size="sm" className="flex-1" data-testid={`edit-item-${item.id}`}>
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm" data-testid={`print-label-${item.id}`}>
+                            <Package size={14} />
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table Layout */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm font-medium text-muted-foreground">
+                        <th className="pb-3">SKU</th>
+                        <th className="pb-3">Item</th>
+                        <th className="pb-3">Type</th>
+                        <th className="pb-3">Size</th>
+                        <th className="pb-3">Color</th>
+                        <th className="pb-3">Price</th>
+                        <th className="pb-3">Stock</th>
+                        <th className="pb-3">Status</th>
+                        <th className="pb-3">Actions</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     {filteredItems.map((item: any) => {
                       const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
@@ -158,8 +220,9 @@ export default function Inventory() {
                       );
                     })}
                   </tbody>
-                </table>
-              </div>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </Card>
