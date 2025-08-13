@@ -6,21 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import NewSaleModal from "@/components/modals/new-sale-modal";
+import { useAuth } from "@/hooks/useAuth";
 import { Search, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sales() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
+  const isAdmin = (user as any)?.role === 'admin';
 
-  const { data: sales, isLoading } = useQuery({
+  const { data: sales = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/sales"],
   });
 
-  const filteredSales = sales?.filter((sale: any) =>
-    sale.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.salesAssociate.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSales = sales.filter((sale: any) =>
+    sale.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sale.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sale.salesAssociate?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCurrency = (amount: number) => {
@@ -100,8 +103,8 @@ export default function Sales() {
                       <th className="pb-3">Order ID</th>
                       <th className="pb-3">Item</th>
                       <th className="pb-3">Qty</th>
-                      <th className="pb-3">Unit Price</th>
-                      <th className="pb-3">Total</th>
+                      {isAdmin && <th className="pb-3">Unit Price</th>}
+                      {isAdmin && <th className="pb-3">Total</th>}
                       <th className="pb-3">Associate</th>
                       <th className="pb-3">Payment</th>
                       <th className="pb-3">Date</th>
@@ -125,16 +128,20 @@ export default function Sales() {
                         <td className="py-3">
                           <span className="text-sm text-secondary">{sale.quantity}</span>
                         </td>
-                        <td className="py-3">
-                          <span className="text-sm text-secondary">
-                            {formatCurrency(Number(sale.unitPrice))}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <span className="text-sm font-medium text-secondary">
-                            {formatCurrency(Number(sale.totalAmount))}
-                          </span>
-                        </td>
+                        {isAdmin && (
+                          <td className="py-3">
+                            <span className="text-sm text-secondary">
+                              {formatCurrency(Number(sale.unitPrice))}
+                            </span>
+                          </td>
+                        )}
+                        {isAdmin && (
+                          <td className="py-3">
+                            <span className="text-sm font-medium text-secondary">
+                              {formatCurrency(Number(sale.totalAmount))}
+                            </span>
+                          </td>
+                        )}
                         <td className="py-3">
                           <span className="text-sm text-secondary">{sale.salesAssociate.name}</span>
                         </td>

@@ -15,6 +15,9 @@ import MobileSales from "@/pages/mobile-sales";
 import Sidebar from "@/components/layout/sidebar";
 
 function AuthenticatedApp() {
+  const { user } = useAuth();
+  const userRole = (user as any)?.role || 'associate';
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -23,9 +26,13 @@ function AuthenticatedApp() {
           <Route path="/" component={Dashboard} />
           <Route path="/inventory" component={Inventory} />
           <Route path="/sales" component={Sales} />
-          <Route path="/reports" component={Reports} />
-          <Route path="/associates" component={Associates} />
           <Route path="/mobile-sales" component={MobileSales} />
+          {userRole === 'admin' && (
+            <>
+              <Route path="/reports" component={Reports} />
+              <Route path="/associates" component={Associates} />
+            </>
+          )}
           <Route component={NotFound} />
         </Switch>
       </div>

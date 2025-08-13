@@ -14,7 +14,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   await setupAuth(app);
   // Dashboard Stats
-  app.get("/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats();
       res.json(stats);
@@ -23,8 +23,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Associates (Users with associate role)
-  app.get("/api/associates", isAuthenticated, async (req, res) => {
+  // Associates (Admin Only)
+  app.get("/api/associates", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const associates = await storage.getAssociates();
       res.json(associates);
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Suppliers
-  app.get("/api/suppliers", async (req, res) => {
+  app.get("/api/suppliers", isAuthenticated, async (req, res) => {
     try {
       const suppliers = await storage.getSuppliers();
       res.json(suppliers);
@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/suppliers", async (req, res) => {
+  app.post("/api/suppliers", isAuthenticated, async (req, res) => {
     try {
       const supplier = insertSupplierSchema.parse(req.body);
       const newSupplier = await storage.createSupplier(supplier);
@@ -94,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory Items
-  app.get("/api/inventory", async (req, res) => {
+  app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {
       const items = await storage.getInventoryItems();
       res.json(items);
@@ -103,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/inventory/low-stock", async (req, res) => {
+  app.get("/api/inventory/low-stock", isAuthenticated, async (req, res) => {
     try {
       const items = await storage.getLowStockItems();
       res.json(items);
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory", async (req, res) => {
+  app.post("/api/inventory", isAuthenticated, async (req, res) => {
     try {
       const item = insertInventoryItemSchema.parse(req.body);
       const newItem = await storage.createInventoryItem(item);
@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/inventory/:id", async (req, res) => {
+  app.patch("/api/inventory/:id", isAuthenticated, async (req, res) => {
     try {
       const updates = req.body;
       const updatedItem = await storage.updateInventoryItem(req.params.id, updates);
@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sales
-  app.get("/api/sales", async (req, res) => {
+  app.get("/api/sales", isAuthenticated, async (req, res) => {
     try {
       const salesData = await storage.getSales();
       res.json(salesData);
@@ -159,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sales", async (req, res) => {
+  app.post("/api/sales", isAuthenticated, async (req, res) => {
     try {
       const sale = insertSaleSchema.parse(req.body);
       const newSale = await storage.createSale(sale);

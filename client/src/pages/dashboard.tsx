@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import NewSaleModal from "@/components/modals/new-sale-modal";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
 import PrintLabelsModal from "@/components/modals/print-labels-modal";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   DollarSign, 
   Package, 
@@ -23,16 +24,18 @@ export default function Dashboard() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [showAddInventoryModal, setShowAddInventoryModal] = useState(false);
   const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = (user as any)?.role === 'admin';
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats = {}, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["/api/dashboard/stats"],
   });
 
-  const { data: recentSales, isLoading: salesLoading } = useQuery({
+  const { data: recentSales = [], isLoading: salesLoading } = useQuery<any[]>({
     queryKey: ["/api/sales"],
   });
 
-  const { data: lowStockItems, isLoading: lowStockLoading } = useQuery({
+  const { data: lowStockItems = [], isLoading: lowStockLoading } = useQuery<any[]>({
     queryKey: ["/api/inventory/low-stock"],
   });
 
@@ -62,24 +65,29 @@ export default function Dashboard() {
 
       <main className="flex-1 overflow-y-auto p-6 bg-background">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6 border-border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-3xl font-bold text-secondary mt-2" data-testid="stat-total-revenue">
-                  {statsLoading ? "Loading..." : formatCurrency(stats?.totalRevenue || 0)}
-                </p>
-                <p className="text-sm text-accent mt-1 flex items-center">
-                  <ArrowUpRight className="mr-1" size={12} />
-                  +12.5% from last month
-                </p>
+        <div className={cn(
+          "grid gap-6 mb-8",
+          isAdmin ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-3"
+        )}>
+          {isAdmin && (
+            <Card className="p-6 border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                  <p className="text-3xl font-bold text-secondary mt-2" data-testid="stat-total-revenue">
+                    {statsLoading ? "Loading..." : formatCurrency(stats?.totalRevenue || 0)}
+                  </p>
+                  <p className="text-sm text-accent mt-1 flex items-center">
+                    <ArrowUpRight className="mr-1" size={12} />
+                    +12.5% from last month
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="text-accent" size={24} />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <DollarSign className="text-accent" size={24} />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           <Card className="p-6 border-border">
             <div className="flex items-center justify-between">

@@ -13,17 +13,28 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: BarChart3 },
-  { name: "Inventory", href: "/inventory", icon: Warehouse },
-  { name: "Sales", href: "/sales", icon: ScanBarcode },
-  { name: "Reports", href: "/reports", icon: Package },
-  { name: "Associates", href: "/associates", icon: Users },
-];
+const getNavigationForRole = (userRole: string) => {
+  const baseNavigation = [
+    { name: "Dashboard", href: "/", icon: BarChart3 },
+    { name: "Inventory", href: "/inventory", icon: Warehouse },
+    { name: "Sales", href: "/sales", icon: ScanBarcode },
+  ];
+
+  if (userRole === 'admin') {
+    return [
+      ...baseNavigation,
+      { name: "Reports", href: "/reports", icon: Package },
+      { name: "Associates", href: "/associates", icon: Users },
+    ];
+  }
+
+  return baseNavigation;
+};
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const navigation = getNavigationForRole((user as any)?.role || 'associate');
 
   return (
     <div className="w-64 bg-surface shadow-lg border-r border-border">
