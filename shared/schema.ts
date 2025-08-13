@@ -1,0 +1,120 @@
+import { sql, relations } from "drizzle-orm";
+import { pgTable, text, varchar, integer, decimal, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const salesAssociates = pgTable("sales_associates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").unique(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const suppliers = pgTable("suppliers", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  contactInfo: text("contact_info"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const inventoryItems = pgTable("inventory_items", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sku: varchar("sku", { length: 50 }).notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // e.g., "shirt", "pants", "shoes"
+  size: text("size"), // e.g., "S", "M", "L", "XL", "9", "10"
+  color: text("color"), // e.g., "red", "blue", "black"
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  quantity: integer("quantity").notNull().default(0),
+  minStockLevel: integer("min_stock_level").default(10),
+  supplierId: uuid("supplier_id").references(() => suppliers.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sales = pgTable("sales", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderNumber: varchar("order_number", { length: 20 }).notNull().unique(),
+  itemId: uuid("item_id").notNull().references(() => inventoryItems.id),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(), // "cash" or "venmo"
+  salesAssociateId: uuid("sales_associate_id").notNull().references(() => salesAssociates.id),
+  saleDate: timestamp("sale_date").defaultNow(),
+});
+
+// Relations
+export const salesAssociatesRelations = relations(salesAssociates, ({ many }) => ({
+  sales: many(sales),
+}));
+
+export const suppliersRelations = relations(suppliers, ({ many }) => ({
+  inventoryItems: many(inventoryItems),
+}));
+
+export const inventoryItemsRelations = relations(inventoryItems, ({ one, many }) => ({
+  supplier: one(suppliers, {
+    fields: [inventoryItems.supplierId],
+    references: [suppliers.id],
+  }),
+  sales: many(sales),
+}));
+
+export const salesRelations = relations(sales, ({ one }) => ({
+  item: one(inventoryItems, {
+    fields: [sales.itemId],
+    references: [inventoryItems.id],
+  }),
+  salesAssociate: one(salesAssociates, {
+    fields: [sales.salesAssociateId],
+    references: [salesAssociates.id],
+  }),
+}));
+
+// Insert schemas
+export const insertSalesAssociateSchema = createInsertSchema(salesAssociates).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertInventoryItemSchema = createInsertSchema(inventoryItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSaleSchema = createInsertSchema(sales).omit({
+  id: true,
+  saleDate: true,
+});
+
+// Types
+export type SalesAssociate = typeof salesAssociates.$inferSelect;
+export type InsertSalesAssociate = z.infer<typeof insertSalesAssociateSchema>;
+
+export type Supplier = typeof suppliers.$inferSelect;
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+
+export type InventoryItem = typeof inventoryItems.$inferSelect;
+export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
+
+export type Sale = typeof sales.$inferSelect;
+export type InsertSale = z.infer<typeof insertSaleSchema>;
+
+// Extended types with relations
+export type InventoryItemWithSupplier = InventoryItem & {
+  supplier: Supplier | null;
+};
+
+export type SaleWithDetails = Sale & {
+  item: InventoryItem;
+  salesAssociate: SalesAssociate;
+};

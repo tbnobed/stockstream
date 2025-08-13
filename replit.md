@@ -1,0 +1,93 @@
+# InventoryPro - Retail Inventory Management System
+
+## Overview
+
+InventoryPro is a full-stack retail inventory management system designed for small to medium businesses. The application provides comprehensive functionality for tracking inventory items, managing sales transactions, handling suppliers, and monitoring sales associates. Built with modern web technologies, it features a responsive dashboard with real-time analytics, QR code label generation for inventory tracking, and detailed reporting capabilities.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript for type safety and component-based architecture
+- **Routing**: Wouter for lightweight client-side routing
+- **UI Components**: Radix UI primitives with shadcn/ui design system for consistent, accessible components
+- **Styling**: Tailwind CSS with CSS variables for theming and responsive design
+- **State Management**: TanStack Query (React Query) for server state management and caching
+- **Forms**: React Hook Form with Zod for validation and type-safe form handling
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js framework for RESTful API endpoints
+- **Database**: PostgreSQL with Neon serverless driver for scalable cloud database
+- **ORM**: Drizzle ORM for type-safe database queries and schema management
+- **Build System**: Vite for fast development and optimized production builds
+- **Development**: tsx for TypeScript execution and hot reloading
+
+### Database Design
+The application uses a relational database schema with four main entities:
+- **Sales Associates**: User management for tracking who made sales
+- **Suppliers**: Vendor information for inventory sourcing
+- **Inventory Items**: Product catalog with stock levels, pricing, and SKU management
+- **Sales**: Transaction records linking items, associates, and payment methods
+
+The schema includes proper foreign key relationships and uses UUIDs for primary keys to ensure scalability and avoid conflicts.
+
+### API Structure
+RESTful API design with clear endpoint patterns:
+- `/api/dashboard/stats` - Aggregated dashboard metrics
+- `/api/associates` - Sales associate CRUD operations
+- `/api/suppliers` - Supplier management
+- `/api/inventory` - Inventory item management with low stock alerts
+- `/api/sales` - Sales transaction processing
+
+Each endpoint implements proper error handling, input validation using Zod schemas, and returns JSON responses with appropriate HTTP status codes.
+
+### Feature Architecture
+- **Inventory Management**: SKU generation, stock level monitoring, supplier tracking
+- **Sales Processing**: Order number generation, payment method tracking, inventory updates
+- **Reporting**: Dashboard analytics with revenue, sales volume, and stock alerts
+- **QR Code Generation**: Label printing system for inventory tracking
+- **Search and Filtering**: Real-time search across inventory and sales data
+
+## External Dependencies
+
+### Core Framework Dependencies
+- **React Ecosystem**: React 18, React DOM, TypeScript for frontend development
+- **Express.js**: Web framework for backend API development
+- **Vite**: Build tool and development server with hot module replacement
+
+### Database and ORM
+- **@neondatabase/serverless**: Neon PostgreSQL serverless driver for cloud database
+- **drizzle-orm**: Type-safe ORM for database operations
+- **drizzle-kit**: Database migration and schema management tools
+
+### UI and Design System
+- **@radix-ui/***: Complete set of accessible UI primitives (dialogs, forms, navigation)
+- **tailwindcss**: Utility-first CSS framework for styling
+- **class-variance-authority**: Utility for managing component variants
+- **lucide-react**: Icon library for consistent iconography
+
+### Data Management
+- **@tanstack/react-query**: Server state management and caching
+- **react-hook-form**: Form state management and validation
+- **@hookform/resolvers**: Integration between React Hook Form and Zod
+- **zod**: TypeScript-first schema validation
+- **drizzle-zod**: Integration between Drizzle ORM and Zod schemas
+
+### Charts and Visualization
+- **recharts**: React chart library for dashboard analytics and reporting
+
+### Development Tools
+- **@replit/vite-plugin-runtime-error-modal**: Development error overlay
+- **@replit/vite-plugin-cartographer**: Replit-specific development tools
+- **ws**: WebSocket library for database connections
+
+### Date and Utility Libraries
+- **date-fns**: Date manipulation and formatting
+- **nanoid**: URL-safe unique ID generation
+- **clsx**: Conditional className utility
+- **tailwind-merge**: Utility for merging Tailwind classes
+
+The application is structured as a monorepo with shared TypeScript types and schemas between frontend and backend, ensuring type safety across the entire stack. The architecture supports both development and production deployments with proper environment configuration and build optimization.
