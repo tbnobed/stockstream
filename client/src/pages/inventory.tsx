@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
-import { Search, Package, AlertTriangle } from "lucide-react";
+import QRScanner from "@/components/qr-scanner";
+import { Search, Package, AlertTriangle, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
 
   const { data: inventoryItems, isLoading } = useQuery({
     queryKey: ["/api/inventory"],
@@ -34,6 +36,11 @@ export default function Inventory() {
     if (quantity <= minLevel) return "low";
     if (quantity <= minLevel * 1.5) return "medium";
     return "good";
+  };
+
+  const handleQRScan = (result: string) => {
+    setSearchTerm(result);
+    setShowScanner(false);
   };
 
   return (
@@ -59,6 +66,15 @@ export default function Inventory() {
               />
             </div>
             <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowScanner(true)}
+                data-testid="button-scan-qr"
+                className="md:hidden"
+              >
+                <QrCode size={16} />
+              </Button>
               <Button variant="outline" size="sm" data-testid="button-filter">
                 Filter
               </Button>
@@ -231,6 +247,12 @@ export default function Inventory() {
       <AddInventoryModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+      />
+      
+      <QRScanner
+        isOpen={showScanner}
+        onScan={handleQRScan}
+        onClose={() => setShowScanner(false)}
       />
     </>
   );

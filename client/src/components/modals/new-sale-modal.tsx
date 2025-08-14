@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { QrCode, X } from "lucide-react";
+import QRScanner from "@/components/qr-scanner";
 import { insertSaleSchema, type InsertSale } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -30,6 +31,7 @@ interface NewSaleModalProps {
 
 export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) {
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
@@ -134,6 +136,11 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     }
   };
 
+  const handleQRScan = (result: string) => {
+    onSkuChange(result);
+    setShowScanner(false);
+  };
+
   const onSubmit = (data: SaleFormData) => {
     if (!selectedItem) {
       toast({
@@ -197,6 +204,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                         type="button"
                         variant="ghost"
                         size="sm"
+                        onClick={() => setShowScanner(true)}
                         className="absolute right-2 top-1/2 -translate-y-1/2"
                         data-testid="button-qr-scan"
                       >
@@ -369,6 +377,12 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
           </form>
         </Form>
       </DialogContent>
+      
+      <QRScanner
+        isOpen={showScanner}
+        onScan={handleQRScan}
+        onClose={() => setShowScanner(false)}
+      />
     </Dialog>
   );
 }
