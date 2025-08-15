@@ -114,12 +114,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/suppliers/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
+      console.log(`Attempting to delete supplier: ${id}`);
+      
+      // Check if supplier is referenced by inventory items
+      const referencedItems = await storage.getInventoryItems();
+      const hasReferences = referencedItems.some((item: any) => item.supplierId === id);
+      
+      if (hasReferences) {
+        return res.status(400).json({ 
+          message: "Cannot delete supplier. It is referenced by inventory items. Please remove or reassign those items first." 
+        });
+      }
+      
       const deleted = await storage.deleteSupplier(id);
       if (!deleted) {
         return res.status(404).json({ message: "Supplier not found" });
       }
       res.json({ message: "Supplier deleted successfully" });
     } catch (error) {
+      console.error("Delete supplier error:", error);
       res.status(500).json({ message: "Failed to delete supplier" });
     }
   });

@@ -33,19 +33,28 @@ export default function SupplierManagement() {
         description: "Supplier deleted successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Delete supplier error:", error);
+      let errorMessage = "Failed to delete supplier";
+      
+      if (error.message?.includes("400")) {
+        errorMessage = "Cannot delete supplier. It is referenced by inventory items. Please remove or reassign those items first.";
+      } else if (error.message?.includes("404")) {
+        errorMessage = "Supplier not found";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to delete supplier",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
-  const filteredSuppliers = (suppliers || []).filter((supplier: any) =>
+  const filteredSuppliers = suppliers ? suppliers.filter((supplier: any) =>
     supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.contactInfo?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   const handleEditSupplier = (supplier: any) => {
     setEditingSupplier(supplier);
