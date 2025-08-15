@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Camera, X, Flashlight, Settings } from "lucide-react";
 import { CameraDiagnostic } from "./camera-diagnostic";
 
@@ -402,18 +402,12 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[99999] p-4" onClick={onClose}>
-      <Card className="w-full max-w-md bg-background" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Scan QR Code</h3>
-            <Button variant="ghost" size="sm" onClick={onClose} data-testid="close-scanner">
-              <X size={20} />
-            </Button>
-          </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Scan QR Code</DialogTitle>
+        </DialogHeader>
 
           {error ? (
             <div className="text-center py-4">
@@ -574,12 +568,11 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
               </div>
             </div>
           )}
-        </div>
-      </Card>
-      
-      {showDiagnostic && (
-        <CameraDiagnostic onClose={() => setShowDiagnostic(false)} />
-      )}
-    </div>
+
+        {showDiagnostic && (
+          <CameraDiagnostic onClose={() => setShowDiagnostic(false)} />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
