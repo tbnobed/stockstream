@@ -31,6 +31,7 @@ interface NewSaleModalProps {
 
 export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) {
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -90,24 +91,39 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     },
   });
 
-  const lookupItemMutation = useMutation({
-    mutationFn: async (sku: string) => {
-      const response = await apiRequest("GET", `/api/inventory/sku/${encodeURIComponent(sku)}`);
+  const searchItemsMutation = useMutation({
+    mutationFn: async (searchTerm: string) => {
+      const response = await apiRequest("GET", `/api/inventory/search/${encodeURIComponent(searchTerm)}`);
       return response.json();
     },
-    onSuccess: (item) => {
-      setSelectedItem(item);
-      form.setValue("itemId", item.id);
-      form.setValue("unitPrice", item.price);
-      updateTotalAmount();
+    onSuccess: (items) => {
+      setSearchResults(items);
+      if (items.length === 1) {
+        // If only one result, auto-select it
+        const item = items[0];
+        setSelectedItem(item);
+        form.setValue("itemId", item.id);
+        form.setValue("unitPrice", item.price);
+        updateTotalAmount();
+      } else if (items.length === 0) {
+        setSelectedItem(null);
+        form.setValue("itemId", "");
+        form.setValue("unitPrice", "");
+        toast({
+          title: "No items found",
+          description: "No items match your search",
+          variant: "destructive",
+        });
+      }
     },
     onError: () => {
+      setSearchResults([]);
       setSelectedItem(null);
       form.setValue("itemId", "");
       form.setValue("unitPrice", "");
       toast({
-        title: "Item not found",
-        description: "No item found with that SKU",
+        title: "Search failed",
+        description: "Failed to search inventory items",
         variant: "destructive",
       });
     },
@@ -129,13 +145,23 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const onSkuChange = (sku: string) => {
     form.setValue("sku", sku);
     if (sku.trim()) {
-      lookupItemMutation.mutate(sku.trim());
+      searchItemsMutation.mutate(sku.trim());
     } else {
+      setSearchResults([]);
       setSelectedItem(null);
       form.setValue("itemId", "");
       form.setValue("unitPrice", "");
       form.setValue("totalAmount", "");
     }
+  };
+
+  const selectItem = (item: any) => {
+    setSelectedItem(item);
+    form.setValue("sku", item.sku);
+    form.setValue("itemId", item.id);
+    form.setValue("unitPrice", item.price);
+    updateTotalAmount();
+    setSearchResults([]);
   };
 
   const handleQRScan = (result: string) => {
@@ -211,9 +237,31 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                     </div>
                   </FormControl>
                   <FormMessage />
+                  
+                  {/* Search Results Dropdown */}
+                  {searchResults.length > 1 && (
+                    <div className="mt-2 p-2 border rounded-md bg-background">
+                      <p className="text-sm font-medium mb-2">Select an item:</p>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {searchResults.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => selectItem(item)}
+                            className="w-full text-left p-2 text-sm hover:bg-muted rounded border-b last:border-b-0"
+                            data-testid={`button-select-item-${item.id}`}
+                          >
+                            <div className="font-medium">{item.sku}</div>
+                            <div className="text-muted-foreground">{item.name} - ${item.price}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   {selectedItem && (
                     <div className="text-sm text-muted-foreground">
-                      Found: {selectedItem.name} - ${selectedItem.price}
+                      Selected: {selectedItem.name} - ${selectedItem.price}
                     </div>
                   )}
                 </FormItem>
