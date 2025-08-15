@@ -85,8 +85,12 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAssociates(): Promise<User[]> {
-    return db.select().from(users).where(eq(users.role, 'associate'));
+  async getAssociates(): Promise<any[]> {
+    const users = await db.select().from(users).where(eq(users.role, 'associate'));
+    return users.map(user => ({
+      ...user,
+      name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || 'Unknown Associate'
+    }));
   }
 
   async getSalesAssociates(): Promise<SalesAssociate[]> {
