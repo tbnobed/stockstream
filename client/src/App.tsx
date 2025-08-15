@@ -10,6 +10,7 @@ import Inventory from "@/pages/inventory";
 import Sales from "@/pages/sales";
 import Reports from "@/pages/reports";
 import Associates from "@/pages/associates";
+import QRTest from "@/pages/qr-test";
 import Login from "@/pages/login";
 import MobileSales from "@/pages/mobile-sales";
 import Sidebar from "@/components/layout/sidebar";
@@ -27,6 +28,7 @@ function AuthenticatedApp() {
           <Route path="/inventory" component={Inventory} />
           <Route path="/sales" component={Sales} />
           <Route path="/mobile-sales" component={MobileSales} />
+          <Route path="/qr-test" component={QRTest} />
           {userRole === 'admin' && (
             <>
               <Route path="/reports" component={Reports} />
