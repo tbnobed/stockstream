@@ -180,11 +180,10 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           video.setAttribute('playsinline', 'true');
           video.setAttribute('disablePictureInPicture', 'true');
           
-          // Set video style to prevent layout shifts and fix mirroring
+          // Set video style to prevent layout shifts - no mirroring for better QR aiming
           video.style.objectFit = 'cover';
           video.style.width = '100%';
           video.style.height = '100%';
-          video.style.transform = 'scaleX(-1)'; // Mirror horizontally for natural feel
           
           console.log("Video element configured for stability");
         };
@@ -492,8 +491,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
                     width: '100%', 
                     height: '100%',
                     objectFit: 'cover',
-                    backgroundColor: 'black',
-                    transform: 'scaleX(-1)' // Mirror the video for natural feel
+                    backgroundColor: 'black'
                   }}
                 />
                 
