@@ -3,6 +3,7 @@ import {
   salesAssociates,
   suppliers,
   inventoryItems,
+  inventoryTransactions,
   sales,
   type User,
   type InsertUser,
@@ -12,6 +13,8 @@ import {
   type InsertSupplier,
   type InventoryItem,
   type InsertInventoryItem,
+  type InventoryTransaction,
+  type InsertInventoryTransaction,
   type InventoryItemWithSupplier,
   type Sale,
   type InsertSale,
@@ -45,7 +48,12 @@ export interface IStorage {
   searchInventoryItems(searchTerm: string): Promise<InventoryItemWithSupplier[]>;
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
   updateInventoryItem(id: string, item: Partial<InventoryItem>): Promise<InventoryItem>;
+  addStockToItem(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItemWithSupplier[]>;
+  
+  // Inventory Transactions
+  getInventoryTransactions(itemId?: string): Promise<InventoryTransaction[]>;
+  createInventoryTransaction(transaction: InsertInventoryTransaction): Promise<InventoryTransaction>;
   
   // Sales
   getSales(): Promise<SaleWithDetails[]>;
@@ -270,7 +278,59 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(inventoryItems.id, sale.itemId));
     
+    // Record the transaction
+    await this.createInventoryTransaction({
+      itemId: sale.itemId,
+      transactionType: "sale",
+      quantity: -sale.quantity,
+      reason: "sale",
+      notes: `Sale ${sale.orderNumber}`,
+      userId: null, // We'll need to pass the user ID for this
+    });
+    
     return newSale;
+  }
+
+  async addStockToItem(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem> {
+    // Update inventory quantity
+    const [updatedItem] = await db
+      .update(inventoryItems)
+      .set({ 
+        quantity: sql`${inventoryItems.quantity} + ${quantity}`,
+        updatedAt: new Date()
+      })
+      .where(eq(inventoryItems.id, itemId))
+      .returning();
+    
+    // Record the transaction
+    await this.createInventoryTransaction({
+      itemId,
+      transactionType: "addition",
+      quantity,
+      reason,
+      notes,
+      userId,
+    });
+    
+    return updatedItem;
+  }
+
+  async getInventoryTransactions(itemId?: string): Promise<InventoryTransaction[]> {
+    const query = db.select().from(inventoryTransactions);
+    
+    if (itemId) {
+      return query.where(eq(inventoryTransactions.itemId, itemId)).orderBy(desc(inventoryTransactions.createdAt));
+    }
+    
+    return query.orderBy(desc(inventoryTransactions.createdAt));
+  }
+
+  async createInventoryTransaction(transaction: InsertInventoryTransaction): Promise<InventoryTransaction> {
+    const [newTransaction] = await db
+      .insert(inventoryTransactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
   }
 
   async getDashboardStats(): Promise<{

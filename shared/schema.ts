@@ -60,6 +60,17 @@ export const inventoryItems = pgTable("inventory_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const inventoryTransactions = pgTable("inventory_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  itemId: uuid("item_id").notNull().references(() => inventoryItems.id),
+  transactionType: text("transaction_type").notNull(), // "addition", "sale", "adjustment"
+  quantity: integer("quantity").notNull(), // positive for additions, negative for sales
+  reason: text("reason"), // e.g., "restock", "sale", "damaged", "lost"
+  notes: text("notes"),
+  userId: uuid("user_id").references(() => users.id), // Who performed the transaction
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const sales = pgTable("sales", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   orderNumber: varchar("order_number", { length: 20 }).notNull().unique(),
@@ -87,6 +98,18 @@ export const inventoryItemsRelations = relations(inventoryItems, ({ one, many })
     references: [suppliers.id],
   }),
   sales: many(sales),
+  transactions: many(inventoryTransactions),
+}));
+
+export const inventoryTransactionsRelations = relations(inventoryTransactions, ({ one }) => ({
+  item: one(inventoryItems, {
+    fields: [inventoryTransactions.itemId],
+    references: [inventoryItems.id],
+  }),
+  user: one(users, {
+    fields: [inventoryTransactions.userId],
+    references: [users.id],
+  }),
 }));
 
 export const salesRelations = relations(sales, ({ one }) => ({
@@ -122,6 +145,11 @@ export const insertSaleSchema = createInsertSchema(sales).omit({
   saleDate: true,
 });
 
+export const insertInventoryTransactionSchema = createInsertSchema(inventoryTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // User insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -145,6 +173,9 @@ export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 
 export type InventoryItem = typeof inventoryItems.$inferSelect;
 export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
+
+export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
+export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransactionSchema>;
 
 export type Sale = typeof sales.$inferSelect;
 export type InsertSale = z.infer<typeof insertSaleSchema>;

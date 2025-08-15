@@ -178,6 +178,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/inventory/:id/add-stock", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { quantity, reason, notes } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!quantity || quantity <= 0) {
+        return res.status(400).json({ message: "Quantity must be a positive number" });
+      }
+      
+      const updatedItem = await storage.addStockToItem(id, Number(quantity), reason || "restock", notes || "", userId);
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error adding stock:", error);
+      res.status(500).json({ message: "Failed to add stock" });
+    }
+  });
+
+  app.get("/api/inventory/:id/transactions", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const transactions = await storage.getInventoryTransactions(id);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
   // Sales
   app.get("/api/sales", isAuthenticated, async (req, res) => {
     try {

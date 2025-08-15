@@ -6,14 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
+import AddStockModal from "@/components/modals/add-stock-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showScanner, setShowScanner] = useState(false);
 
@@ -48,6 +51,11 @@ export default function Inventory() {
   const handleEditItem = (item: any) => {
     setEditingItem(item);
     setShowEditModal(true);
+  };
+
+  const handleAddStock = (item: any) => {
+    setSelectedItem(item);
+    setShowAddStockModal(true);
   };
 
   return (
@@ -152,8 +160,24 @@ export default function Inventory() {
                         </div>
                         
                         <div className="flex space-x-2 pt-3 border-t">
-                          <Button variant="outline" size="sm" className="flex-1" data-testid={`edit-item-${item.id}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleEditItem(item)}
+                            data-testid={`edit-item-${item.id}`}
+                          >
+                            <Edit size={14} className="mr-1" />
                             Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleAddStock(item)}
+                            data-testid={`add-stock-${item.id}`}
+                          >
+                            <Plus size={14} className="mr-1" />
+                            Add
                           </Button>
                           <Button variant="outline" size="sm" data-testid={`print-label-${item.id}`}>
                             <Package size={14} />
@@ -237,7 +261,17 @@ export default function Inventory() {
                                 onClick={() => handleEditItem(item)}
                                 data-testid={`edit-item-${item.id}`}
                               >
+                                <Edit size={14} className="mr-1" />
                                 Edit
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleAddStock(item)}
+                                data-testid={`add-stock-${item.id}`}
+                              >
+                                <Plus size={14} className="mr-1" />
+                                Add
                               </Button>
                               <Button variant="ghost" size="sm" data-testid={`print-label-${item.id}`}>
                                 <Package size={14} />
@@ -269,6 +303,12 @@ export default function Inventory() {
           setShowEditModal(false);
           setEditingItem(null);
         }}
+      />
+
+      <AddStockModal
+        open={showAddStockModal}
+        onOpenChange={setShowAddStockModal}
+        item={selectedItem}
       />
       
       <QRScanner
