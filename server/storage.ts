@@ -278,14 +278,14 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(inventoryItems.id, sale.itemId));
     
-    // Record the transaction (sales don't need user tracking for now)
+    // Record the transaction
     await this.createInventoryTransaction({
       itemId: sale.itemId,
       transactionType: "sale",
       quantity: -sale.quantity,
       reason: "sale",
       notes: `Sale ${sale.orderNumber}`,
-      userId: null,
+      userId: sale.salesAssociateId,
     });
     
     return newSale;
