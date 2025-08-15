@@ -1,0 +1,48 @@
+Sales creation error: error: insert or update on table "sales" violates foreign key constraint "sales_sales_associate_id_sales_associates_id_fk"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.createSale (/home/runner/workspace/server/storage.ts:234:23)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:167:23) {
+  length: 357,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (sales_associate_id)=(296d72fd-0c88-4413-99ae-790fa2a5dc6e) is not present in table "sales_associates".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'sales',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'sales_sales_associate_id_sales_associates_id_fk',
+  file: 'ri_triggers.c',
+  line: '2608',
+  routine: 'ri_ReportViolation'
+}
+Storage error: error: insert or update on table "sales" violates foreign key constraint "sales_sales_associate_id_sales_associates_id_fk"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.createSale (/home/runner/workspace/server/storage.ts:234:23)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:167:23) {
+  length: 357,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (sales_associate_id)=(296d72fd-0c88-4413-99ae-790fa2a5dc6e) is not present in table "sales_associates".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'sales',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'sales_sales_associate_id_sales_associates_id_fk',
+  file: 'ri_triggers.c',
+  line: '2608',
+  routine: 'ri_ReportViolation'
+}
