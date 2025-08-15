@@ -183,10 +183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { quantity, reason, notes } = req.body;
       
-      console.log("Add stock request - user object:", req.user);
-      console.log("Add stock request - user claims:", req.user?.claims);
-      
-      const userId = req.user?.claims?.sub || "system";
+      // Get user ID - either from claims (OpenID) or direct user object (our auth)
+      const userId = req.user?.claims?.sub || req.user?.id;
       
       if (!quantity || quantity <= 0) {
         return res.status(400).json({ message: "Quantity must be a positive number" });
