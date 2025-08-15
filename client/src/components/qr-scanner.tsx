@@ -53,52 +53,41 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       setHasPermission(true);
 
       if (videoRef.current) {
+        console.log("Setting video stream...");
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true");
+        
+        // Force video to play
+        const playVideo = async () => {
+          try {
+            await videoRef.current!.play();
+            console.log("Video is playing");
+            setIsScanning(true);
+          } catch (err) {
+            console.error("Failed to play video:", err);
+            setError("Failed to start camera preview");
+          }
+        };
         
         // Initialize the code reader immediately
         if (!codeReader.current) {
           codeReader.current = new BrowserMultiFormatReader();
         }
         
-        // Wait for video to be ready and start decoding
-        const startDecoding = () => {
-          if (videoRef.current && videoRef.current.videoWidth > 0) {
-            console.log("Video ready, starting QR code detection...");
-            
-            // Start continuous decoding
-            const scanInterval = setInterval(async () => {
-              if (videoRef.current && videoRef.current.videoWidth > 0) {
-                try {
-                  const result = await codeReader.current!.decodeOnceFromVideoDevice(undefined, videoRef.current);
-                  if (result) {
-                    console.log("QR Code detected:", result.getText());
-                    clearInterval(scanInterval);
-                    onScan(result.getText());
-                    stopScanning();
-                  }
-                } catch (err: any) {
-                  // Ignore NotFoundException - it means no QR code was found in this frame
-                  if (!(err instanceof NotFoundException)) {
-                    console.warn("QR scan error:", err.message);
-                  }
-                }
-              }
-            }, 500); // Check every 500ms
-            
-            // Store interval reference to clean up later
-            (videoRef.current as any).__scanInterval = scanInterval;
-          } else {
-            // Retry after a short delay if video isn't ready
-            setTimeout(startDecoding, 100);
+        // Wait for video to load and start playing
+        videoRef.current.addEventListener('loadedmetadata', () => {
+          console.log("Video metadata loaded, dimensions:", videoRef.current!.videoWidth, "x", videoRef.current!.videoHeight);
+          playVideo();
+        });
+        
+        videoRef.current.addEventListener('canplay', () => {
+          console.log("Video can play");
+          if (videoRef.current!.videoWidth > 0) {
+            startQRDecoding();
           }
-        };
+        });
         
-        // Start when video metadata is loaded
-        videoRef.current.addEventListener('loadedmetadata', startDecoding);
-        
-        // Also try after a short delay in case loadedmetadata already fired
-        setTimeout(startDecoding, 200);
+        // Also try to play after a delay
+        setTimeout(playVideo, 500);
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -111,10 +100,40 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       } else if (err.message?.includes('not supported')) {
         setError("Camera access is not supported on this device or browser.");
       } else {
-        setError(`Unable to access camera: ${err.message || 'Unknown error'}`);
+        setError(`Unable to access camera: ${err.message || err.toString() || 'Unknown error'}`);
       }
+      console.error("Full error object:", err);
       setIsScanning(false);
     }
+  };
+
+  const startQRDecoding = () => {
+    if (!videoRef.current || !codeReader.current) return;
+    
+    console.log("Starting QR code detection...");
+    
+    // Start continuous decoding
+    const scanInterval = setInterval(async () => {
+      if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.readyState >= 2) {
+        try {
+          const result = await codeReader.current!.decodeOnceFromVideoDevice(undefined, videoRef.current);
+          if (result) {
+            console.log("QR Code detected:", result.getText());
+            clearInterval(scanInterval);
+            onScan(result.getText());
+            stopScanning();
+          }
+        } catch (err: any) {
+          // Ignore NotFoundException - it means no QR code was found in this frame
+          if (!(err instanceof NotFoundException)) {
+            console.warn("QR scan error:", err.message);
+          }
+        }
+      }
+    }, 1000); // Check every second
+    
+    // Store interval reference to clean up later
+    (videoRef.current as any).__scanInterval = scanInterval;
   };
 
   const stopScanning = () => {
@@ -207,10 +226,13 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
                   playsInline
                   controls={false}
                   data-testid="scanner-video"
+                  onLoadedData={() => console.log("Video data loaded")}
+                  onError={(e) => console.error("Video error:", e)}
                   style={{ 
                     width: '100%', 
                     height: '100%',
-                    objectFit: 'cover'
+                    objectFit: 'cover',
+                    backgroundColor: 'black'
                   }}
                 />
                 
