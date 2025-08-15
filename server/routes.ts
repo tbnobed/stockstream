@@ -112,10 +112,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search inventory items (partial matching)
+  app.get("/api/inventory/search/:term", async (req, res) => {
+    try {
+      const searchTerm = req.params.term.trim();
+      if (!searchTerm) {
+        res.json([]);
+        return;
+      }
+      
+      const items = await storage.searchInventoryItems(searchTerm);
+      res.json(items);
+    } catch (error) {
+      console.error("Search inventory error:", error);
+      res.status(500).json({ message: "Failed to search inventory items" });
+    }
+  });
+
+  // Get exact inventory item by SKU
   app.get("/api/inventory/sku/:sku", async (req, res) => {
     try {
       const item = await storage.getInventoryItemBySku(req.params.sku);
       if (!item) {
+        // If exact match fails, try searching for partial matches
+        const searchResults = await storage.searchInventoryItems(req.params.sku);
+        if (searchResults.length === 1) {
+          // If only one result, return it
+          res.json(searchResults[0]);
+          return;
+        } else if (searchResults.length > 1) {
+          // Multiple matches, return the first one or let frontend handle
+          res.json(searchResults[0]);
+          return;
+        }
         res.status(404).json({ message: "Item not found" });
         return;
       }

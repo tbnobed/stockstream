@@ -18,7 +18,7 @@ import {
   type SaleWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, desc, lt, and } from "drizzle-orm";
+import { eq, sql, desc, lt, and, like, or, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -42,6 +42,7 @@ export interface IStorage {
   getInventoryItems(): Promise<InventoryItemWithSupplier[]>;
   getInventoryItem(id: string): Promise<InventoryItemWithSupplier | undefined>;
   getInventoryItemBySku(sku: string): Promise<InventoryItemWithSupplier | undefined>;
+  searchInventoryItems(searchTerm: string): Promise<InventoryItemWithSupplier[]>;
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
   updateInventoryItem(id: string, item: Partial<InventoryItem>): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItemWithSupplier[]>;
@@ -168,6 +169,26 @@ export class DatabaseStorage implements IStorage {
       ...result.inventory_items,
       supplier: result.suppliers
     };
+  }
+
+  async searchInventoryItems(searchTerm: string): Promise<InventoryItemWithSupplier[]> {
+    const results = await db
+      .select()
+      .from(inventoryItems)
+      .leftJoin(suppliers, eq(inventoryItems.supplierId, suppliers.id))
+      .where(
+        or(
+          ilike(inventoryItems.sku, `%${searchTerm}%`),
+          ilike(inventoryItems.name, `%${searchTerm}%`),
+          ilike(inventoryItems.description, `%${searchTerm}%`)
+        )
+      )
+      .limit(10); // Limit results to avoid overwhelming the UI
+    
+    return results.map(result => ({
+      ...result.inventory_items,
+      supplier: result.suppliers
+    }));
   }
 
   async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
