@@ -39,6 +39,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       size: editingItem.size || "",
       color: editingItem.color || "",
       price: editingItem.price || "",
+      cost: editingItem.cost || "",
       quantity: editingItem.quantity || 0,
       minStockLevel: editingItem.minStockLevel || 10,
       supplierId: editingItem.supplierId || undefined,
@@ -50,6 +51,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       size: "",
       color: "",
       price: "",
+      cost: "",
       quantity: 0,
       minStockLevel: 10,
       supplierId: undefined,
@@ -67,6 +69,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         size: editingItem.size || "",
         color: editingItem.color || "",
         price: editingItem.price || "",
+        cost: editingItem.cost || "",
         quantity: editingItem.quantity || 0,
         minStockLevel: editingItem.minStockLevel || 10,
         supplierId: editingItem.supplierId || undefined,
@@ -80,6 +83,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         size: "",
         color: "",
         price: "",
+        cost: "",
         quantity: 0,
         minStockLevel: 10,
         supplierId: undefined,
@@ -275,7 +279,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Selling Price</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -283,6 +287,29 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         placeholder="0.00"
                         {...field}
                         data-testid="input-item-price"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="cost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Landed Cost (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="input-item-cost"
                       />
                     </FormControl>
                     <FormMessage />

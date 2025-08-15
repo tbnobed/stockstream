@@ -208,6 +208,11 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
       const quantity = parseInt(item.quantity || 0);
       return sum + (quantity * price);
     }, 0);
+    const totalCost = inventory.reduce((sum: number, item: any) => {
+      const cost = parseFloat(item.cost || 0);
+      const quantity = parseInt(item.quantity || 0);
+      return sum + (quantity * cost);
+    }, 0);
     const lowStockItems = inventory.filter((item: any) => item.quantity <= item.minStockLevel);
     const outOfStockItems = inventory.filter((item: any) => item.quantity === 0);
     
@@ -226,6 +231,9 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     return {
       totalItems,
       totalValue,
+      totalCost,
+      potentialProfit: totalValue - totalCost,
+      profitMargin: totalValue > 0 ? ((totalValue - totalCost) / totalValue * 100) : 0,
       lowStockCount: lowStockItems.length,
       outOfStockCount: outOfStockItems.length,
       categoryBreakdown,
@@ -474,8 +482,27 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                 <div className="flex items-center space-x-2">
                   <DollarSign className="text-green-600" size={20} />
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Value</p>
+                    <p className="text-sm text-muted-foreground">Inventory Value</p>
                     <p className="text-lg font-semibold">{formatCurrency(generatedReport.totalValue)}</p>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="text-orange-600" size={20} />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Cost</p>
+                    <p className="text-lg font-semibold">{formatCurrency(generatedReport.totalCost || 0)}</p>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="text-emerald-600" size={20} />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Potential Profit</p>
+                    <p className="text-lg font-semibold">{formatCurrency(generatedReport.potentialProfit || 0)}</p>
+                    <p className="text-xs text-muted-foreground">{(generatedReport.profitMargin || 0).toFixed(1)}% margin</p>
                   </div>
                 </div>
               </Card>

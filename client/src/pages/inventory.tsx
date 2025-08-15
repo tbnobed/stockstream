@@ -167,16 +167,25 @@ export default function Inventory() {
                             <p className="font-medium capitalize">{item.type}</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Price</p>
+                            <p className="text-muted-foreground">Selling Price</p>
                             <p className="font-medium">{formatCurrency(Number(item.price))}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Cost</p>
+                            <p className="font-medium">{item.cost ? formatCurrency(Number(item.cost)) : "N/A"}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Stock</p>
                             <p className="font-medium">{item.quantity} / {item.minStockLevel} min</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Details</p>
-                            <p className="font-medium">{item.size || "N/A"} - {item.color || "N/A"}</p>
+                            <p className="text-muted-foreground">Profit Margin</p>
+                            <p className="font-medium">
+                              {item.cost && item.price ? 
+                                `${(((Number(item.price) - Number(item.cost)) / Number(item.price)) * 100).toFixed(1)}%` : 
+                                "N/A"
+                              }
+                            </p>
                           </div>
                         </div>
                         
@@ -243,6 +252,8 @@ export default function Inventory() {
                         <th className="pb-3">Size</th>
                         <th className="pb-3">Color</th>
                         <th className="pb-3">Price</th>
+                        <th className="pb-3">Cost</th>
+                        <th className="pb-3">Margin</th>
                         <th className="pb-3">Stock</th>
                         <th className="pb-3">Status</th>
                         <th className="pb-3">Actions</th>
@@ -279,6 +290,19 @@ export default function Inventory() {
                           <td className="py-3">
                             <span className="text-sm font-medium text-secondary">
                               {formatCurrency(Number(item.price))}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <span className="text-sm text-secondary">
+                              {item.cost ? formatCurrency(Number(item.cost)) : "N/A"}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <span className="text-sm font-medium text-secondary">
+                              {item.cost && item.price ? 
+                                `${(((Number(item.price) - Number(item.cost)) / Number(item.price)) * 100).toFixed(1)}%` : 
+                                "N/A"
+                              }
                             </span>
                           </td>
                           <td className="py-3">
