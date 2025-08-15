@@ -244,16 +244,47 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           </div>
 
           {error ? (
-            <div className="text-center py-8">
+            <div className="text-center py-4">
               <div className="text-red-500 mb-4">{error}</div>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Button onClick={startScanning} className="w-full" data-testid="retry-camera">
                   <Camera className="mr-2" size={16} />
                   Try Again
                 </Button>
+                
+                <div className="border-t pt-4">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Or enter the QR code manually:
+                  </p>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Type or paste QR code here"
+                      className="flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                          onScan(e.currentTarget.value.trim());
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                        if (input.value.trim()) {
+                          onScan(input.value.trim());
+                        }
+                      }}
+                    >
+                      Enter
+                    </Button>
+                  </div>
+                </div>
+                
                 {hasPermission === false && (
-                  <p className="text-sm text-muted-foreground">
-                    Go to your browser settings to enable camera permissions for this site.
+                  <p className="text-xs text-muted-foreground">
+                    Camera permissions may need to be enabled in browser settings.
                   </p>
                 )}
               </div>
@@ -328,15 +359,15 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
                 Position the QR code within the frame to scan
               </p>
               
-              <div className="text-center pt-2">
+              <div className="text-center pt-2 border-t">
                 <p className="text-xs text-muted-foreground mb-2">
-                  Having camera issues? Enter the code manually:
+                  Or enter the code manually:
                 </p>
                 <div className="flex space-x-2">
                   <input
                     type="text"
-                    placeholder="Enter QR code manually"
-                    className="flex-1 px-3 py-2 text-sm border rounded-md"
+                    placeholder="Type or paste QR code here"
+                    className="flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         onScan(e.currentTarget.value.trim());
