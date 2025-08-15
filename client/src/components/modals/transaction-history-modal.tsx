@@ -28,11 +28,11 @@ export default function TransactionHistoryModal({ open, onOpenChange, item }: Tr
       case "addition":
         return <TrendingUp className="text-green-600" size={16} />;
       case "sale":
-        return <TrendingDown className="text-red-600" size={16} />;
+        return <ShoppingCart className="text-red-600" size={16} />;
       case "adjustment":
-        return <Package className="text-blue-600" size={16} />;
+        return <TrendingDown className="text-orange-600" size={16} />;
       default:
-        return <ShoppingCart className="text-gray-600" size={16} />;
+        return <Package className="text-gray-600" size={16} />;
     }
   };
 
@@ -43,7 +43,7 @@ export default function TransactionHistoryModal({ open, onOpenChange, item }: Tr
       case "sale":
         return "text-red-600";
       case "adjustment":
-        return "text-blue-600";
+        return "text-orange-600";
       default:
         return "text-gray-600";
     }

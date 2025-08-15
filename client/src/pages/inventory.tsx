@@ -7,16 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
 import AddStockModal from "@/components/modals/add-stock-modal";
+import AdjustInventoryModal from "@/components/modals/adjust-inventory-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
 import PrintLabelModal from "@/components/modals/print-label-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showPrintLabelModal, setShowPrintLabelModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -70,6 +72,11 @@ export default function Inventory() {
   const handlePrintLabel = (item: any) => {
     setSelectedItem(item);
     setShowPrintLabelModal(true);
+  };
+
+  const handleAdjustInventory = (item: any) => {
+    setSelectedItem(item);
+    setShowAdjustModal(true);
   };
 
   return (
@@ -173,11 +180,10 @@ export default function Inventory() {
                           </div>
                         </div>
                         
-                        <div className="flex space-x-2 pt-3 border-t">
+                        <div className="grid grid-cols-2 gap-2 pt-3 border-t">
                           <Button 
                             variant="outline" 
-                            size="sm" 
-                            className="flex-1"
+                            size="sm"
                             onClick={() => handleEditItem(item)}
                             data-testid={`edit-item-${item.id}`}
                           >
@@ -196,6 +202,15 @@ export default function Inventory() {
                           <Button 
                             variant="outline" 
                             size="sm"
+                            onClick={() => handleAdjustInventory(item)}
+                            data-testid={`adjust-item-${item.id}`}
+                          >
+                            <Minus size={14} className="mr-1" />
+                            Adjust
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
                             onClick={() => handleViewHistory(item)}
                             data-testid={`view-history-${item.id}`}
                           >
@@ -206,8 +221,10 @@ export default function Inventory() {
                             size="sm"
                             onClick={() => handlePrintLabel(item)}
                             data-testid={`print-label-${item.id}`}
+                            className="col-span-2"
                           >
-                            <Package size={14} />
+                            <Package size={14} className="mr-1" />
+                            Print Label
                           </Button>
                         </div>
                       </Card>
@@ -281,15 +298,14 @@ export default function Inventory() {
                             </Badge>
                           </td>
                           <td className="py-3">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => handleEditItem(item)}
                                 data-testid={`edit-item-${item.id}`}
                               >
-                                <Edit size={14} className="mr-1" />
-                                Edit
+                                <Edit size={14} />
                               </Button>
                               <Button 
                                 variant="ghost" 
@@ -297,8 +313,15 @@ export default function Inventory() {
                                 onClick={() => handleAddStock(item)}
                                 data-testid={`add-stock-${item.id}`}
                               >
-                                <Plus size={14} className="mr-1" />
-                                Add
+                                <Plus size={14} />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleAdjustInventory(item)}
+                                data-testid={`adjust-item-${item.id}`}
+                              >
+                                <Minus size={14} />
                               </Button>
                               <Button 
                                 variant="ghost" 
@@ -348,6 +371,12 @@ export default function Inventory() {
       <AddStockModal
         open={showAddStockModal}
         onOpenChange={setShowAddStockModal}
+        item={selectedItem}
+      />
+
+      <AdjustInventoryModal
+        open={showAdjustModal}
+        onOpenChange={setShowAdjustModal}
         item={selectedItem}
       />
 

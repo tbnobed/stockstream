@@ -315,6 +315,30 @@ export class DatabaseStorage implements IStorage {
     return updatedItem;
   }
 
+  async adjustInventory(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem> {
+    // Update inventory quantity (subtract the adjustment)
+    const [updatedItem] = await db
+      .update(inventoryItems)
+      .set({ 
+        quantity: sql`${inventoryItems.quantity} - ${quantity}`,
+        updatedAt: new Date()
+      })
+      .where(eq(inventoryItems.id, itemId))
+      .returning();
+    
+    // Record the transaction (negative quantity for deduction)
+    await this.createInventoryTransaction({
+      itemId,
+      transactionType: "adjustment",
+      quantity: -quantity,
+      reason,
+      notes,
+      userId,
+    });
+    
+    return updatedItem;
+  }
+
   async getInventoryTransactions(itemId?: string): Promise<InventoryTransaction[]> {
     const query = db.select().from(inventoryTransactions);
     

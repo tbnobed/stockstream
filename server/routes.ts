@@ -209,6 +209,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/inventory/:id/adjust", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { quantity, reason, notes } = req.body;
+      
+      // Get user ID - either from claims (OpenID) or direct user object (our auth)
+      const userId = req.user?.claims?.sub || req.user?.id;
+      
+      if (!quantity || quantity <= 0) {
+        return res.status(400).json({ message: "Quantity must be a positive number" });
+      }
+      
+      const updatedItem = await storage.adjustInventory(id, Number(quantity), reason || "adjustment", notes || "", userId);
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error adjusting inventory:", error);
+      res.status(500).json({ message: "Failed to adjust inventory" });
+    }
+  });
+
   // Sales
   app.get("/api/sales", isAuthenticated, async (req, res) => {
     try {
