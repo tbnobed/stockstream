@@ -71,7 +71,7 @@ export default function Dashboard() {
         {/* Stats Cards */}
         <div className={cn(
           "grid gap-4 md:gap-6 mb-6 md:mb-8",
-          isAdmin ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+          isAdmin ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
         )}>
           {isAdmin && (
             <Card className="p-4 md:p-6 border-border">
@@ -88,6 +88,26 @@ export default function Dashboard() {
                 </div>
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/10 rounded-lg flex items-center justify-center">
                   <DollarSign className="text-accent" size={20} />
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {isAdmin && (
+            <Card className="p-4 md:p-6 border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Profit</p>
+                  <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-total-profit">
+                    {statsLoading ? "Loading..." : formatCurrency(stats?.totalProfit || 0)}
+                  </p>
+                  <p className="text-xs md:text-sm text-green-600 mt-1 flex items-center">
+                    <TrendingUp className="mr-1" size={10} />
+                    Real profit from sales
+                  </p>
+                </div>
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-green-600/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="text-green-600" size={20} />
                 </div>
               </div>
             </Card>

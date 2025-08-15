@@ -362,6 +362,7 @@ export class DatabaseStorage implements IStorage {
 
   async getDashboardStats(): Promise<{
     totalRevenue: number;
+    totalProfit: number;
     totalItems: number;
     salesToday: number;
     lowStockCount: number;
@@ -372,6 +373,14 @@ export class DatabaseStorage implements IStorage {
     const [revenueResult] = await db
       .select({ total: sql<number>`COALESCE(SUM(${sales.totalAmount}), 0)` })
       .from(sales);
+    
+    // Calculate total profit by joining sales with inventory items to get cost data
+    const [profitResult] = await db
+      .select({ 
+        totalProfit: sql<number>`COALESCE(SUM(${sales.totalAmount} - (${sales.quantity} * COALESCE(${inventoryItems.cost}, 0))), 0)` 
+      })
+      .from(sales)
+      .leftJoin(inventoryItems, eq(sales.itemId, inventoryItems.id));
     
     const [itemsResult] = await db
       .select({ total: sql<number>`COALESCE(SUM(${inventoryItems.quantity}), 0)` })
@@ -389,6 +398,7 @@ export class DatabaseStorage implements IStorage {
     
     return {
       totalRevenue: Number(revenueResult.total) || 0,
+      totalProfit: Number(profitResult.totalProfit) || 0,
       totalItems: Number(itemsResult.total) || 0,
       salesToday: Number(salesTodayResult.count) || 0,
       lowStockCount: Number(lowStockResult.count) || 0,
