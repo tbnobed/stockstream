@@ -405,8 +405,8 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100] p-4">
-      <Card className="w-full max-w-md bg-background">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100] p-4" onClick={onClose}>
+      <Card className="w-full max-w-md bg-background" onClick={(e) => e.stopPropagation()}>
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Scan QR Code</h3>
