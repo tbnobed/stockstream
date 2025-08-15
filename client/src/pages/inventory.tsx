@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
+import AddSupplierModal from "@/components/modals/add-supplier-modal";
 import AddStockModal from "@/components/modals/add-stock-modal";
 import AdjustInventoryModal from "@/components/modals/adjust-inventory-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
@@ -21,6 +22,7 @@ export default function Inventory() {
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showPrintLabelModal, setShowPrintLabelModal] = useState(false);
+  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,6 +118,15 @@ export default function Inventory() {
               </Button>
               <Button variant="outline" size="sm" data-testid="button-export">
                 Export
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowAddSupplierModal(true)}
+                data-testid="button-add-supplier"
+              >
+                <Plus size={16} className="mr-1" />
+                Supplier
               </Button>
             </div>
           </div>
@@ -420,6 +431,11 @@ export default function Inventory() {
         isOpen={showScanner}
         onScan={handleQRScan}
         onClose={() => setShowScanner(false)}
+      />
+      
+      <AddSupplierModal
+        open={showAddSupplierModal}
+        onOpenChange={setShowAddSupplierModal}
       />
     </>
   );
