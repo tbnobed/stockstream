@@ -161,110 +161,65 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         console.log("Setting video stream...");
         videoRef.current.srcObject = stream;
         
-        // Setup video element with comprehensive browser support
+        // Setup video element with stable configuration
         const setupVideo = () => {
           if (!videoRef.current) return;
           
           const video = videoRef.current;
+          
+          // Set critical attributes before assigning stream
           video.muted = true;
           video.playsInline = true;
           video.autoplay = true;
           video.controls = false;
           
-          // Handle video stream interruptions
-          video.addEventListener('pause', () => {
-            console.log("Video paused, attempting to resume...");
-            video.play().catch(err => {
-              console.warn("Failed to resume video:", err);
-              // Try to restart the entire stream
-              setTimeout(() => restartStream(), 1000);
-            });
-          });
+          // Prevent browser from pausing video
+          video.setAttribute('webkit-playsinline', 'true');
+          video.setAttribute('playsinline', 'true');
           
-          video.addEventListener('ended', () => {
-            console.log("Video ended, restarting stream...");
-            restartStream();
-          });
+          // Set video style to prevent layout shifts
+          video.style.objectFit = 'cover';
+          video.style.width = '100%';
+          video.style.height = '100%';
           
-          video.addEventListener('error', (e) => {
-            console.error("Video element error:", e);
-            restartStream();
-          });
-          
-          // Monitor video stream health
-          const monitorStream = () => {
-            if (video.srcObject) {
-              const stream = video.srcObject as MediaStream;
-              const tracks = stream.getVideoTracks();
-              
-              if (tracks.length === 0 || tracks[0].readyState === 'ended') {
-                console.warn("Video track ended, restarting stream...");
-                restartStream();
-                return;
-              }
-            }
-            
-            // Check every 2 seconds
-            setTimeout(monitorStream, 2000);
-          };
-          
-          // Start monitoring after initial setup
-          setTimeout(monitorStream, 3000);
-          
-          console.log("Video element configured with event listeners");
+          console.log("Video element configured for stability");
         };
         
         const playVideo = async () => {
           if (!videoRef.current) return;
           
-          try {
-            setupVideo();
-            
-            // Wait for video to be ready
-            const waitForVideoReady = () => {
-              return new Promise<void>((resolve) => {
-                const checkReady = () => {
-                  if (videoRef.current && videoRef.current.readyState >= 2) {
-                    resolve();
-                  } else {
-                    setTimeout(checkReady, 100);
-                  }
-                };
-                checkReady();
-              });
-            };
-            
-            await waitForVideoReady();
-            
-            // Try to play the video
+          const video = videoRef.current;
+          setupVideo();
+          
+          // Force immediate play without waiting
+          const forcePlay = async () => {
             try {
-              await videoRef.current.play();
-              console.log("Video playing successfully");
-            } catch (playErr) {
-              console.warn("Play promise failed:", playErr);
-              // Continue anyway - video might still work
-            }
-            
-            // Wait for video dimensions and start QR decoding
-            const waitForDimensions = () => {
-              if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-                console.log("Video dimensions available:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
-                setIsScanning(true);
-                startQRDecoding();
-              } else {
-                console.log("Waiting for video dimensions...");
-                setTimeout(waitForDimensions, 200);
+              // Some browsers require user gesture, but try anyway
+              const playPromise = video.play();
+              if (playPromise) {
+                await playPromise;
               }
-            };
-            
-            // Start checking for dimensions
-            setTimeout(waitForDimensions, 300);
-            
-          } catch (setupErr) {
-            console.error("Video setup failed:", setupErr);
-            setIsScanning(true);
-            setTimeout(() => startQRDecoding(), 1000);
-          }
+              console.log("Video play initiated successfully");
+            } catch (err) {
+              console.warn("Initial play failed, video may still work:", err);
+            }
+          };
+          
+          // Start playing immediately
+          await forcePlay();
+          
+          // Start QR detection after a short delay regardless of play status
+          setTimeout(() => {
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+              console.log("Video ready with dimensions:", video.videoWidth, "x", video.videoHeight);
+              setIsScanning(true);
+              startQRDecoding();
+            } else {
+              console.log("Starting QR detection without confirmed dimensions");
+              setIsScanning(true);
+              startQRDecoding();
+            }
+          }, 800);
         };
         
         // Initialize the code reader immediately
@@ -272,31 +227,19 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           codeReader.current = new BrowserMultiFormatReader();
         }
         
-        // Set up event listeners for video loading
+        // Simplified event handling - just start playing as soon as possible
         const video = videoRef.current;
         
-        video.addEventListener('loadstart', () => console.log("Video load started"));
         video.addEventListener('loadedmetadata', () => {
-          console.log("Video metadata loaded, dimensions:", video.videoWidth, "x", video.videoHeight);
-        });
-        video.addEventListener('loadeddata', () => {
-          console.log("Video data loaded");
+          console.log("Metadata loaded, starting video immediately");
           playVideo();
-        });
-        video.addEventListener('canplay', () => {
-          console.log("Video can play");
-          playVideo();
-        });
-        video.addEventListener('playing', () => {
-          console.log("Video is now playing");
-          setIsScanning(true);
         });
         
-        // Fallback timeout to ensure we try to start
+        // Also try to start after a short delay regardless of events
         setTimeout(() => {
-          console.log("Fallback timeout - attempting to start video");
+          console.log("Timeout fallback - starting video");
           playVideo();
-        }, 1500);
+        }, 1000);
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -371,9 +314,9 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       clearInterval((video as any).__scanInterval);
     }
     
-    // Start continuous decoding with faster intervals
+    // Simple continuous decoding - less aggressive checking
     const scanInterval = setInterval(async () => {
-      if (video && video.videoWidth > 0 && video.readyState >= 2 && !video.paused && !video.ended) {
+      if (video && video.readyState >= 1) {
         try {
           const result = await codeReader.current!.decodeOnceFromVideoDevice(undefined, video);
           if (result) {
@@ -388,18 +331,8 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
             console.warn("QR scan error:", err.message);
           }
         }
-      } else if (video && (video.paused || video.ended)) {
-        console.warn("Video is paused or ended, attempting to restart");
-        video.play().catch(err => {
-          console.warn("Failed to restart video:", err);
-          // If play fails, restart the entire stream
-          restartStream();
-        });
-      } else if (video && video.videoWidth === 0) {
-        console.warn("Video lost dimensions, restarting stream");
-        restartStream();
       }
-    }, 500); // Check twice per second for better responsiveness
+    }, 750); // Scan every 750ms - less frequent to reduce resource usage
     
     // Store interval reference to clean up later
     (video as any).__scanInterval = scanInterval;
