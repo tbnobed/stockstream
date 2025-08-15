@@ -151,7 +151,9 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     
     const paymentMethods = filteredSales.reduce((acc, sale) => {
       const amount = parseFloat(sale.totalAmount || sale.total || 0);
-      acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + amount;
+      const method = sale.paymentMethod || 'unknown';
+      if (!acc[method]) acc[method] = 0;
+      acc[method] += amount;
       return acc;
     }, {});
 
@@ -161,7 +163,8 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         if (dateStr) {
           const date = format(new Date(dateStr), 'yyyy-MM-dd');
           const amount = parseFloat(sale.totalAmount || sale.total || 0);
-          acc[date] = (acc[date] || 0) + amount;
+          if (!acc[date]) acc[date] = 0;
+          acc[date] += amount;
         }
       } catch (error) {
         console.warn("Date parsing error for sale:", sale);
@@ -281,11 +284,18 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
 
     let csvContent = "";
     const timestamp = format(new Date(), 'yyyy-MM-dd');
-    const dateRangeStr = `${format(generatedReport.dateRange.start, 'MMM dd, yyyy')} - ${format(generatedReport.dateRange.end, 'MMM dd, yyyy')}`;
+    let dateRangeStr = "All Time";
+    try {
+      if (generatedReport.dateRange?.start && generatedReport.dateRange?.end) {
+        dateRangeStr = `${format(generatedReport.dateRange.start, 'MMM dd, yyyy')} - ${format(generatedReport.dateRange.end, 'MMM dd, yyyy')}`;
+      }
+    } catch (error) {
+      console.warn("Date formatting error:", error);
+    }
 
     // Add header
     csvContent += `${getReportTitle()}\n`;
-    csvContent += `Generated: ${format(generatedReport.generatedAt, 'MMM dd, yyyy HH:mm')}\n`;
+    csvContent += `Generated: ${format(generatedReport.generatedAt || new Date(), 'MMM dd, yyyy HH:mm')}\n`;
     csvContent += `Date Range: ${dateRangeStr}\n\n`;
 
     switch (reportType) {
@@ -293,17 +303,17 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         csvContent += "Summary\n";
         csvContent += `Total Revenue,${generatedReport.totalRevenue}\n`;
         csvContent += `Total Transactions,${generatedReport.totalTransactions}\n`;
-        csvContent += `Average Transaction,${generatedReport.avgTransactionValue.toFixed(2)}\n\n`;
+        csvContent += `Average Transaction,${(generatedReport.avgTransactionValue || 0).toFixed(2)}\n\n`;
         
         csvContent += "Payment Methods\n";
         csvContent += "Method,Amount\n";
-        Object.entries(generatedReport.paymentMethods).forEach(([method, amount]: [string, any]) => {
+        Object.entries(generatedReport.paymentMethods || {}).forEach(([method, amount]: [string, any]) => {
           csvContent += `${method},${amount}\n`;
         });
         
         csvContent += "\nDaily Sales\n";
         csvContent += "Date,Revenue\n";
-        Object.entries(generatedReport.dailySales).forEach(([date, amount]: [string, any]) => {
+        Object.entries(generatedReport.dailySales || {}).forEach(([date, amount]: [string, any]) => {
           csvContent += `${date},${amount}\n`;
         });
         break;
