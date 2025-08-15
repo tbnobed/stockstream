@@ -241,18 +241,98 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
   const exportReport = () => {
     if (!generatedReport) return;
 
-    const reportData = {
-      title: getReportTitle(),
-      generatedAt: generatedReport.generatedAt,
-      dateRange: generatedReport.dateRange,
-      data: generatedReport
-    };
+    let csvContent = "";
+    const timestamp = format(new Date(), 'yyyy-MM-dd');
+    const dateRangeStr = `${format(generatedReport.dateRange.start, 'MMM dd, yyyy')} - ${format(generatedReport.dateRange.end, 'MMM dd, yyyy')}`;
 
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    // Add header
+    csvContent += `${getReportTitle()}\n`;
+    csvContent += `Generated: ${format(generatedReport.generatedAt, 'MMM dd, yyyy HH:mm')}\n`;
+    csvContent += `Date Range: ${dateRangeStr}\n\n`;
+
+    switch (reportType) {
+      case "sales-summary":
+        csvContent += "Summary\n";
+        csvContent += `Total Revenue,${generatedReport.totalRevenue}\n`;
+        csvContent += `Total Transactions,${generatedReport.totalTransactions}\n`;
+        csvContent += `Average Transaction,${generatedReport.avgTransactionValue.toFixed(2)}\n\n`;
+        
+        csvContent += "Payment Methods\n";
+        csvContent += "Method,Amount\n";
+        Object.entries(generatedReport.paymentMethods).forEach(([method, amount]: [string, any]) => {
+          csvContent += `${method},${amount}\n`;
+        });
+        
+        csvContent += "\nDaily Sales\n";
+        csvContent += "Date,Revenue\n";
+        Object.entries(generatedReport.dailySales).forEach(([date, amount]: [string, any]) => {
+          csvContent += `${date},${amount}\n`;
+        });
+        break;
+
+      case "sales-by-associate":
+        if (generatedReport.error) {
+          csvContent += "Error: Access denied\n";
+        } else {
+          csvContent += "Associate,Code,Total Sales,Total Revenue,Avg Sale\n";
+          Object.values(generatedReport.associateStats).forEach((associate: any) => {
+            const avgSale = associate.totalSales > 0 ? (associate.totalRevenue / associate.totalSales).toFixed(2) : 0;
+            csvContent += `"${associate.name}",${associate.code},${associate.totalSales},${associate.totalRevenue},${avgSale}\n`;
+          });
+        }
+        break;
+
+      case "inventory-status":
+        csvContent += "Summary\n";
+        csvContent += `Total Items,${generatedReport.totalItems}\n`;
+        csvContent += `Total Value,${generatedReport.totalValue}\n`;
+        csvContent += `Low Stock Count,${generatedReport.lowStockCount}\n`;
+        csvContent += `Out of Stock Count,${generatedReport.outOfStockCount}\n\n`;
+        
+        csvContent += "Category Breakdown\n";
+        csvContent += "Category,Item Count,Total Value\n";
+        Object.entries(generatedReport.categoryBreakdown).forEach(([category, data]: [string, any]) => {
+          csvContent += `"${category}",${data.count},${data.value}\n`;
+        });
+        
+        if (generatedReport.lowStockItems.length > 0) {
+          csvContent += "\nLow Stock Items\n";
+          csvContent += "Name,SKU,Current Qty,Min Level\n";
+          generatedReport.lowStockItems.forEach((item: any) => {
+            csvContent += `"${item.name}",${item.sku},${item.quantity},${item.minStockLevel}\n`;
+          });
+        }
+        break;
+
+      case "low-stock":
+        csvContent += "Name,SKU,Current Quantity,Min Stock Level,Shortage\n";
+        generatedReport.items.forEach((item: any) => {
+          const shortage = item.minStockLevel - item.quantity;
+          csvContent += `"${item.name}",${item.sku},${item.quantity},${item.minStockLevel},${shortage}\n`;
+        });
+        break;
+
+      case "top-selling":
+        csvContent += "Rank,Name,SKU,Total Quantity Sold,Total Revenue,Transactions\n";
+        generatedReport.topItems.forEach((item: any, index: number) => {
+          csvContent += `${index + 1},"${item.name}",${item.sku},${item.totalQuantity},${item.totalRevenue},${item.transactions}\n`;
+        });
+        break;
+
+      case "inventory-adjustments":
+        csvContent += "Date,Type,Item,Quantity Change,Reason,Associate\n";
+        generatedReport.movements.forEach((movement: any) => {
+          const date = format(new Date(movement.date), 'yyyy-MM-dd HH:mm');
+          csvContent += `${date},${movement.type},"${movement.item?.name || 'Unknown'}",${movement.quantity},"${movement.reason}","${movement.associate || 'N/A'}"\n`;
+        });
+        break;
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${reportType}-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    a.download = `${reportType}-${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -531,7 +611,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                   data-testid="button-export-report"
                 >
                   <Download size={16} className="mr-2" />
-                  Export
+                  Export CSV
                 </Button>
               </div>
 
