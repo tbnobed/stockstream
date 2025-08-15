@@ -30,10 +30,7 @@ export default function AddSupplierModal({ open, onOpenChange, onClose }: AddSup
 
   const createSupplierMutation = useMutation({
     mutationFn: async (data: InsertSupplier) => {
-      return apiRequest("/api/suppliers", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("POST", "/api/suppliers", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
@@ -44,10 +41,19 @@ export default function AddSupplierModal({ open, onOpenChange, onClose }: AddSup
         description: "Supplier added successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Add supplier error:", error);
+      let errorMessage = "Failed to add supplier";
+      
+      if (error.message?.includes("401")) {
+        errorMessage = "You need to be logged in to add suppliers";
+      } else if (error.message?.includes("400")) {
+        errorMessage = "Invalid supplier information provided";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to add supplier",
+        description: errorMessage,
         variant: "destructive",
       });
     },
