@@ -27,7 +27,7 @@ export interface IStorage {
   getUserByAssociateCode(associateCode: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   // Associates (users with associate role)
-  getAssociates(): Promise<User[]>;
+  getAssociates(): Promise<any[]>;
   // Sales Associates (legacy table)
   getSalesAssociates(): Promise<SalesAssociate[]>;
   getSalesAssociate(id: string): Promise<SalesAssociate | undefined>;
@@ -86,8 +86,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAssociates(): Promise<any[]> {
-    const users = await db.select().from(users).where(eq(users.role, 'associate'));
-    return users.map(user => ({
+    const userList = await db.select().from(users).where(eq(users.role, 'associate'));
+    return userList.map((user: User) => ({
       ...user,
       name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || 'Unknown Associate'
     }));
