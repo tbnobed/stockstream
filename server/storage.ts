@@ -141,7 +141,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(inventoryItems)
       .leftJoin(suppliers, eq(inventoryItems.supplierId, suppliers.id))
-      .orderBy(inventoryItems.name)
+      .orderBy(inventoryItems.sku)
       .then(rows => 
         rows.map(row => ({
           ...row.inventory_items,
@@ -192,7 +192,7 @@ export class DatabaseStorage implements IStorage {
           ilike(inventoryItems.description, `%${searchTerm}%`)
         )
       )
-      .orderBy(inventoryItems.name)
+      .orderBy(inventoryItems.sku)
       .limit(10); // Limit results to avoid overwhelming the UI
     
     return results.map(result => ({
@@ -224,7 +224,7 @@ export class DatabaseStorage implements IStorage {
       .from(inventoryItems)
       .leftJoin(suppliers, eq(inventoryItems.supplierId, suppliers.id))
       .where(sql`${inventoryItems.quantity} <= ${inventoryItems.minStockLevel}`)
-      .orderBy(inventoryItems.name)
+      .orderBy(inventoryItems.sku)
       .then(rows => 
         rows.map(row => ({
           ...row.inventory_items,
