@@ -42,12 +42,37 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
 
       console.log("Requesting camera permission...");
       
-      // Request camera permission with simpler constraints
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment"
+      // Try different camera configurations
+      let stream: MediaStream | null = null;
+      
+      const configs = [
+        // Prefer back camera
+        { video: { facingMode: { exact: "environment" } } },
+        // Fallback to any back camera
+        { video: { facingMode: "environment" } },
+        // Fallback to front camera
+        { video: { facingMode: "user" } },
+        // Fallback to any camera
+        { video: true }
+      ];
+      
+      for (const config of configs) {
+        try {
+          console.log("Trying camera config:", config);
+          stream = await navigator.mediaDevices.getUserMedia(config);
+          if (stream) {
+            console.log("Camera stream obtained with config:", config);
+            break;
+          }
+        } catch (configErr) {
+          console.warn("Failed with config:", config, configErr);
+          continue;
         }
-      });
+      }
+      
+      if (!stream) {
+        throw new Error("Unable to access any camera");
+      }
 
       console.log("Camera permission granted, setting up video stream...");
       setHasPermission(true);
@@ -59,12 +84,22 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         // Force video to play
         const playVideo = async () => {
           try {
-            await videoRef.current!.play();
-            console.log("Video is playing");
-            setIsScanning(true);
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.playsInline = true;
+              videoRef.current.autoplay = true;
+              await videoRef.current.play();
+              console.log("Video is playing, dimensions:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
+              
+              // Only set scanning to true if video has dimensions
+              if (videoRef.current.videoWidth > 0) {
+                setIsScanning(true);
+              }
+            }
           } catch (err) {
             console.error("Failed to play video:", err);
-            setError("Failed to start camera preview");
+            // Try to continue anyway - some browsers don't require explicit play()
+            setIsScanning(true);
           }
         };
         
@@ -86,8 +121,16 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           }
         });
         
-        // Also try to play after a delay
-        setTimeout(playVideo, 500);
+        // Also try to play after a delay and wait for loadeddata
+        videoRef.current.addEventListener('loadeddata', () => {
+          console.log("Video loadeddata event fired");
+          playVideo();
+        });
+        
+        setTimeout(() => {
+          console.log("Timeout fallback - forcing video play");
+          playVideo();
+        }, 1000);
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -284,6 +327,35 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
               <p className="text-sm text-muted-foreground text-center">
                 Position the QR code within the frame to scan
               </p>
+              
+              <div className="text-center pt-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Having camera issues? Enter the code manually:
+                </p>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    placeholder="Enter QR code manually"
+                    className="flex-1 px-3 py-2 text-sm border rounded-md"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                        onScan(e.currentTarget.value.trim());
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                      if (input.value.trim()) {
+                        onScan(input.value.trim());
+                      }
+                    }}
+                  >
+                    Enter
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>
