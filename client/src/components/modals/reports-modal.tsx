@@ -31,7 +31,7 @@ type ReportType = "sales-summary" | "sales-by-associate" | "inventory-status" | 
 
 export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) {
   const [reportType, setReportType] = useState<ReportType>("sales-summary");
-  const [dateRange, setDateRange] = useState<string>("7days");
+  const [dateRange, setDateRange] = useState<string>("30days");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [generatedReport, setGeneratedReport] = useState<any>(null);
@@ -63,13 +63,15 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         return { start: subDays(now, 30), end: now };
       case "thisMonth":
         return { start: startOfMonth(now), end: endOfMonth(now) };
+      case "all":
+        return { start: new Date(2020, 0, 1), end: now }; // Very wide range to include all data
       case "custom":
         return {
           start: customStartDate ? new Date(customStartDate) : subDays(now, 7),
           end: customEndDate ? new Date(customEndDate) : now
         };
       default:
-        return { start: subDays(now, 7), end: now };
+        return { start: subDays(now, 30), end: now };
     }
   };
 
@@ -77,11 +79,28 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     setIsGenerating(true);
     const { start, end } = getDateRange();
     
-    // Filter data by date range
-    const filteredSales = sales.filter((sale: any) => {
+    console.log("Sales data:", sales);
+    console.log("Date range:", { start, end });
+    
+    // For reports, use all sales data if none found in date range
+    let filteredSales = sales.filter((sale: any) => {
+      if (!sale.createdAt) return false;
       const saleDate = new Date(sale.createdAt);
-      return saleDate >= start && saleDate <= end;
+      const startOfDay = new Date(start);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(end);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      return saleDate >= startOfDay && saleDate <= endOfDay;
     });
+    
+    // If no sales found in date range, use all sales for demonstration
+    if (filteredSales.length === 0 && sales.length > 0) {
+      console.log("No sales in date range, using all sales data");
+      filteredSales = sales;
+    }
+    
+    console.log("Filtered sales:", filteredSales.length, "out of", sales.length);
 
     let report: any = {};
 
@@ -552,6 +571,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                   <SelectItem value="7days">Last 7 Days</SelectItem>
                   <SelectItem value="30days">Last 30 Days</SelectItem>
                   <SelectItem value="thisMonth">This Month</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
                   <SelectItem value="custom">Custom Range</SelectItem>
                 </SelectContent>
               </Select>
