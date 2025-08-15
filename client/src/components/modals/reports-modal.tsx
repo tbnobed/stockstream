@@ -207,17 +207,23 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
 
   const generateInventoryStatus = () => {
     const totalItems = inventory.length;
-    const totalValue = inventory.reduce((sum: number, item: any) => sum + (item.quantity * item.cost), 0);
+    const totalValue = inventory.reduce((sum: number, item: any) => {
+      const price = parseFloat(item.price || 0);
+      const quantity = parseInt(item.quantity || 0);
+      return sum + (quantity * price);
+    }, 0);
     const lowStockItems = inventory.filter((item: any) => item.quantity <= item.minStockLevel);
     const outOfStockItems = inventory.filter((item: any) => item.quantity === 0);
     
     const categoryBreakdown = inventory.reduce((acc: any, item: any) => {
-      const category = item.category || "Uncategorized";
+      const category = item.type || item.category || "Uncategorized";
       if (!acc[category]) {
         acc[category] = { count: 0, value: 0 };
       }
       acc[category].count += 1;
-      acc[category].value += item.quantity * item.cost;
+      const price = parseFloat(item.price || 0);
+      const quantity = parseInt(item.quantity || 0);
+      acc[category].value += quantity * price;
       return acc;
     }, {});
 
@@ -333,14 +339,14 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
       case "inventory-status":
         csvContent += "Summary\n";
         csvContent += `Total Items,${generatedReport.totalItems}\n`;
-        csvContent += `Total Value,${generatedReport.totalValue}\n`;
+        csvContent += `Total Value,${(generatedReport.totalValue || 0).toFixed(2)}\n`;
         csvContent += `Low Stock Count,${generatedReport.lowStockCount}\n`;
         csvContent += `Out of Stock Count,${generatedReport.outOfStockCount}\n\n`;
         
         csvContent += "Category Breakdown\n";
         csvContent += "Category,Item Count,Total Value\n";
-        Object.entries(generatedReport.categoryBreakdown).forEach(([category, data]: [string, any]) => {
-          csvContent += `"${category}",${data.count},${data.value}\n`;
+        Object.entries(generatedReport.categoryBreakdown || {}).forEach(([category, data]: [string, any]) => {
+          csvContent += `"${category}",${data.count},${(data.value || 0).toFixed(2)}\n`;
         });
         
         if (generatedReport.lowStockItems.length > 0) {
