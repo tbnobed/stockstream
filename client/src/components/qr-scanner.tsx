@@ -18,6 +18,8 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -151,6 +153,9 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
 
       console.log("Camera permission granted, setting up video stream...");
       setHasPermission(true);
+      
+      // Store stream reference for monitoring
+      streamRef.current = stream;
 
       if (videoRef.current) {
         console.log("Setting video stream...");
@@ -166,20 +171,45 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           video.autoplay = true;
           video.controls = false;
           
-          // Prevent video from pausing or stopping
+          // Handle video stream interruptions
           video.addEventListener('pause', () => {
             console.log("Video paused, attempting to resume...");
-            video.play().catch(err => console.warn("Failed to resume video:", err));
+            video.play().catch(err => {
+              console.warn("Failed to resume video:", err);
+              // Try to restart the entire stream
+              setTimeout(() => restartStream(), 1000);
+            });
           });
           
           video.addEventListener('ended', () => {
-            console.log("Video ended, restarting...");
-            video.play().catch(err => console.warn("Failed to restart video:", err));
+            console.log("Video ended, restarting stream...");
+            restartStream();
           });
           
           video.addEventListener('error', (e) => {
             console.error("Video element error:", e);
+            restartStream();
           });
+          
+          // Monitor video stream health
+          const monitorStream = () => {
+            if (video.srcObject) {
+              const stream = video.srcObject as MediaStream;
+              const tracks = stream.getVideoTracks();
+              
+              if (tracks.length === 0 || tracks[0].readyState === 'ended') {
+                console.warn("Video track ended, restarting stream...");
+                restartStream();
+                return;
+              }
+            }
+            
+            // Check every 2 seconds
+            setTimeout(monitorStream, 2000);
+          };
+          
+          // Start monitoring after initial setup
+          setTimeout(monitorStream, 3000);
           
           console.log("Video element configured with event listeners");
         };
@@ -294,6 +324,31 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
     }
   };
 
+  const restartStream = async () => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+    }
+    
+    console.log("Restarting camera stream...");
+    
+    // Clean up current stream
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    
+    // Wait a moment then restart
+    retryTimeoutRef.current = setTimeout(async () => {
+      try {
+        await startScanning();
+      } catch (err) {
+        console.error("Failed to restart stream:", err);
+        setError("Camera connection lost. Please try again or use manual input.");
+      }
+    }, 1000);
+  };
+
   const startQRDecoding = () => {
     if (!videoRef.current || !codeReader.current) {
       console.warn("Cannot start QR decoding - missing video or code reader");
@@ -335,7 +390,14 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         }
       } else if (video && (video.paused || video.ended)) {
         console.warn("Video is paused or ended, attempting to restart");
-        video.play().catch(err => console.warn("Failed to restart video:", err));
+        video.play().catch(err => {
+          console.warn("Failed to restart video:", err);
+          // If play fails, restart the entire stream
+          restartStream();
+        });
+      } else if (video && video.videoWidth === 0) {
+        console.warn("Video lost dimensions, restarting stream");
+        restartStream();
       }
     }, 500); // Check twice per second for better responsiveness
     
@@ -345,6 +407,12 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
 
   const stopScanning = () => {
     console.log("Stopping QR scanner...");
+    
+    // Clear retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
     
     // Clear any scanning interval
     if (videoRef.current && (videoRef.current as any).__scanInterval) {
@@ -362,17 +430,21 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
     }
     
     // Stop video stream
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
         track.stop();
         console.log("Stopped track:", track.kind);
       });
+      streamRef.current = null;
+    }
+    
+    if (videoRef.current?.srcObject) {
       videoRef.current.srcObject = null;
     }
     
     setIsScanning(false);
     setHasPermission(null);
+    setError(null);
   };
 
   const toggleFlashlight = async () => {
