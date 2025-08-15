@@ -161,14 +161,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/sales", isAuthenticated, async (req, res) => {
     try {
+      console.log("Creating sale with data:", JSON.stringify(req.body, null, 2));
       const sale = insertSaleSchema.parse(req.body);
+      console.log("Parsed sale data:", JSON.stringify(sale, null, 2));
       const newSale = await storage.createSale(sale);
       res.status(201).json(newSale);
     } catch (error) {
+      console.error("Sales creation error:", error);
       if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
         res.status(400).json({ message: "Invalid data", errors: error.errors });
       } else {
-        res.status(500).json({ message: "Failed to create sale" });
+        console.error("Storage error:", error);
+        res.status(500).json({ message: "Failed to create sale", error: error instanceof Error ? error.message : 'Unknown error' });
       }
     }
   });

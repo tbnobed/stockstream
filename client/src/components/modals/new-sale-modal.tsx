@@ -161,12 +161,13 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       orderNumber: generateOrderNumber(),
       itemId: data.itemId,
       quantity: data.quantity,
-      unitPrice: data.unitPrice,
-      totalAmount: data.totalAmount,
+      unitPrice: Number(data.unitPrice).toFixed(2),
+      totalAmount: Number(data.totalAmount).toFixed(2),
       paymentMethod: data.paymentMethod,
       salesAssociateId: data.salesAssociateId,
     };
 
+    console.log("Submitting sale data:", saleData);
     createSaleMutation.mutate(saleData);
   };
 
