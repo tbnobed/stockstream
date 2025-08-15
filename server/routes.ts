@@ -182,7 +182,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { quantity, reason, notes } = req.body;
-      const userId = req.user.claims.sub;
+      
+      console.log("Add stock request - user object:", req.user);
+      console.log("Add stock request - user claims:", req.user?.claims);
+      
+      const userId = req.user?.claims?.sub || "system";
       
       if (!quantity || quantity <= 0) {
         return res.status(400).json({ message: "Quantity must be a positive number" });
