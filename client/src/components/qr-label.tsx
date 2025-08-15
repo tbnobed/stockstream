@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import QRCode from "qrcode";
 
 interface QRLabelProps {
   item: {
@@ -16,28 +17,30 @@ export default function QRLabel({ item, size = "medium" }: QRLabelProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Simple QR code placeholder - in a real app you'd use a QR code library
     const qrSize = size === "small" ? 40 : size === "large" ? 80 : 60;
     
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw QR code placeholder (black square with white center)
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, qrSize, qrSize);
-    
-    // Add some white squares to simulate QR pattern
-    ctx.fillStyle = '#fff';
-    for (let i = 0; i < qrSize; i += 8) {
-      for (let j = 0; j < qrSize; j += 8) {
-        if ((i + j) % 16 === 0) {
-          ctx.fillRect(i, j, 4, 4);
-        }
+    // Generate real QR code
+    QRCode.toCanvas(canvas, item.sku, {
+      width: qrSize,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
       }
-    }
+    }).catch(err => {
+      console.error('Error generating QR code:', err);
+      // Fallback to placeholder if QR generation fails
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, qrSize, qrSize);
+        ctx.fillStyle = '#fff';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('QR', qrSize/2, qrSize/2);
+      }
+    });
     
   }, [item.sku, size]);
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Printer } from "lucide-react";
 import QRLabel from "@/components/qr-label";
+import QRCode from "qrcode";
 
 interface PrintLabelsModalProps {
   open: boolean;
@@ -117,31 +118,57 @@ export default function PrintLabelsModal({ open, onOpenChange }: PrintLabelsModa
     printWindow.document.close();
 
     // Generate QR codes after DOM is ready
-    printWindow.onload = () => {
-      selectedItemsData.forEach((item: any) => {
-        for (let copy = 0; copy < copies; copy++) {
-          const canvas = printWindow.document.getElementById(`qr-${item.id}-${copy}`) as HTMLCanvasElement;
-          if (canvas) {
-            // You would implement QR code generation here
-            // For now, we'll just draw a placeholder
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.fillStyle = '#000';
-              ctx.fillRect(0, 0, 60, 60);
-              ctx.fillStyle = '#fff';
-              ctx.font = '8px monospace';
-              ctx.textAlign = 'center';
-              ctx.fillText('QR', 30, 32);
+    printWindow.onload = async () => {
+      try {
+        // Generate all QR codes
+        const qrPromises: Promise<void>[] = [];
+        
+        selectedItemsData.forEach((item: any) => {
+          for (let copy = 0; copy < copies; copy++) {
+            const canvas = printWindow.document.getElementById(`qr-${item.id}-${copy}`) as HTMLCanvasElement;
+            if (canvas) {
+              const promise = QRCode.toCanvas(canvas, item.sku, {
+                width: 60,
+                margin: 1,
+                color: {
+                  dark: '#000000',
+                  light: '#ffffff'
+                }
+              }).catch(err => {
+                console.error('Error generating QR code for', item.sku, ':', err);
+                // Fallback to placeholder
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.fillStyle = '#000';
+                  ctx.fillRect(0, 0, 60, 60);
+                  ctx.fillStyle = '#fff';
+                  ctx.font = '8px monospace';
+                  ctx.textAlign = 'center';
+                  ctx.fillText('QR', 30, 32);
+                }
+              });
+              qrPromises.push(promise);
             }
           }
-        }
-      });
-      
-      // Print after a short delay
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
+        });
+        
+        // Wait for all QR codes to generate
+        await Promise.all(qrPromises);
+        
+        // Print after QR codes are generated
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+        
+      } catch (error) {
+        console.error('Error generating QR codes:', error);
+        // Still try to print even if QR generation fails
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      }
     };
 
     onOpenChange(false);
