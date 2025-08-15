@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, X, Flashlight } from "lucide-react";
+import { Camera, X, Flashlight, Settings } from "lucide-react";
+import { CameraDiagnostic } from "./camera-diagnostic";
 
 interface QRScannerProps {
   onScan: (result: string) => void;
@@ -15,6 +16,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
 
   useEffect(() => {
@@ -35,9 +37,14 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       setError(null);
       setIsScanning(true);
 
-      // Check if getUserMedia is supported
+      // Check basic support
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Camera access not supported on this device");
+      }
+
+      // Check if we're on HTTPS (required for camera access)
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        throw new Error("Camera access requires HTTPS connection");
       }
 
       console.log("Requesting camera permission...");
@@ -242,7 +249,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       } else if (err.name === 'OverconstrainedError') {
         setError("Camera constraints not supported. Your device's camera may have limited capabilities.");
       } else if (err.message?.includes('Starting videoinput failed')) {
-        setError("Camera is busy or blocked by another app. Please close other camera apps and try again.");
+        setError("Camera access is blocked. This can happen due to browser security settings, system permissions, or hardware restrictions. Please try: 1) Refresh the page, 2) Check browser camera permissions, 3) Try a different browser.");
       } else if (err.message?.includes('not supported')) {
         setError("Camera access is not supported in this browser. Try using Chrome, Firefox, or Safari.");
       } else if (err.message?.includes('timeout')) {
@@ -353,10 +360,20 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
             <div className="text-center py-4">
               <div className="text-red-500 mb-4">{error}</div>
               <div className="space-y-4">
-                <Button onClick={startScanning} className="w-full" data-testid="retry-camera">
-                  <Camera className="mr-2" size={16} />
-                  Try Again
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={startScanning} className="flex-1" data-testid="retry-camera">
+                    <Camera className="mr-2" size={16} />
+                    Try Again
+                  </Button>
+                  <Button 
+                    onClick={() => setShowDiagnostic(true)} 
+                    variant="outline"
+                    data-testid="camera-diagnostic"
+                  >
+                    <Settings className="mr-2" size={16} />
+                    Diagnose
+                  </Button>
+                </div>
                 
                 <div className="border-t pt-4">
                   <p className="text-sm text-muted-foreground mb-3">
@@ -502,6 +519,10 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           )}
         </div>
       </Card>
+      
+      {showDiagnostic && (
+        <CameraDiagnostic onClose={() => setShowDiagnostic(false)} />
+      )}
     </div>
   );
 }
