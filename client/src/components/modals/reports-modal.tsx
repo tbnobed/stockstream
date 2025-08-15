@@ -79,8 +79,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     setIsGenerating(true);
     const { start, end } = getDateRange();
     
-    console.log("Sales data:", sales);
-    console.log("Date range:", { start, end });
+
     
     // For reports, use all sales data if none found in date range
     let filteredSales = sales.filter((sale: any) => {
@@ -103,11 +102,8 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     
     // If no sales found in date range, use all sales for demonstration
     if (filteredSales.length === 0 && sales.length > 0) {
-      console.log("No sales in date range, using all sales data");
       filteredSales = sales;
     }
-    
-    console.log("Filtered sales:", filteredSales.length, "out of", sales.length);
 
     let report: any = {};
 
@@ -349,10 +345,10 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
           csvContent += `"${category}",${data.count},${(data.value || 0).toFixed(2)}\n`;
         });
         
-        if (generatedReport.lowStockItems.length > 0) {
+        if ((generatedReport.lowStockItems || []).length > 0) {
           csvContent += "\nLow Stock Items\n";
           csvContent += "Name,SKU,Current Qty,Min Level\n";
-          generatedReport.lowStockItems.forEach((item: any) => {
+          (generatedReport.lowStockItems || []).forEach((item: any) => {
             csvContent += `"${item.name}",${item.sku},${item.quantity},${item.minStockLevel}\n`;
           });
         }
@@ -450,7 +446,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
             <div>
               <h4 className="font-medium mb-2">Payment Methods</h4>
               <div className="space-y-2">
-                {Object.entries(generatedReport.paymentMethods).map(([method, amount]: [string, any]) => (
+                {Object.entries(generatedReport.paymentMethods || {}).map(([method, amount]: [string, any]) => (
                   <div key={method} className="flex justify-between">
                     <span className="capitalize">{method}</span>
                     <span className="font-medium">{formatCurrency(amount)}</span>
@@ -500,7 +496,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
       case "low-stock":
         return (
           <div className="space-y-2">
-            {generatedReport.items.map((item: any) => (
+            {(generatedReport.items || []).map((item: any) => (
               <div key={item.id} className="flex justify-between items-center p-3 border rounded">
                 <div>
                   <p className="font-medium">{item.name}</p>
@@ -522,7 +518,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         }
         return (
           <div className="space-y-4">
-            {Object.values(generatedReport.associateStats).map((associate: any) => (
+            {Object.values(generatedReport.associateStats || {}).map((associate: any) => (
               <Card key={associate.code} className="p-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -542,7 +538,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
       case "top-selling":
         return (
           <div className="space-y-2">
-            {generatedReport.topItems.map((item: any, index: number) => (
+            {(generatedReport.topItems || []).map((item: any, index: number) => (
               <div key={item.sku} className="flex justify-between items-center p-3 border rounded">
                 <div className="flex items-center space-x-3">
                   <Badge variant="secondary">#{index + 1}</Badge>
