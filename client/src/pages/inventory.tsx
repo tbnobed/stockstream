@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
 import AddStockModal from "@/components/modals/add-stock-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
+import PrintLabelModal from "@/components/modals/print-label-modal";
 import QRScanner from "@/components/qr-scanner";
 import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ export default function Inventory() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showPrintLabelModal, setShowPrintLabelModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,6 +65,11 @@ export default function Inventory() {
   const handleViewHistory = (item: any) => {
     setSelectedItem(item);
     setShowHistoryModal(true);
+  };
+
+  const handlePrintLabel = (item: any) => {
+    setSelectedItem(item);
+    setShowPrintLabelModal(true);
   };
 
   return (
@@ -194,7 +201,12 @@ export default function Inventory() {
                           >
                             <History size={14} />
                           </Button>
-                          <Button variant="outline" size="sm" data-testid={`print-label-${item.id}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handlePrintLabel(item)}
+                            data-testid={`print-label-${item.id}`}
+                          >
                             <Package size={14} />
                           </Button>
                         </div>
@@ -296,7 +308,12 @@ export default function Inventory() {
                               >
                                 <History size={14} />
                               </Button>
-                              <Button variant="ghost" size="sm" data-testid={`print-label-${item.id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handlePrintLabel(item)}
+                                data-testid={`print-label-${item.id}`}
+                              >
                                 <Package size={14} />
                               </Button>
                             </div>
@@ -337,6 +354,12 @@ export default function Inventory() {
       <TransactionHistoryModal
         open={showHistoryModal}
         onOpenChange={setShowHistoryModal}
+        item={selectedItem}
+      />
+
+      <PrintLabelModal
+        open={showPrintLabelModal}
+        onOpenChange={setShowPrintLabelModal}
         item={selectedItem}
       />
       
