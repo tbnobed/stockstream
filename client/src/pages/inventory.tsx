@@ -7,14 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
 import AddStockModal from "@/components/modals/add-stock-modal";
+import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode, Plus, Edit } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,6 +58,11 @@ export default function Inventory() {
   const handleAddStock = (item: any) => {
     setSelectedItem(item);
     setShowAddStockModal(true);
+  };
+
+  const handleViewHistory = (item: any) => {
+    setSelectedItem(item);
+    setShowHistoryModal(true);
   };
 
   return (
@@ -179,6 +186,14 @@ export default function Inventory() {
                             <Plus size={14} className="mr-1" />
                             Add
                           </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewHistory(item)}
+                            data-testid={`view-history-${item.id}`}
+                          >
+                            <History size={14} />
+                          </Button>
                           <Button variant="outline" size="sm" data-testid={`print-label-${item.id}`}>
                             <Package size={14} />
                           </Button>
@@ -273,6 +288,14 @@ export default function Inventory() {
                                 <Plus size={14} className="mr-1" />
                                 Add
                               </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewHistory(item)}
+                                data-testid={`view-history-${item.id}`}
+                              >
+                                <History size={14} />
+                              </Button>
                               <Button variant="ghost" size="sm" data-testid={`print-label-${item.id}`}>
                                 <Package size={14} />
                               </Button>
@@ -308,6 +331,12 @@ export default function Inventory() {
       <AddStockModal
         open={showAddStockModal}
         onOpenChange={setShowAddStockModal}
+        item={selectedItem}
+      />
+
+      <TransactionHistoryModal
+        open={showHistoryModal}
+        onOpenChange={setShowHistoryModal}
         item={selectedItem}
       />
       
