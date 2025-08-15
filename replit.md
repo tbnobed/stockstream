@@ -91,3 +91,34 @@ Each endpoint implements proper error handling, input validation using Zod schem
 - **tailwind-merge**: Utility for merging Tailwind classes
 
 The application is structured as a monorepo with shared TypeScript types and schemas between frontend and backend, ensuring type safety across the entire stack. The architecture supports both development and production deployments with proper environment configuration and build optimization.
+
+## Production Deployment
+
+### Docker Containerization
+- **Multi-stage Docker build** for optimized production images
+- **Docker Compose** configuration for orchestrating application and database services
+- **Health check endpoints** for monitoring and load balancer integration
+- **Security hardening** with non-root user and minimal attack surface
+
+### Deployment Scripts
+- **Automated deployment** (`deploy.sh`) - Complete setup from scratch
+- **Update mechanism** (`update.sh`) - Zero-downtime updates with rollback capability
+- **Database backup** (`backup.sh`) - Automated daily backups with retention policy
+- **Server setup** (`setup-production.sh`) - Ubuntu server configuration with security hardening
+
+### Production Features
+- **Nginx reverse proxy** configuration with SSL/TLS support
+- **PostgreSQL database** with proper connection pooling and optimizations
+- **Application monitoring** through health endpoints and logging
+- **Systemd service** for automatic startup and process management
+- **Firewall configuration** and security best practices
+- **Log rotation** and maintenance automation
+
+### Security Implementation
+- **Environment variable management** for sensitive configuration
+- **Database access controls** and user permissions
+- **SSL certificate automation** with Let's Encrypt integration
+- **Fail2ban protection** against brute force attacks
+- **Regular security updates** and monitoring
+
+The deployment system is production-ready and includes comprehensive documentation, automated scripts, and monitoring capabilities for reliable operation in Ubuntu environments.

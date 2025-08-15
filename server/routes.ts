@@ -11,6 +11,38 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint (before auth middleware)
+  app.get('/api/health', async (req, res) => {
+    try {
+      // Test database connection
+      await storage.getInventoryItems();
+      
+      const health = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        pid: process.pid,
+        node_version: process.version,
+        environment: process.env.NODE_ENV || 'development'
+      };
+
+      res.status(200).json(health);
+    } catch (error) {
+      console.error('Health check failed:', error);
+      
+      const health = {
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: error.message,
+        uptime: process.uptime(),
+        pid: process.pid
+      };
+
+      res.status(503).json(health);
+    }
+  });
+
   // Setup authentication routes
   await setupAuth(app);
   // Dashboard Stats
