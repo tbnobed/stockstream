@@ -84,14 +84,21 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     
     // For reports, use all sales data if none found in date range
     let filteredSales = sales.filter((sale: any) => {
-      if (!sale.createdAt) return false;
-      const saleDate = new Date(sale.createdAt);
-      const startOfDay = new Date(start);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(end);
-      endOfDay.setHours(23, 59, 59, 999);
+      const dateStr = sale.saleDate || sale.createdAt;
+      if (!dateStr) return false;
       
-      return saleDate >= startOfDay && saleDate <= endOfDay;
+      try {
+        const saleDate = new Date(dateStr);
+        const startOfDay = new Date(start);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(end);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        return saleDate >= startOfDay && saleDate <= endOfDay;
+      } catch (error) {
+        console.warn("Date parsing error:", error);
+        return false;
+      }
     });
     
     // If no sales found in date range, use all sales for demonstration
@@ -135,18 +142,30 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
   };
 
   const generateSalesSummary = (filteredSales: any[]) => {
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+    const totalRevenue = filteredSales.reduce((sum, sale) => {
+      const amount = parseFloat(sale.totalAmount || sale.total || 0);
+      return sum + amount;
+    }, 0);
     const totalTransactions = filteredSales.length;
     const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
     
     const paymentMethods = filteredSales.reduce((acc, sale) => {
-      acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total;
+      const amount = parseFloat(sale.totalAmount || sale.total || 0);
+      acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + amount;
       return acc;
     }, {});
 
     const dailySales = filteredSales.reduce((acc, sale) => {
-      const date = format(new Date(sale.createdAt), 'yyyy-MM-dd');
-      acc[date] = (acc[date] || 0) + sale.total;
+      try {
+        const dateStr = sale.saleDate || sale.createdAt;
+        if (dateStr) {
+          const date = format(new Date(dateStr), 'yyyy-MM-dd');
+          const amount = parseFloat(sale.totalAmount || sale.total || 0);
+          acc[date] = (acc[date] || 0) + amount;
+        }
+      } catch (error) {
+        console.warn("Date parsing error for sale:", sale);
+      }
       return acc;
     }, {});
 
@@ -163,9 +182,9 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     if (!isAdmin) return { error: "Unauthorized" };
     
     const associateStats = filteredSales.reduce((acc, sale) => {
-      const associateId = sale.associateId;
+      const associateId = sale.salesAssociateId || sale.associateId;
       if (!acc[associateId]) {
-        const associate = associates.find((a: any) => a.id === associateId);
+        const associate = associates.find((a: any) => a.id === associateId) || sale.salesAssociate;
         acc[associateId] = {
           name: associate?.name || "Unknown",
           code: associate?.code || "N/A",
@@ -175,7 +194,7 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         };
       }
       acc[associateId].totalSales += 1;
-      acc[associateId].totalRevenue += sale.total;
+      acc[associateId].totalRevenue += parseFloat(sale.totalAmount || sale.total || 0);
       acc[associateId].transactions.push(sale);
       return acc;
     }, {});
@@ -244,8 +263,8 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
           transactions: 0
         };
       }
-      acc[itemId].totalQuantity += sale.quantity;
-      acc[itemId].totalRevenue += sale.total;
+      acc[itemId].totalQuantity += parseInt(sale.quantity || 0);
+      acc[itemId].totalRevenue += parseFloat(sale.totalAmount || sale.total || 0);
       acc[itemId].transactions += 1;
       return acc;
     }, {});
