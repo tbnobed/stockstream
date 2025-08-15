@@ -18,7 +18,6 @@ const getNavigationForRole = (userRole: string) => {
     { name: "Dashboard", href: "/", icon: BarChart3 },
     { name: "Inventory", href: "/inventory", icon: Warehouse },
     { name: "Sales", href: "/sales", icon: ScanBarcode },
-    { name: "QR Test", href: "/qr-test", icon: QrCode },
   ];
 
   if (userRole === 'admin') {

@@ -172,15 +172,19 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           video.playsInline = true;
           video.autoplay = true;
           video.controls = false;
+          video.disablePictureInPicture = true;
+          video.preload = "none";
           
           // Prevent browser from pausing video
           video.setAttribute('webkit-playsinline', 'true');
           video.setAttribute('playsinline', 'true');
+          video.setAttribute('disablePictureInPicture', 'true');
           
-          // Set video style to prevent layout shifts
+          // Set video style to prevent layout shifts and fix mirroring
           video.style.objectFit = 'cover';
           video.style.width = '100%';
           video.style.height = '100%';
+          video.style.transform = 'scaleX(-1)'; // Mirror horizontally for natural feel
           
           console.log("Video element configured for stability");
         };
@@ -219,7 +223,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
               setIsScanning(true);
               startQRDecoding();
             }
-          }, 800);
+          }, 1200); // Increased delay to reduce flickering
         };
         
         // Initialize the code reader immediately
@@ -239,7 +243,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         setTimeout(() => {
           console.log("Timeout fallback - starting video");
           playVideo();
-        }, 1000);
+        }, 1500); // Increased delay to prevent multiple initialization attempts
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -281,7 +285,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       videoRef.current.srcObject = null;
     }
     
-    // Wait a moment then restart
+    // Wait longer to prevent rapid restart cycles that cause flickering
     retryTimeoutRef.current = setTimeout(async () => {
       try {
         await startScanning();
@@ -289,7 +293,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         console.error("Failed to restart stream:", err);
         setError("Camera connection lost. Please try again or use manual input.");
       }
-    }, 1000);
+    }, 2000); // Increased delay to prevent flickering
   };
 
   const startQRDecoding = () => {
@@ -316,7 +320,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
     
     // Simple continuous decoding - less aggressive checking
     const scanInterval = setInterval(async () => {
-      if (video && video.readyState >= 1) {
+      if (video && video.readyState >= 2 && video.videoWidth > 0) { // Only scan when video is ready
         try {
           const result = await codeReader.current!.decodeOnceFromVideoDevice(undefined, video);
           if (result) {
@@ -332,7 +336,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           }
         }
       }
-    }, 750); // Scan every 750ms - less frequent to reduce resource usage
+    }, 1000); // Increased to 1000ms to reduce strain and flickering
     
     // Store interval reference to clean up later
     (video as any).__scanInterval = scanInterval;
@@ -473,12 +477,11 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
               <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
                 <video
                   ref={videoRef}
-                  className="w-full h-full object-cover transform scale-x-[-1]"
+                  className="w-full h-full object-cover"
                   autoPlay
                   muted
                   playsInline
                   controls={false}
-                  webkit-playsinline="true"
                   data-testid="scanner-video"
                   onLoadedData={() => console.log("Video data loaded")}
                   onLoadedMetadata={() => console.log("Video metadata loaded")}
@@ -490,7 +493,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
                     height: '100%',
                     objectFit: 'cover',
                     backgroundColor: 'black',
-                    transform: 'scaleX(-1)' // Mirror the video for better UX
+                    transform: 'scaleX(-1)' // Mirror the video for natural feel
                   }}
                 />
                 
