@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Building2, Phone, Mail } from "lucide-react";
+import { Edit, Trash2, Plus, Building2, Phone, Mail, User, MapPin, Globe } from "lucide-react";
 import AddSupplierModal from "@/components/modals/add-supplier-modal";
 import EditSupplierModal from "@/components/modals/edit-supplier-modal";
 import { queryClient } from "@/lib/queryClient";
@@ -78,7 +78,7 @@ export default function SupplierManagement() {
       if (trimmedLine.startsWith('Contact: ')) {
         return (
           <div key={index} className="flex items-center text-sm text-muted-foreground">
-            <Building2 className="mr-2" size={12} />
+            <User className="mr-2" size={12} />
             <span>{trimmedLine.substring(9)}</span>
           </div>
         );
@@ -105,7 +105,7 @@ export default function SupplierManagement() {
       if (trimmedLine.startsWith('Address: ')) {
         return (
           <div key={index} className="flex items-center text-sm text-muted-foreground">
-            <Building2 className="mr-2" size={12} />
+            <MapPin className="mr-2" size={12} />
             <span>{trimmedLine.substring(9)}</span>
           </div>
         );
@@ -114,7 +114,7 @@ export default function SupplierManagement() {
       if (trimmedLine.startsWith('Website: ')) {
         return (
           <div key={index} className="flex items-center text-sm text-muted-foreground">
-            <Building2 className="mr-2" size={12} />
+            <Globe className="mr-2" size={12} />
             <a href={trimmedLine.substring(9)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               {trimmedLine.substring(9)}
             </a>
@@ -141,7 +141,8 @@ export default function SupplierManagement() {
         );
       }
       
-      if (/[\d\s\-\(\)]+/.test(trimmedLine) && trimmedLine.length >= 10) {
+      // Phone number pattern (digits, spaces, dashes, parentheses, at least 10 chars)
+      if (/^[\d\s\-\(\)]+$/.test(trimmedLine) && trimmedLine.length >= 10) {
         return (
           <div key={index} className="flex items-center text-sm text-muted-foreground">
             <Phone className="mr-2" size={12} />
@@ -150,9 +151,22 @@ export default function SupplierManagement() {
         );
       }
       
+      // Address patterns (contains address indicators)
+      if (/\b(st|street|dr|drive|ave|avenue|rd|road|blvd|boulevard|way|ln|lane|ct|court|pl|place|pkwy|parkway|circle|cir)\b/i.test(trimmedLine) ||
+          /\b\d{5}(-\d{4})?\b/.test(trimmedLine) || // ZIP code pattern
+          /\b(ca|california|tx|texas|ny|new york|fl|florida)\b/i.test(trimmedLine)) { // Common state patterns
+        return (
+          <div key={index} className="flex items-center text-sm text-muted-foreground">
+            <MapPin className="mr-2" size={12} />
+            <span>{trimmedLine}</span>
+          </div>
+        );
+      }
+      
+      // Default to contact person for other text
       return (
         <div key={index} className="flex items-center text-sm text-muted-foreground">
-          <Building2 className="mr-2" size={12} />
+          <User className="mr-2" size={12} />
           <span>{trimmedLine}</span>
         </div>
       );
