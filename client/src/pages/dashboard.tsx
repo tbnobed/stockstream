@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import NewSaleModal from "@/components/modals/new-sale-modal";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
 import PrintLabelsModal from "@/components/modals/print-labels-modal";
+import InventoryCheckModal from "@/components/modals/inventory-check-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   DollarSign, 
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [showAddInventoryModal, setShowAddInventoryModal] = useState(false);
   const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
+  const [showInventoryCheckModal, setShowInventoryCheckModal] = useState(false);
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
 
@@ -256,6 +258,7 @@ export default function Dashboard() {
                 <Button
                   variant="ghost"
                   className="w-full justify-between p-3 h-auto hover:bg-muted"
+                  onClick={() => setShowInventoryCheckModal(true)}
                   data-testid="quick-action-inventory"
                 >
                   <div className="flex items-center">
@@ -335,6 +338,11 @@ export default function Dashboard() {
       <PrintLabelsModal
         open={showPrintLabelsModal}
         onOpenChange={setShowPrintLabelsModal}
+      />
+      
+      <InventoryCheckModal
+        open={showInventoryCheckModal}
+        onOpenChange={setShowInventoryCheckModal}
       />
     </>
   );
