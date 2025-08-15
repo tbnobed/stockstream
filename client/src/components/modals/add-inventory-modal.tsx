@@ -84,17 +84,7 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Add Inventory Item
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              data-testid="button-close-inventory-modal"
-            >
-              <X size={16} />
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Add Inventory Item</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>

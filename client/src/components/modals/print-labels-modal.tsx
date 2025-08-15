@@ -180,17 +180,7 @@ export default function PrintLabelsModal({ open, onOpenChange }: PrintLabelsModa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Print QR Code Labels
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              data-testid="button-close-labels-modal"
-            >
-              <X size={16} />
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Print QR Code Labels</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

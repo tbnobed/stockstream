@@ -176,17 +176,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              New Sale
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onOpenChange(false)}
-                data-testid="button-close-sale-modal"
-              >
-                <X size={16} />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>New Sale</DialogTitle>
             <DialogDescription id="dialog-description">
               Process a new sale transaction by scanning or entering item details
             </DialogDescription>
