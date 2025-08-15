@@ -65,7 +65,64 @@ export default function SupplierManagement() {
     return lines.map((line, index) => {
       const trimmedLine = line.trim();
       
-      // Check if it looks like an email
+      // Parse structured contact info with prefixes
+      if (trimmedLine.startsWith('Contact: ')) {
+        return (
+          <div key={index} className="flex items-center text-sm text-muted-foreground">
+            <Building2 className="mr-2" size={12} />
+            <span>{trimmedLine.substring(9)}</span>
+          </div>
+        );
+      }
+      
+      if (trimmedLine.startsWith('Phone: ')) {
+        return (
+          <div key={index} className="flex items-center text-sm text-muted-foreground">
+            <Phone className="mr-2" size={12} />
+            <span>{trimmedLine.substring(7)}</span>
+          </div>
+        );
+      }
+      
+      if (trimmedLine.startsWith('Email: ')) {
+        return (
+          <div key={index} className="flex items-center text-sm text-muted-foreground">
+            <Mail className="mr-2" size={12} />
+            <span>{trimmedLine.substring(7)}</span>
+          </div>
+        );
+      }
+      
+      if (trimmedLine.startsWith('Address: ')) {
+        return (
+          <div key={index} className="flex items-center text-sm text-muted-foreground">
+            <Building2 className="mr-2" size={12} />
+            <span>{trimmedLine.substring(9)}</span>
+          </div>
+        );
+      }
+      
+      if (trimmedLine.startsWith('Website: ')) {
+        return (
+          <div key={index} className="flex items-center text-sm text-muted-foreground">
+            <Building2 className="mr-2" size={12} />
+            <a href={trimmedLine.substring(9)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              {trimmedLine.substring(9)}
+            </a>
+          </div>
+        );
+      }
+      
+      if (trimmedLine.startsWith('Notes: ')) {
+        return (
+          <div key={index} className="flex items-start text-sm text-muted-foreground">
+            <Building2 className="mr-2 mt-0.5" size={12} />
+            <span className="italic">{trimmedLine.substring(7)}</span>
+          </div>
+        );
+      }
+      
+      // Fallback for unstructured data (backward compatibility)
       if (trimmedLine.includes('@')) {
         return (
           <div key={index} className="flex items-center text-sm text-muted-foreground">
@@ -75,7 +132,6 @@ export default function SupplierManagement() {
         );
       }
       
-      // Check if it looks like a phone number
       if (/[\d\s\-\(\)]+/.test(trimmedLine) && trimmedLine.length >= 10) {
         return (
           <div key={index} className="flex items-center text-sm text-muted-foreground">
@@ -85,7 +141,6 @@ export default function SupplierManagement() {
         );
       }
       
-      // Default to building icon for addresses or other info
       return (
         <div key={index} className="flex items-center text-sm text-muted-foreground">
           <Building2 className="mr-2" size={12} />
