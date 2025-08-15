@@ -30,10 +30,7 @@ export default function AdjustInventoryModal({ open, onOpenChange, item }: Adjus
 
   const adjustMutation = useMutation({
     mutationFn: async (data: { quantity: number; reason: string; notes: string }) => {
-      await apiRequest(`/api/inventory/${item?.id}/adjust`, {
-        method: "POST",
-        body: data,
-      });
+      await apiRequest("POST", `/api/inventory/${item?.id}/adjust`, data);
     },
     onSuccess: () => {
       toast({
