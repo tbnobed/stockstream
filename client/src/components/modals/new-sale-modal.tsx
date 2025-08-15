@@ -35,6 +35,8 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
+  
+  console.log("NewSaleModal render - showScanner:", showScanner);
 
   const { data: associates = [] } = useQuery({
     queryKey: ["/api/associates"],
@@ -137,8 +139,14 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   };
 
   const handleQRScan = (result: string) => {
+    console.log("QR scan result:", result);
     onSkuChange(result);
     setShowScanner(false);
+  };
+
+  const openScanner = () => {
+    console.log("Opening QR scanner...");
+    setShowScanner(true);
   };
 
   const onSubmit = (data: SaleFormData) => {
@@ -165,24 +173,25 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            New Sale
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              data-testid="button-close-sale-modal"
-            >
-              <X size={16} />
-            </Button>
-          </DialogTitle>
-          <DialogDescription id="dialog-description">
-            Process a new sale transaction by scanning or entering item details
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              New Sale
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                data-testid="button-close-sale-modal"
+              >
+                <X size={16} />
+              </Button>
+            </DialogTitle>
+            <DialogDescription id="dialog-description">
+              Process a new sale transaction by scanning or entering item details
+            </DialogDescription>
+          </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -204,7 +213,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => setShowScanner(true)}
+                        onClick={openScanner}
                         className="absolute right-2 top-1/2 -translate-y-1/2"
                         data-testid="button-qr-scan"
                       >
@@ -307,7 +316,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {associates.map((associate: any) => (
+                        {(associates as any[]).map((associate: any) => (
                           <SelectItem key={associate.id} value={associate.id}>
                             {associate.name}
                           </SelectItem>
@@ -377,12 +386,13 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
           </form>
         </Form>
       </DialogContent>
-      
-      <QRScanner
-        isOpen={showScanner}
-        onScan={handleQRScan}
-        onClose={() => setShowScanner(false)}
-      />
     </Dialog>
+    
+    <QRScanner
+      isOpen={showScanner}
+      onScan={handleQRScan}
+      onClose={() => setShowScanner(false)}
+    />
+    </>
   );
 }

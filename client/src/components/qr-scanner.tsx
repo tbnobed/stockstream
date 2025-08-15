@@ -30,15 +30,18 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
   }, [isOpen]);
 
   const startScanning = async () => {
+    console.log("Starting QR scanner...");
     try {
       setError(null);
       setIsScanning(true);
 
-      // Initialize the code reader
-      if (!codeReader.current) {
-        codeReader.current = new BrowserMultiFormatReader();
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera access not supported on this device");
       }
 
+      console.log("Requesting camera permission...");
+      
       // Request camera permission
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
@@ -48,25 +51,37 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         }
       });
 
+      console.log("Camera permission granted, setting up video stream...");
       setHasPermission(true);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Start decoding from video element
-        codeReader.current.decodeFromVideoDevice(
-          null,
-          videoRef.current,
-          (result, err) => {
-            if (result) {
-              onScan(result.getText());
-              stopScanning();
-            }
-            if (err && !(err instanceof NotFoundException)) {
-              console.error("QR Code scan error:", err);
-            }
+        // Wait for video to load before starting decoder
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video loaded, initializing QR code reader...");
+          
+          // Initialize the code reader
+          if (!codeReader.current) {
+            codeReader.current = new BrowserMultiFormatReader();
           }
-        );
+          
+          // Start decoding from video element
+          codeReader.current.decodeFromVideoDevice(
+            null,
+            videoRef.current!,
+            (result, err) => {
+              if (result) {
+                console.log("QR Code detected:", result.getText());
+                onScan(result.getText());
+                stopScanning();
+              }
+              if (err && !(err instanceof NotFoundException)) {
+                console.error("QR Code scan error:", err);
+              }
+            }
+          );
+        };
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -76,8 +91,10 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         setError("Camera permission denied. Please allow camera access and try again.");
       } else if (err.name === 'NotFoundError') {
         setError("No camera found on this device.");
+      } else if (err.message?.includes('not supported')) {
+        setError("Camera access is not supported on this device or browser.");
       } else {
-        setError("Unable to access camera. Please try again.");
+        setError(`Unable to access camera: ${err.message || 'Unknown error'}`);
       }
       setIsScanning(false);
     }
@@ -116,10 +133,12 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
     }
   };
 
+  console.log("QR Scanner render - isOpen:", isOpen, "isScanning:", isScanning, "hasPermission:", hasPermission, "error:", error);
+  
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100] p-4">
       <Card className="w-full max-w-md bg-background">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
