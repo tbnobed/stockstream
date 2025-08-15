@@ -42,36 +42,104 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
 
       console.log("Requesting camera permission...");
       
-      // Try different camera configurations
+      // Get available devices first
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        console.log("Available video devices:", videoDevices.map(d => ({ 
+          deviceId: d.deviceId, 
+          label: d.label || 'Unknown Camera',
+          kind: d.kind 
+        })));
+        
+        if (videoDevices.length === 0) {
+          throw new Error("No cameras found on this device");
+        }
+      } catch (enumErr) {
+        console.warn("Could not enumerate devices:", enumErr);
+      }
+      
+      // Try different camera configurations with better error handling
       let stream: MediaStream | null = null;
+      const errors: string[] = [];
       
       const configs = [
-        // Prefer back camera
-        { video: { facingMode: { exact: "environment" } } },
-        // Fallback to any back camera
-        { video: { facingMode: "environment" } },
-        // Fallback to front camera
-        { video: { facingMode: "user" } },
-        // Fallback to any camera
+        // Back camera with high quality
+        { 
+          video: { 
+            facingMode: { exact: "environment" },
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 }
+          } 
+        },
+        // Back camera with medium quality
+        { 
+          video: { 
+            facingMode: "environment",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        },
+        // Front camera
+        { 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        },
+        // Any camera with basic resolution
+        { 
+          video: { 
+            width: { min: 320, ideal: 640 },
+            height: { min: 240, ideal: 480 }
+          } 
+        },
+        // Minimal constraints - last resort
+        { video: { width: 320, height: 240 } },
         { video: true }
       ];
       
-      for (const config of configs) {
+      for (let i = 0; i < configs.length; i++) {
+        const config = configs[i];
         try {
-          console.log("Trying camera config:", config);
-          stream = await navigator.mediaDevices.getUserMedia(config);
-          if (stream) {
-            console.log("Camera stream obtained with config:", config);
+          console.log(`Attempting config ${i + 1}/${configs.length}:`, JSON.stringify(config));
+          
+          // Add timeout to prevent hanging
+          const streamPromise = navigator.mediaDevices.getUserMedia(config);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Camera access timeout')), 10000)
+          );
+          
+          stream = await Promise.race([streamPromise, timeoutPromise]) as MediaStream;
+          
+          if (stream && stream.getVideoTracks().length > 0) {
+            const track = stream.getVideoTracks()[0];
+            console.log("Camera stream obtained successfully!");
+            console.log("Video track settings:", track.getSettings());
+            console.log("Video track capabilities:", track.getCapabilities());
             break;
+          } else {
+            throw new Error("Stream obtained but no video tracks available");
           }
-        } catch (configErr) {
-          console.warn("Failed with config:", config, configErr);
+        } catch (configErr: any) {
+          const errorMsg = configErr?.message || configErr?.name || configErr?.toString() || 'Unknown error';
+          console.error(`Config ${i + 1} failed:`, errorMsg, configErr);
+          errors.push(`Config ${i + 1}: ${errorMsg}`);
+          
+          // Clean up any partial stream
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+          }
+          
           continue;
         }
       }
       
       if (!stream) {
-        throw new Error("Unable to access any camera");
+        const errorSummary = errors.length > 0 ? errors.join('; ') : 'All camera configurations failed';
+        throw new Error(`Unable to access camera. Tried ${configs.length} configurations. Errors: ${errorSummary}`);
       }
 
       console.log("Camera permission granted, setting up video stream...");
@@ -81,25 +149,55 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         console.log("Setting video stream...");
         videoRef.current.srcObject = stream;
         
-        // Force video to play
+        // Setup video element with comprehensive browser support
+        const setupVideo = () => {
+          if (!videoRef.current) return;
+          
+          const video = videoRef.current;
+          video.muted = true;
+          video.playsInline = true;
+          video.autoplay = true;
+          video.controls = false;
+          
+          // Force dimensions if not set
+          if (!video.style.width) video.style.width = '100%';
+          if (!video.style.height) video.style.height = '100%';
+          
+          console.log("Video element configured");
+        };
+        
         const playVideo = async () => {
+          if (!videoRef.current) return;
+          
           try {
-            if (videoRef.current) {
-              videoRef.current.muted = true;
-              videoRef.current.playsInline = true;
-              videoRef.current.autoplay = true;
-              await videoRef.current.play();
-              console.log("Video is playing, dimensions:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
-              
-              // Only set scanning to true if video has dimensions
-              if (videoRef.current.videoWidth > 0) {
-                setIsScanning(true);
-              }
+            setupVideo();
+            
+            // Try to play - some browsers require user interaction first
+            const playPromise = videoRef.current.play();
+            
+            if (playPromise) {
+              await playPromise;
+              console.log("Video playing successfully");
             }
-          } catch (err) {
-            console.error("Failed to play video:", err);
-            // Try to continue anyway - some browsers don't require explicit play()
+            
+            // Wait for video to have dimensions
+            const waitForDimensions = () => {
+              if (videoRef.current && videoRef.current.videoWidth > 0) {
+                console.log("Video dimensions available:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
+                setIsScanning(true);
+                startQRDecoding();
+              } else {
+                setTimeout(waitForDimensions, 100);
+              }
+            };
+            
+            waitForDimensions();
+            
+          } catch (playErr) {
+            console.warn("Video play failed, but continuing:", playErr);
+            // Some mobile browsers don't require explicit play
             setIsScanning(true);
+            setTimeout(() => startQRDecoding(), 500);
           }
         };
         
@@ -136,14 +234,22 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       console.error("Camera access error:", err);
       setHasPermission(false);
       
+      // More specific error handling based on common issues
       if (err.name === 'NotAllowedError') {
-        setError("Camera permission denied. Please allow camera access and try again.");
+        setError("Camera permission denied. Please allow camera access in your browser settings and refresh the page.");
       } else if (err.name === 'NotFoundError') {
         setError("No camera found on this device.");
+      } else if (err.name === 'OverconstrainedError') {
+        setError("Camera constraints not supported. Your device's camera may have limited capabilities.");
+      } else if (err.message?.includes('Starting videoinput failed')) {
+        setError("Camera is busy or blocked by another app. Please close other camera apps and try again.");
       } else if (err.message?.includes('not supported')) {
-        setError("Camera access is not supported on this device or browser.");
+        setError("Camera access is not supported in this browser. Try using Chrome, Firefox, or Safari.");
+      } else if (err.message?.includes('timeout')) {
+        setError("Camera access timed out. Please check your camera connection and try again.");
       } else {
-        setError(`Unable to access camera: ${err.message || err.toString() || 'Unknown error'}`);
+        const errorMsg = err.message || err.toString() || 'Unknown camera error';
+        setError(`Unable to access camera: ${errorMsg}. Try refreshing the page or using manual input below.`);
       }
       console.error("Full error object:", err);
       setIsScanning(false);
@@ -299,14 +405,19 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
                   muted
                   playsInline
                   controls={false}
+                  webkit-playsinline="true"
                   data-testid="scanner-video"
                   onLoadedData={() => console.log("Video data loaded")}
-                  onError={(e) => console.error("Video error:", e)}
+                  onLoadedMetadata={() => console.log("Video metadata loaded")}
+                  onCanPlay={() => console.log("Video can play")}
+                  onPlay={() => console.log("Video started playing")}
+                  onError={(e) => console.error("Video element error:", e)}
                   style={{ 
                     width: '100%', 
                     height: '100%',
                     objectFit: 'cover',
-                    backgroundColor: 'black'
+                    backgroundColor: 'black',
+                    transform: 'scaleX(-1)' // Mirror the video for better UX
                   }}
                 />
                 
