@@ -36,7 +36,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
   
-  console.log("NewSaleModal render - showScanner:", showScanner);
+
 
   const { data: associates = [] } = useQuery({
     queryKey: ["/api/associates"],
@@ -139,13 +139,11 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   };
 
   const handleQRScan = (result: string) => {
-    console.log("QR scan result:", result);
     onSkuChange(result);
     setShowScanner(false);
   };
 
   const openScanner = () => {
-    console.log("Opening QR scanner...");
     setShowScanner(true);
   };
 

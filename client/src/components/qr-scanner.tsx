@@ -42,12 +42,10 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
 
       console.log("Requesting camera permission...");
       
-      // Request camera permission
+      // Request camera permission with simpler constraints
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: "environment", // Use back camera by default
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+        video: {
+          facingMode: "environment"
         }
       });
 
@@ -56,32 +54,51 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "true");
         
-        // Wait for video to load before starting decoder
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Video loaded, initializing QR code reader...");
-          
-          // Initialize the code reader
-          if (!codeReader.current) {
-            codeReader.current = new BrowserMultiFormatReader();
+        // Initialize the code reader immediately
+        if (!codeReader.current) {
+          codeReader.current = new BrowserMultiFormatReader();
+        }
+        
+        // Wait for video to be ready and start decoding
+        const startDecoding = () => {
+          if (videoRef.current && videoRef.current.videoWidth > 0) {
+            console.log("Video ready, starting QR code detection...");
+            
+            // Start continuous decoding
+            const scanInterval = setInterval(async () => {
+              if (videoRef.current && videoRef.current.videoWidth > 0) {
+                try {
+                  const result = await codeReader.current!.decodeOnceFromVideoDevice(undefined, videoRef.current);
+                  if (result) {
+                    console.log("QR Code detected:", result.getText());
+                    clearInterval(scanInterval);
+                    onScan(result.getText());
+                    stopScanning();
+                  }
+                } catch (err: any) {
+                  // Ignore NotFoundException - it means no QR code was found in this frame
+                  if (!(err instanceof NotFoundException)) {
+                    console.warn("QR scan error:", err.message);
+                  }
+                }
+              }
+            }, 500); // Check every 500ms
+            
+            // Store interval reference to clean up later
+            (videoRef.current as any).__scanInterval = scanInterval;
+          } else {
+            // Retry after a short delay if video isn't ready
+            setTimeout(startDecoding, 100);
           }
-          
-          // Start decoding from video element
-          codeReader.current.decodeFromVideoDevice(
-            null,
-            videoRef.current!,
-            (result, err) => {
-              if (result) {
-                console.log("QR Code detected:", result.getText());
-                onScan(result.getText());
-                stopScanning();
-              }
-              if (err && !(err instanceof NotFoundException)) {
-                console.error("QR Code scan error:", err);
-              }
-            }
-          );
         };
+        
+        // Start when video metadata is loaded
+        videoRef.current.addEventListener('loadedmetadata', startDecoding);
+        
+        // Also try after a short delay in case loadedmetadata already fired
+        setTimeout(startDecoding, 200);
       }
     } catch (err: any) {
       console.error("Camera access error:", err);
@@ -101,17 +118,35 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
   };
 
   const stopScanning = () => {
-    if (codeReader.current) {
-      codeReader.current.reset();
+    console.log("Stopping QR scanner...");
+    
+    // Clear any scanning interval
+    if (videoRef.current && (videoRef.current as any).__scanInterval) {
+      clearInterval((videoRef.current as any).__scanInterval);
+      (videoRef.current as any).__scanInterval = null;
     }
     
+    // Stop the code reader
+    if (codeReader.current) {
+      try {
+        codeReader.current.reset();
+      } catch (err) {
+        console.warn("Error stopping code reader:", err);
+      }
+    }
+    
+    // Stop video stream
     if (videoRef.current?.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log("Stopped track:", track.kind);
+      });
       videoRef.current.srcObject = null;
     }
     
     setIsScanning(false);
+    setHasPermission(null);
   };
 
   const toggleFlashlight = async () => {
@@ -133,8 +168,6 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
     }
   };
 
-  console.log("QR Scanner render - isOpen:", isOpen, "isScanning:", isScanning, "hasPermission:", hasPermission, "error:", error);
-  
   if (!isOpen) return null;
 
   return (
@@ -168,11 +201,17 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
               <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
                 <video
                   ref={videoRef}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transform scale-x-[-1]"
                   autoPlay
                   muted
                   playsInline
+                  controls={false}
                   data-testid="scanner-video"
+                  style={{ 
+                    width: '100%', 
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
                 />
                 
                 {/* Scanning overlay */}
@@ -183,10 +222,18 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
                   <div className="absolute bottom-4 right-4 w-8 h-8 border-r-4 border-b-4 border-primary"></div>
                 </div>
                 
-                {isScanning && (
+                {isScanning && hasPermission && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded">
+                    <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded text-sm">
                       Point camera at QR code
+                    </div>
+                  </div>
+                )}
+                
+                {!isScanning && hasPermission && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded text-sm">
+                      Loading camera...
                     </div>
                   </div>
                 )}
