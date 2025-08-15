@@ -7,6 +7,7 @@ import {
   Users, 
   Warehouse,
   Package,
+  Building2,
   LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const getNavigationForRole = (userRole: string) => {
       ...baseNavigation,
       { name: "Reports", href: "/reports", icon: Package },
       { name: "Associates", href: "/associates", icon: Users },
+      { name: "Suppliers", href: "/suppliers", icon: Building2 },
     ];
   }
 

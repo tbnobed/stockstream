@@ -93,6 +93,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/suppliers/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const supplier = insertSupplierSchema.parse(req.body);
+      const updatedSupplier = await storage.updateSupplier(id, supplier);
+      if (!updatedSupplier) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+      res.json(updatedSupplier);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update supplier" });
+      }
+    }
+  });
+
+  app.delete("/api/suppliers/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteSupplier(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+      res.json({ message: "Supplier deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete supplier" });
+    }
+  });
+
   // Inventory Items
   app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {

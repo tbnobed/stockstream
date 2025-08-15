@@ -10,6 +10,7 @@ import Inventory from "@/pages/inventory";
 import Sales from "@/pages/sales";
 import Reports from "@/pages/reports";
 import Associates from "@/pages/associates";
+import Suppliers from "@/pages/suppliers";
 import Login from "@/pages/login";
 import MobileSales from "@/pages/mobile-sales";
 import Sidebar from "@/components/layout/sidebar";
@@ -31,6 +32,7 @@ function AuthenticatedApp() {
             <>
               <Route path="/reports" component={Reports} />
               <Route path="/associates" component={Associates} />
+              <Route path="/suppliers" component={Suppliers} />
             </>
           )}
           <Route component={NotFound} />
