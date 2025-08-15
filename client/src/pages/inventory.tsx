@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showScanner, setShowScanner] = useState(false);
 
@@ -41,6 +43,11 @@ export default function Inventory() {
   const handleQRScan = (result: string) => {
     setSearchTerm(result);
     setShowScanner(false);
+  };
+
+  const handleEditItem = (item: any) => {
+    setEditingItem(item);
+    setShowEditModal(true);
   };
 
   return (
@@ -224,7 +231,12 @@ export default function Inventory() {
                           </td>
                           <td className="py-3">
                             <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm" data-testid={`edit-item-${item.id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditItem(item)}
+                                data-testid={`edit-item-${item.id}`}
+                              >
                                 Edit
                               </Button>
                               <Button variant="ghost" size="sm" data-testid={`print-label-${item.id}`}>
@@ -247,6 +259,16 @@ export default function Inventory() {
       <AddInventoryModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+      />
+
+      <AddInventoryModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        editingItem={editingItem}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingItem(null);
+        }}
       />
       
       <QRScanner

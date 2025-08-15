@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,9 +18,11 @@ import { generateSKU } from "@/lib/sku-generator";
 interface AddInventoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editingItem?: any;
+  onClose?: () => void;
 }
 
-export default function AddInventoryModal({ open, onOpenChange }: AddInventoryModalProps) {
+export default function AddInventoryModal({ open, onOpenChange, editingItem, onClose }: AddInventoryModalProps) {
   const { toast } = useToast();
 
   const { data: suppliers } = useQuery({
@@ -28,7 +31,18 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
-    defaultValues: {
+    defaultValues: editingItem ? {
+      sku: editingItem.sku || "",
+      name: editingItem.name || "",
+      description: editingItem.description || "",
+      type: editingItem.type || "",
+      size: editingItem.size || "",
+      color: editingItem.color || "",
+      price: editingItem.price || "",
+      quantity: editingItem.quantity || 0,
+      minStockLevel: editingItem.minStockLevel || 10,
+      supplierId: editingItem.supplierId || undefined,
+    } : {
       sku: "",
       name: "",
       description: "",
@@ -42,6 +56,37 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
     },
   });
 
+  // Reset form when editingItem changes
+  useEffect(() => {
+    if (editingItem && open) {
+      form.reset({
+        sku: editingItem.sku || "",
+        name: editingItem.name || "",
+        description: editingItem.description || "",
+        type: editingItem.type || "",
+        size: editingItem.size || "",
+        color: editingItem.color || "",
+        price: editingItem.price || "",
+        quantity: editingItem.quantity || 0,
+        minStockLevel: editingItem.minStockLevel || 10,
+        supplierId: editingItem.supplierId || undefined,
+      });
+    } else if (!editingItem && open) {
+      form.reset({
+        sku: "",
+        name: "",
+        description: "",
+        type: "",
+        size: "",
+        color: "",
+        price: "",
+        quantity: 0,
+        minStockLevel: 10,
+        supplierId: undefined,
+      });
+    }
+  }, [editingItem, open, form]);
+
   const createItemMutation = useMutation({
     mutationFn: async (data: InsertInventoryItem) => {
       const response = await apiRequest("POST", "/api/inventory", data);
@@ -50,8 +95,7 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-      onOpenChange(false);
-      form.reset();
+      handleClose();
       toast({
         title: "Success",
         description: "Inventory item added successfully",
@@ -61,6 +105,29 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
       toast({
         title: "Error",
         description: "Failed to add inventory item",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateItemMutation = useMutation({
+    mutationFn: async (data: InsertInventoryItem) => {
+      const response = await apiRequest("PATCH", `/api/inventory/${editingItem.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      handleClose();
+      toast({
+        title: "Success",
+        description: "Inventory item updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update inventory item",
         variant: "destructive",
       });
     },
@@ -76,15 +143,25 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
     form.setValue("sku", sku);
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+    form.reset();
+    if (onClose) onClose();
+  };
+
   const onSubmit = (data: InsertInventoryItem) => {
-    createItemMutation.mutate(data);
+    if (editingItem) {
+      updateItemMutation.mutate(data);
+    } else {
+      createItemMutation.mutate(data);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Inventory Item</DialogTitle>
+          <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add Inventory Item"}</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -113,6 +190,7 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
                     <Textarea
                       placeholder="Enter item description"
                       {...field}
+                      value={field.value || ""}
                       data-testid="input-item-description"
                     />
                   </FormControl>
@@ -154,6 +232,7 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
                       <Input
                         placeholder="e.g., red, blue, black"
                         {...field}
+                        value={field.value || ""}
                         onChange={(e) => {
                           field.onChange(e.target.value);
                           setTimeout(generateSkuFromForm, 100);
@@ -178,6 +257,7 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
                       <Input
                         placeholder="e.g., S, M, L, 9, 10"
                         {...field}
+                        value={field.value || ""}
                         onChange={(e) => {
                           field.onChange(e.target.value);
                           setTimeout(generateSkuFromForm, 100);
@@ -271,6 +351,7 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
                         type="number"
                         min="0"
                         {...field}
+                        value={field.value || ""}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                         data-testid="input-min-stock"
                       />
@@ -287,14 +368,14 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Supplier (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger data-testid="select-supplier">
                         <SelectValue placeholder="Select supplier" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {suppliers?.map((supplier: any) => (
+                      {suppliers && suppliers.map((supplier: any) => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </SelectItem>
@@ -317,10 +398,13 @@ export default function AddInventoryModal({ open, onOpenChange }: AddInventoryMo
               </Button>
               <Button
                 type="submit"
-                disabled={createItemMutation.isPending}
+                disabled={createItemMutation.isPending || updateItemMutation.isPending}
                 data-testid="button-save-inventory"
               >
-                {createItemMutation.isPending ? "Adding..." : "Add Item"}
+                {editingItem 
+                  ? (updateItemMutation.isPending ? "Updating..." : "Update Item")
+                  : (createItemMutation.isPending ? "Adding..." : "Add Item")
+                }
               </Button>
             </div>
           </form>
