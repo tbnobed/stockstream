@@ -65,17 +65,9 @@ docker-compose build
 echo "🗄️  Starting database and running migrations..."
 docker-compose up -d postgres
 
-# Wait for database to be ready
-echo "⏳ Waiting for database to be ready..."
-sleep 10
-
-# Run database migrations using the builder stage with dev dependencies
-echo "📊 Running database migrations..."
-docker-compose run --rm app sh -c "npm install --include=dev && npm run db:push"
-
-# Seed database with initial admin user
-echo "🌱 Seeding database with admin user..."
-docker-compose run --rm app node scripts/seed-docker.js
+# Wait for application to be ready (it handles migrations automatically)
+echo "⏳ Waiting for application startup..."
+sleep 15
 
 echo "🚀 Starting application..."
 docker-compose up -d

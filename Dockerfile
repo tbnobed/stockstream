@@ -47,6 +47,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 
+# Install postgresql-client for database operations
+USER root
+RUN apk add --no-cache postgresql-client
+
+# Copy and setup entrypoint script
+COPY scripts/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Fix permissions for nextjs user
+RUN chown -R nextjs:nodejs /app
+
 # Switch to non-root user
 USER nextjs
 
@@ -56,8 +67,8 @@ EXPOSE 5000
 # Set environment
 ENV NODE_ENV=production
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
+# Use dumb-init to handle signals properly and run entrypoint
+ENTRYPOINT ["dumb-init", "--", "/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the application
 CMD ["node", "dist/index.js"]

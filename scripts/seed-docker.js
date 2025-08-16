@@ -4,7 +4,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq } from 'drizzle-orm';
-import { users, salesAssociates } from '../shared/schema.js';
+import { users, salesAssociates } from '../shared/schema.ts';
 
 async function seedDatabase() {
   console.log('🌱 Seeding database with initial data...');

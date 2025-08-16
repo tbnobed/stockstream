@@ -22,13 +22,9 @@ docker-compose exec postgres pg_dump -U postgres inventorypro > "backups/backup-
 echo "🏗️  Building updated application..."
 docker-compose build app
 
-# Run migrations
-echo "📊 Running database migrations..."
-docker-compose run --rm app sh -c "npm install --include=dev && npm run db:push"
-
-# Seed database with initial admin user if not exists
-echo "🌱 Ensuring admin user exists..."
-docker-compose run --rm app node scripts/seed-docker.js
+# Application handles migrations and seeding automatically on startup
+echo "⏳ Waiting for application to complete setup..."
+sleep 10
 
 # Restart application with new image
 echo "🔄 Restarting application..."
