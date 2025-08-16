@@ -14,6 +14,16 @@ import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { generateSKU } from "@/lib/sku-generator";
+import { 
+  ITEM_TYPES, 
+  ITEM_COLORS, 
+  ITEM_SIZES, 
+  ITEM_DESIGNS, 
+  GROUP_TYPES, 
+  STYLE_GROUPS,
+  generateItemName,
+  generateSKU as generateCategorySKU
+} from "@shared/categories";
 
 interface AddInventoryModalProps {
   open: boolean;
@@ -149,6 +159,35 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     },
   });
 
+  // Auto-populate item name and SKU based on selections
+  const autoPopulateFromCategories = () => {
+    const formData = form.getValues();
+    
+    // Generate item name from categories
+    const itemName = generateItemName({
+      type: formData.type,
+      color: formData.color,
+      size: formData.size,
+      design: formData.design,
+      groupType: formData.groupType,
+      styleGroup: formData.styleGroup,
+    });
+    
+    // Generate SKU from categories
+    const sku = generateCategorySKU({
+      type: formData.type,
+      color: formData.color,
+      size: formData.size,
+      design: formData.design,
+      groupType: formData.groupType,
+      styleGroup: formData.styleGroup,
+    });
+    
+    // Update form values
+    form.setValue("name", itemName);
+    form.setValue("sku", sku);
+  };
+
   const generateSkuFromForm = () => {
     const formData = form.getValues();
     const sku = generateSKU({
@@ -222,17 +261,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., shirt, pants, shoes"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          setTimeout(generateSkuFromForm, 100);
-                        }}
-                        data-testid="input-item-type"
-                      />
-                    </FormControl>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setTimeout(autoPopulateFromCategories, 100);
+                    }} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-type">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ITEM_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -244,18 +289,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Color</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., red, blue, black"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          setTimeout(generateSkuFromForm, 100);
-                        }}
-                        data-testid="input-item-color"
-                      />
-                    </FormControl>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setTimeout(autoPopulateFromCategories, 100);
+                    }} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-color">
+                          <SelectValue placeholder="Select color" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ITEM_COLORS.map((color) => (
+                          <SelectItem key={color} value={color}>
+                            {color}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -270,14 +320,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Design</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Lipstick, Cancer, Event-Specific"
-                        {...field}
-                        value={field.value || ""}
-                        data-testid="input-item-design"
-                      />
-                    </FormControl>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setTimeout(autoPopulateFromCategories, 100);
+                    }} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-design">
+                          <SelectValue placeholder="Select design" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ITEM_DESIGNS.map((design) => (
+                          <SelectItem key={design} value={design}>
+                            {design}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -289,14 +348,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Group Type</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Supporter, Ladies, Member-Only"
-                        {...field}
-                        value={field.value || ""}
-                        data-testid="input-item-group-type"
-                      />
-                    </FormControl>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setTimeout(autoPopulateFromCategories, 100);
+                    }} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-group-type">
+                          <SelectValue placeholder="Select group type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {GROUP_TYPES.map((groupType) => (
+                          <SelectItem key={groupType} value={groupType}>
+                            {groupType}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -310,14 +378,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Style Group</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., T-Shirt, V-Neck, Tank Top"
-                        {...field}
-                        value={field.value || ""}
-                        data-testid="input-item-style-group"
-                      />
-                    </FormControl>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setTimeout(autoPopulateFromCategories, 100);
+                    }} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-style-group">
+                          <SelectValue placeholder="Select style group" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {STYLE_GROUPS.map((styleGroup) => (
+                          <SelectItem key={styleGroup} value={styleGroup}>
+                            {styleGroup}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -329,18 +406,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Size</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., S, M, L, 9, 10"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          setTimeout(generateSkuFromForm, 100);
-                        }}
-                        data-testid="input-item-size"
-                      />
-                    </FormControl>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      setTimeout(autoPopulateFromCategories, 100);
+                    }} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-size">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ITEM_SIZES.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -392,6 +474,19 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
               />
             </div>
             
+            {/* Auto-generate button for name and SKU */}
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={autoPopulateFromCategories}
+                data-testid="button-auto-generate"
+                className="w-full"
+              >
+                Auto-Generate Name & SKU from Categories
+              </Button>
+            </div>
+            
             <FormField
               control={form.control}
               name="sku"
@@ -411,7 +506,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         onClick={generateSkuFromForm}
                         data-testid="button-generate-sku"
                       >
-                        Generate
+                        Legacy Generate
                       </Button>
                     </div>
                   </FormControl>
