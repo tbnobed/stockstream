@@ -165,22 +165,22 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     
     // Generate item name from categories
     const itemName = generateItemName({
-      type: formData.type,
-      color: formData.color,
-      size: formData.size,
-      design: formData.design,
-      groupType: formData.groupType,
-      styleGroup: formData.styleGroup,
+      type: formData.type || undefined,
+      color: formData.color || undefined,
+      size: formData.size || undefined,
+      design: formData.design || undefined,
+      groupType: formData.groupType || undefined,
+      styleGroup: formData.styleGroup || undefined,
     });
     
     // Generate SKU from categories
     const sku = generateCategorySKU({
-      type: formData.type,
-      color: formData.color,
-      size: formData.size,
-      design: formData.design,
-      groupType: formData.groupType,
-      styleGroup: formData.styleGroup,
+      type: formData.type || undefined,
+      color: formData.color || undefined,
+      size: formData.size || undefined,
+      design: formData.design || undefined,
+      groupType: formData.groupType || undefined,
+      styleGroup: formData.styleGroup || undefined,
     });
     
     // Update form values
@@ -191,9 +191,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   const generateSkuFromForm = () => {
     const formData = form.getValues();
     const sku = generateSKU({
-      type: formData.type,
-      color: formData.color,
-      size: formData.size,
+      type: formData.type || undefined,
+      color: formData.color || undefined,
+      size: formData.size || undefined,
     });
     form.setValue("sku", sku);
   };
@@ -571,7 +571,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {suppliers && suppliers.map((supplier: any) => (
+                      {suppliers && Array.isArray(suppliers) && suppliers.map((supplier: any) => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </SelectItem>
