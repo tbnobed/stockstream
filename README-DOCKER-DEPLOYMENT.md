@@ -38,6 +38,8 @@ The deployment script will:
 
 ## Updating Existing Deployment
 
+### Multi-Item Transaction Support
+
 ```bash
 # Update existing deployment to support multi-item transactions
 ./update-multi-item.sh
@@ -48,6 +50,20 @@ This will:
 - Remove order number unique constraint
 - Update application code
 - Test functionality
+- Provide rollback if needed
+
+### Category Fields Support
+
+```bash
+# Add inventory categorization fields to existing deployment
+./deploy-category-fields.sh
+```
+
+This will:
+- Create database backup
+- Add Design, Group Type, and Style Group fields to inventory_items
+- Update application with enhanced categorization support
+- Verify deployment functionality
 - Provide rollback if needed
 
 ## Architecture Overview
@@ -63,6 +79,8 @@ This will:
 
 ### Database Schema Changes
 
+#### Multi-Item Transaction Support
+
 The system removes the unique constraint on `order_number` to allow multiple sale records per transaction:
 
 ```sql
@@ -72,6 +90,22 @@ orderNumber varchar(20) NOT NULL UNIQUE
 -- New schema (multi-item transactions)  
 orderNumber varchar(20) NOT NULL
 ```
+
+#### Inventory Categorization Fields
+
+Enhanced inventory_items table with new categorization columns:
+
+```sql
+-- Added columns for advanced categorization
+ALTER TABLE inventory_items ADD COLUMN design TEXT;
+ALTER TABLE inventory_items ADD COLUMN group_type TEXT; 
+ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
+```
+
+**Category Field Examples:**
+- **Design**: Lipstick, Cancer, Event-Specific
+- **Group Type**: Supporter, Ladies, Member-Only
+- **Style Group**: T-Shirt, V-Neck, Tank Top
 
 ### Container Architecture
 

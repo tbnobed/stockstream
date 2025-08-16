@@ -142,9 +142,40 @@ BEGIN
         END LOOP;
     END;
     
-    RAISE NOTICE 'Production constraint fixes applied successfully';
+    -- 3. Add new category fields to inventory_items if they don't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'inventory_items' 
+        AND column_name = 'design' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE inventory_items ADD COLUMN design TEXT;
+        RAISE NOTICE 'Added design column to inventory_items';
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'inventory_items' 
+        AND column_name = 'group_type' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE inventory_items ADD COLUMN group_type TEXT;
+        RAISE NOTICE 'Added group_type column to inventory_items';
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'inventory_items' 
+        AND column_name = 'style_group' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
+        RAISE NOTICE 'Added style_group column to inventory_items';
+    END IF;
+    
+    RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
-" && echo "✅ Production constraints configured for multi-item transactions" || echo "⚠️  Constraint configuration completed with warnings"
+" && echo "✅ Production constraints and schema configured for multi-item transactions and category fields" || echo "⚠️  Constraint and schema configuration completed with warnings"
 
 # Final health check
 echo "🔍 Performing final health check..."

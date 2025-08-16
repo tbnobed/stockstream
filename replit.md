@@ -93,3 +93,15 @@ The application uses Docker for containerization, with multi-stage builds for op
 - **Health monitoring**: Enhanced health checks to verify API endpoints and database connectivity
 - **Environment configuration**: Extended environment variables for multi-item cart and QR scanner settings
 - **Production hardening**: Security considerations, resource limits, and monitoring capabilities for production deployment
+
+### Inventory Categorization Enhancement (August 16, 2025)
+- **Enhanced inventory schema**: Added three new categorization fields to inventory_items table
+- **Design field**: Support for visual themes like Lipstick, Cancer, Event-Specific
+- **Group Type field**: Customer segmentation like Supporter, Ladies, Member-Only
+- **Style Group field**: Product variations like T-Shirt, V-Neck, Tank Top
+- **Automated migration**: Updated docker-entrypoint.sh to automatically add new columns on container startup
+- **Category deployment script**: Created deploy-category-fields.sh for production deployment of new fields
+- **Enhanced search functionality**: Updated search to include all category fields and descriptions
+- **Form improvements**: Added new fields to inventory creation and editing forms with proper validation
+- **Display enhancements**: Updated both mobile and desktop inventory views to show descriptions
+- **Backward compatibility**: All migrations safely handle existing data and missing columns

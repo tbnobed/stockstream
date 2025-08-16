@@ -73,6 +73,49 @@ update_schema() {
         print_success "Database schema already supports multi-item transactions"
     fi
     
+    # Add new category fields to inventory_items table
+    print_status "Adding new category fields to inventory_items table..."
+    
+    docker-compose exec -T postgres psql -U postgres -d inventorypro -c "
+        DO \$\$
+        BEGIN
+            -- Add design column if it doesn't exist
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'inventory_items' 
+                AND column_name = 'design' 
+                AND table_schema = 'public'
+            ) THEN
+                ALTER TABLE inventory_items ADD COLUMN design TEXT;
+                RAISE NOTICE 'Added design column to inventory_items';
+            END IF;
+            
+            -- Add group_type column if it doesn't exist
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'inventory_items' 
+                AND column_name = 'group_type' 
+                AND table_schema = 'public'
+            ) THEN
+                ALTER TABLE inventory_items ADD COLUMN group_type TEXT;
+                RAISE NOTICE 'Added group_type column to inventory_items';
+            END IF;
+            
+            -- Add style_group column if it doesn't exist
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'inventory_items' 
+                AND column_name = 'style_group' 
+                AND table_schema = 'public'
+            ) THEN
+                ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
+                RAISE NOTICE 'Added style_group column to inventory_items';
+            END IF;
+            
+            RAISE NOTICE 'Category fields migration completed successfully';
+        END \$\$;
+    " >/dev/null 2>&1 && print_success "Category fields added to inventory schema" || print_warning "Category fields may already exist"
+    
     # Verify schema update
     NEW_CONSTRAINT_COUNT=$(docker-compose exec -T postgres psql -U postgres -d inventorypro -t -c "
         SELECT COUNT(*) 
