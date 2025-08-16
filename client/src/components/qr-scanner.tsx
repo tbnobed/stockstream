@@ -45,8 +45,13 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       }
 
       // Check if we're on HTTPS (required for camera access)
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('replit')) {
         throw new Error("Camera access requires HTTPS connection");
+      }
+
+      // Check if running in Replit webview (iframe restrictions)
+      if (window.parent !== window) {
+        throw new Error("Camera blocked in Replit preview. Click the 'Open in new tab' button (⧉) at top-right of preview to use QR scanner.");
       }
 
       // Check for actual server environment (not mobile devices)
