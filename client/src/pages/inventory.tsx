@@ -113,12 +113,6 @@ export default function Inventory() {
               >
                 <QrCode size={16} />
               </Button>
-              <Button variant="outline" size="sm" data-testid="button-filter">
-                Filter
-              </Button>
-              <Button variant="outline" size="sm" data-testid="button-export">
-                Export
-              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
