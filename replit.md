@@ -143,3 +143,5 @@ The Docker configuration now properly handles the two-stage build process where 
 - **Migration fix**: Updated Dockerfile to include dev dependencies needed for drizzle-kit migrations
 - **Docker Compose**: Removed obsolete version attribute and improved migration handling
 - **Emergency fix**: Created fix-deployment.sh script for immediate migration resolution
+- **Path resolution fix**: Fixed import.meta.dirname issue in Docker bundled environment using sed replacement
+- **Docker compatibility**: Updated Dockerfile to properly handle Node.js path resolution in production containers

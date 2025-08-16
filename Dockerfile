@@ -13,8 +13,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application and fix paths for Docker
+RUN vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist \
+    && sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js
 
 # Production stage
 FROM node:18-alpine AS production
@@ -38,6 +39,7 @@ RUN npm ci && npm cache clean --force
 # Copy built application from builder stage  
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nextjs:nodejs /app/server ./server
+COPY --from=builder --chown=nextjs:nodejs /app/server/vite-docker.ts ./server/vite.js
 # Copy static assets to the expected location for production serving
 COPY --from=builder --chown=nextjs:nodejs /app/dist/public ./server/public
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
