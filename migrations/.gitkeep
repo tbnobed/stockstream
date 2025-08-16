@@ -1,0 +1,2 @@
+# Migrations directory
+# Drizzle ORM generates migration files here during database schema changes
