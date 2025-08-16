@@ -40,6 +40,8 @@ RUN npm ci && npm cache clean --force
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nextjs:nodejs /app/server ./server
 COPY --from=builder --chown=nextjs:nodejs /app/server/vite-docker.ts ./server/vite.js
+# Replace Neon database driver with standard PostgreSQL for Docker
+COPY server/db-docker.ts ./server/db.js
 # Copy static assets to the expected location for production serving
 COPY --from=builder --chown=nextjs:nodejs /app/dist/public ./server/public
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
@@ -54,6 +56,9 @@ RUN apk add --no-cache postgresql-client
 # Copy and setup entrypoint script
 COPY scripts/docker-entrypoint-simple.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Build the Docker-specific database module and compile TypeScript files
+RUN npx tsc server/db-docker.ts --outDir server --module commonjs --target es2020 --allowJs
 
 # Fix permissions for nextjs user
 RUN chown -R nextjs:nodejs /app
