@@ -14,7 +14,9 @@ RUN npm ci
 COPY . .
 
 # Build the application and fix paths for Docker
-RUN npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist \
+RUN npx vite build \
+    && cp server/db-docker.ts server/db.ts \
+    && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist \
     && sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js
 
 # Production stage
@@ -40,8 +42,7 @@ RUN npm ci && npm cache clean --force
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nextjs:nodejs /app/server ./server
 COPY --from=builder --chown=nextjs:nodejs /app/server/vite-docker.ts ./server/vite.js
-# Replace Neon database driver with standard PostgreSQL for Docker
-COPY server/db-docker.ts ./server/db.js
+# Database driver is already replaced during build
 # Copy static assets to the expected location for production serving
 COPY --from=builder --chown=nextjs:nodejs /app/dist/public ./server/public
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
@@ -57,7 +58,7 @@ RUN apk add --no-cache postgresql-client
 COPY scripts/docker-entrypoint-simple.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Database module is already in CommonJS format, no compilation needed
+# Database driver replaced during build, no additional steps needed
 
 # Fix permissions for nextjs user
 RUN chown -R nextjs:nodejs /app
