@@ -38,6 +38,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       type: editingItem.type || "",
       size: editingItem.size || "",
       color: editingItem.color || "",
+      design: editingItem.design || "",
+      groupType: editingItem.groupType || "",
+      styleGroup: editingItem.styleGroup || "",
       price: editingItem.price || "",
       cost: editingItem.cost || "",
       quantity: editingItem.quantity || 0,
@@ -50,6 +53,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       type: "",
       size: "",
       color: "",
+      design: "",
+      groupType: "",
+      styleGroup: "",
       price: "",
       cost: "",
       quantity: 0,
@@ -68,6 +74,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         type: editingItem.type || "",
         size: editingItem.size || "",
         color: editingItem.color || "",
+        design: editingItem.design || "",
+        groupType: editingItem.groupType || "",
+        styleGroup: editingItem.styleGroup || "",
         price: editingItem.price || "",
         cost: editingItem.cost || "",
         quantity: editingItem.quantity || 0,
@@ -82,6 +91,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         type: "",
         size: "",
         color: "",
+        design: "",
+        groupType: "",
+        styleGroup: "",
         price: "",
         cost: "",
         quantity: 0,
@@ -250,7 +262,67 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
               />
             </div>
             
+            {/* Category Fields */}
             <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="design"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Design</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Lipstick, Cancer, Event-Specific"
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="input-item-design"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="groupType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Group Type</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Supporter, Ladies, Member-Only"
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="input-item-group-type"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="styleGroup"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Style Group</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., T-Shirt, V-Neck, Tank Top"
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="input-item-style-group"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <FormField
                 control={form.control}
                 name="size"
@@ -273,7 +345,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                   </FormItem>
                 )}
               />
-              
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="price"

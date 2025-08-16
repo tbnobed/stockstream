@@ -52,6 +52,9 @@ export const inventoryItems = pgTable("inventory_items", {
   type: text("type").notNull(), // e.g., "shirt", "pants", "shoes"
   size: text("size"), // e.g., "S", "M", "L", "XL", "9", "10"
   color: text("color"), // e.g., "red", "blue", "black"
+  design: text("design"), // e.g., "Lipstick", "Cancer", "Event-Specific"
+  groupType: text("group_type"), // e.g., "Supporter", "Ladies", "Member-Only"
+  styleGroup: text("style_group"), // e.g., "T-Shirt", "V-Neck", "Tank Top"
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Selling price
   cost: decimal("cost", { precision: 10, scale: 2 }), // Landed cost (what you paid)
   quantity: integer("quantity").notNull().default(0),
