@@ -158,27 +158,78 @@ The Docker configuration now properly handles the two-stage build process where 
 ## Docker Deployment Best Practices
 
 ### Critical Docker Deployment Checklist
-When deploying applications with Docker, always follow this checklist to avoid database driver conflicts:
+When deploying full-stack applications with Docker, always follow this comprehensive checklist:
 
-1. **Database Driver Replacement (CRITICAL)**
-   - Replace cloud drivers (Neon, PlanetScale, Supabase) with standard PostgreSQL drivers BEFORE bundling
-   - Never use WebSocket-based database connections in Docker containers
-   - Perform driver replacement during build stage: `cp server/db-docker.ts server/db.ts`
-   - Verify bundled application doesn't contain WebSocket imports (`grep -n "wss://" dist/index.js`)
+#### 1. Database Driver Compatibility (CRITICAL)
+- **Replace cloud drivers** (Neon, PlanetScale, Supabase) with standard PostgreSQL drivers BEFORE bundling
+- **Never use WebSocket connections** in Docker containers - they fail in containerized environments
+- **Perform replacement during build stage** using echo commands in Dockerfile:
+  ```dockerfile
+  RUN echo "import { drizzle } from 'drizzle-orm/postgres-js';" > server/db.ts && \
+      echo "import postgres from 'postgres';" >> server/db.ts
+  ```
+- **Verify no WebSocket imports** remain in bundled code
 
-2. **Build Process Order**
-   - Frontend build → Database driver replacement → Backend bundling → Path fixes
-   - Install postgres package in both builder and production stages
-   - Avoid TypeScript compilation of database modules in production stage
+#### 2. Database Schema and User Creation
+- **Use snake_case column names** in SQL INSERT statements to match Drizzle ORM output
+- **Critical field mapping**:
+  - Schema: `associateCode` → SQL: `associate_code`
+  - Schema: `firstName` → SQL: `first_name`
+  - Schema: `lastName` → SQL: `last_name`
+  - Schema: `isActive` → SQL: `is_active`
+  - Schema: `userId` → SQL: `user_id`
+  - Schema: `createdAt` → SQL: `created_at`
+- **Handle interactive prompts** in drizzle-kit: `echo "yes" | npx drizzle-kit push --force`
+- **Clean database conflicts** by dropping/recreating public schema before migrations
+- **Always verify schema creation** before attempting user creation
 
-3. **Database Setup Automation** 
-   - Use local PostgreSQL container with standard connection strings
-   - Implement automatic schema creation with non-interactive commands (`--force` flags)
-   - Create admin users automatically via SQL commands during startup
-   - Test database connectivity before attempting migrations
+#### 3. Static File Serving (CRITICAL)
+- **Check Vite build output location** in `vite.config.ts` - look for `build.outDir` setting
+- **Common build patterns**:
+  - If `outDir: "dist/public"` → copy from `dist/public/*`
+  - If `outDir: "client/dist"` → copy from `client/dist/*`
+- **Verify build output exists** before copying:
+  ```dockerfile
+  RUN ls -la dist/public/ || (echo "Build failed" && exit 1)
+  ```
+- **Create target directory** before copying: `mkdir -p server/public`
+- **Match serveStatic expectations** - check what path `serveStatic()` function expects
 
-4. **Error Prevention**
-   - Check for WebSocket connection attempts in application logs
-   - Verify DATABASE_URL points to local container (`postgres:5432`)
-   - Ensure proper file permissions in containers (`chown -R nextjs:nodejs`)
-   - Test all API endpoints respond after deployment
+#### 4. Build Process Order (MUST FOLLOW)
+1. **Frontend build**: `npm run build` (outputs static files)
+2. **Database driver replacement**: Replace cloud drivers with postgres-js
+3. **Backend bundling**: `esbuild server/index.ts --bundle`
+4. **Path fixes**: Replace `import.meta.dirname` with absolute paths
+5. **Static file copying**: Copy frontend build to expected server directory
+6. **Verification**: Check all files exist before container startup
+
+#### 5. Container Initialization Script
+- **Wait for database** with `pg_isready` before any operations
+- **Clean schema conflicts** by dropping/recreating public schema
+- **Handle interactive prompts** with `echo "yes" |` for non-interactive execution
+- **Use correct column names** (snake_case) in SQL INSERT statements
+- **Verify admin user creation** with health checks
+- **Fail fast** on any initialization errors
+
+#### 6. Common Failure Patterns to Avoid
+- **"Column does not exist"**: Using camelCase instead of snake_case in SQL
+- **"Build directory not found"**: Copying from wrong path or before build completion  
+- **Interactive prompt hangs**: Not providing input to drizzle-kit push
+- **WebSocket connection errors**: Using cloud drivers instead of postgres-js
+- **Schema conflicts**: Not cleaning existing tables before migration
+- **Permission errors**: Not setting proper file ownership with chown
+
+#### 7. Deployment Verification Steps
+1. **Database connection** - verify container can connect to PostgreSQL
+2. **Schema creation** - confirm all tables exist with correct structure
+3. **Admin user creation** - verify admin account exists and has correct role
+4. **Static file serving** - test that frontend assets are accessible
+5. **API endpoints** - verify all backend routes respond correctly
+6. **Health checks** - confirm application passes all health check endpoints
+
+### Emergency Troubleshooting Guide
+- **Database errors**: Always check column names match schema (snake_case vs camelCase)
+- **Build failures**: Verify Vite output directory path in vite.config.ts
+- **Interactive hangs**: Add `echo "yes" |` before any drizzle-kit commands
+- **Missing files**: Check build output exists before attempting to copy
+- **Container restarts**: Review all initialization logs for specific error messages
