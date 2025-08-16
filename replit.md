@@ -151,3 +151,6 @@ The Docker configuration now properly handles the two-stage build process where 
 - **Automated deployment**: Created docker-entrypoint.sh for automatic database setup and admin creation
 - **Self-contained Docker**: Application now handles all database migrations and seeding during container startup
 - **Zero-configuration deployment**: Docker containers automatically set up database schema and admin user
+- **Database driver fix**: Replaced Neon serverless driver with postgres-js for Docker compatibility
+- **Connection resolution**: Fixed WebSocket connection errors by using standard PostgreSQL drivers in containers
+- **Deployment pattern**: Always use standard database drivers (not cloud drivers) for Docker deployments
