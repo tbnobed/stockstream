@@ -1,69 +1,65 @@
-# Multi-stage build for production deployment
+# InventoryPro Production Dockerfile
+# Clean build with PostgreSQL driver replacement for containerized deployment
+
+# Build stage - prepare application with correct database driver
 FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install all dependencies (including dev dependencies needed for build)
 RUN npm ci
 
-# Copy source code
+# Copy application source
 COPY . .
 
-# Build the application and fix paths for Docker
-RUN npx vite build \
-    && cp server/db-docker.ts server/db.ts \
-    && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist \
-    && sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js
+# Replace cloud database driver with PostgreSQL driver for Docker
+RUN echo "import { drizzle } from 'drizzle-orm/postgres-js';" > server/db.ts && \
+    echo "import postgres from 'postgres';" >> server/db.ts && \
+    echo "import * as schema from '@shared/schema';" >> server/db.ts && \
+    echo "" >> server/db.ts && \
+    echo "if (!process.env.DATABASE_URL) {" >> server/db.ts && \
+    echo "  throw new Error('DATABASE_URL must be set.');" >> server/db.ts && \
+    echo "}" >> server/db.ts && \
+    echo "" >> server/db.ts && \
+    echo "export const connection = postgres(process.env.DATABASE_URL);" >> server/db.ts && \
+    echo "export const db = drizzle({ client: connection, schema });" >> server/db.ts
+
+# Build frontend and backend
+RUN npm run build && \
+    npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && \
+    sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js
 
 # Production stage
 FROM node:18-alpine AS production
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install system dependencies
+RUN apk add --no-cache dumb-init postgresql-client
 
-# Create app user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install production dependencies + required build tools
 COPY package*.json ./
-
-# Install all dependencies for migrations, then clean up dev deps for runtime
 RUN npm ci && npm cache clean --force
 
-# Copy built application from builder stage  
+# Copy application files from builder
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nextjs:nodejs /app/server ./server
-COPY --from=builder --chown=nextjs:nodejs /app/server/vite-docker.ts ./server/vite.js
-# Database driver is already replaced during build
-# Copy static assets to the expected location for production serving
-COPY --from=builder --chown=nextjs:nodejs /app/dist/public ./server/public
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
-COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 
-# Install postgresql-client for database operations
-USER root
-RUN apk add --no-cache postgresql-client
-
-# Copy and setup entrypoint script
-COPY scripts/docker-entrypoint-simple.sh /usr/local/bin/docker-entrypoint.sh
+# Copy and setup entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Database driver replaced during build, no additional steps needed
-
-# Fix permissions for nextjs user
+# Set proper ownership
 RUN chown -R nextjs:nodejs /app
 
-# Switch to non-root user
+# Switch to app user
 USER nextjs
 
 # Expose port
@@ -72,8 +68,10 @@ EXPOSE 5000
 # Set environment
 ENV NODE_ENV=production
 
-# Use dumb-init to handle signals properly and run entrypoint
-ENTRYPOINT ["dumb-init", "--", "/usr/local/bin/docker-entrypoint.sh"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:5000/api/health || exit 1
 
-# Start the application
+# Use entrypoint for database setup
+ENTRYPOINT ["dumb-init", "--", "/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/index.js"]
