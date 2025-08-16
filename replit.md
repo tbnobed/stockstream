@@ -154,3 +154,31 @@ The Docker configuration now properly handles the two-stage build process where 
 - **Database driver fix**: Replaced Neon serverless driver with postgres-js for Docker compatibility
 - **Connection resolution**: Fixed WebSocket connection errors by using standard PostgreSQL drivers in containers
 - **Deployment pattern**: Always use standard database drivers (not cloud drivers) for Docker deployments
+
+## Docker Deployment Best Practices
+
+### Critical Docker Deployment Checklist
+When deploying applications with Docker, always follow this checklist to avoid database driver conflicts:
+
+1. **Database Driver Replacement (CRITICAL)**
+   - Replace cloud drivers (Neon, PlanetScale, Supabase) with standard PostgreSQL drivers BEFORE bundling
+   - Never use WebSocket-based database connections in Docker containers
+   - Perform driver replacement during build stage: `cp server/db-docker.ts server/db.ts`
+   - Verify bundled application doesn't contain WebSocket imports (`grep -n "wss://" dist/index.js`)
+
+2. **Build Process Order**
+   - Frontend build → Database driver replacement → Backend bundling → Path fixes
+   - Install postgres package in both builder and production stages
+   - Avoid TypeScript compilation of database modules in production stage
+
+3. **Database Setup Automation** 
+   - Use local PostgreSQL container with standard connection strings
+   - Implement automatic schema creation with non-interactive commands (`--force` flags)
+   - Create admin users automatically via SQL commands during startup
+   - Test database connectivity before attempting migrations
+
+4. **Error Prevention**
+   - Check for WebSocket connection attempts in application logs
+   - Verify DATABASE_URL points to local container (`postgres:5432`)
+   - Ensure proper file permissions in containers (`chown -R nextjs:nodejs`)
+   - Test all API endpoints respond after deployment
