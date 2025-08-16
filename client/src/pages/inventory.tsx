@@ -40,7 +40,7 @@ export default function Inventory() {
 
   // Archive item mutation
   const archiveMutation = useMutation({
-    mutationFn: (itemId: string) => apiRequest(`/api/inventory/${itemId}/archive`, "PATCH"),
+    mutationFn: (itemId: string) => apiRequest("PATCH", `/api/inventory/${itemId}/archive`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       toast({
@@ -59,7 +59,7 @@ export default function Inventory() {
 
   // Restore item mutation
   const restoreMutation = useMutation({
-    mutationFn: (itemId: string) => apiRequest(`/api/inventory/${itemId}/restore`, "PATCH"),
+    mutationFn: (itemId: string) => apiRequest("PATCH", `/api/inventory/${itemId}/restore`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       toast({
