@@ -203,13 +203,16 @@ When deploying full-stack applications with Docker, always follow this comprehen
 5. **Static file copying**: Copy frontend build to expected server directory
 6. **Verification**: Check all files exist before container startup
 
-#### 5. Container Initialization Script
+#### 5. Container Initialization Script (CRITICAL - DATA PRESERVATION)
 - **Wait for database** with `pg_isready` before any operations
-- **Clean schema conflicts** by dropping/recreating public schema
+- **NEVER DROP EXISTING DATA** - Only create schema if tables don't exist
+- **Check table existence** before running any schema operations
 - **Handle interactive prompts** with `echo "yes" |` for non-interactive execution
 - **Use correct column names** (snake_case) in SQL INSERT statements
 - **Verify admin user creation** with health checks
 - **Fail fast** on any initialization errors
+
+⚠️ **CRITICAL**: Never use `DROP SCHEMA CASCADE` in production - this wipes all user data on every restart!
 
 #### 6. Common Failure Patterns to Avoid
 - **"Column does not exist"**: Using camelCase instead of snake_case in SQL
