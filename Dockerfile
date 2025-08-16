@@ -52,7 +52,7 @@ USER root
 RUN apk add --no-cache postgresql-client
 
 # Copy and setup entrypoint script
-COPY scripts/docker-entrypoint.sh /usr/local/bin/
+COPY scripts/docker-entrypoint-simple.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Fix permissions for nextjs user

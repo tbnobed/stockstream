@@ -16,19 +16,31 @@ echo "✅ Database connection established"
 echo "📊 Checking database schema..."
 if ! psql $DATABASE_URL -c "SELECT 1 FROM users LIMIT 1;" >/dev/null 2>&1; then
   echo "🔧 Database schema not found, running migrations..."
-  npm run db:push
   
-  echo "🌱 Creating default admin user..."
-  psql $DATABASE_URL -c "
-    INSERT INTO users (username, associate_code, first_name, last_name, email, role, is_active)
-    VALUES ('admin', 'ADMIN1', 'System', 'Administrator', 'admin@inventorypro.com', 'admin', true)
-    ON CONFLICT (username) DO NOTHING;
-    
-    INSERT INTO sales_associates (id, name, email, user_id, is_active)
-    SELECT u.id, 'System Administrator', 'admin@inventorypro.com', u.id, true
-    FROM users u WHERE u.username = 'admin'
-    ON CONFLICT (id) DO NOTHING;
-  "
+  # Run drizzle push with auto-confirmation
+  echo "y" | npm run db:push
+  
+  # Wait a moment for tables to be fully created
+  sleep 2
+  
+  # Verify tables were created before seeding
+  echo "🔍 Verifying tables were created..."
+  if psql $DATABASE_URL -c "SELECT 1 FROM users LIMIT 1;" >/dev/null 2>&1; then
+    echo "🌱 Creating default admin user..."
+    psql $DATABASE_URL -c "
+      INSERT INTO users (username, associate_code, first_name, last_name, email, role, is_active)
+      VALUES ('admin', 'ADMIN1', 'System', 'Administrator', 'admin@inventorypro.com', 'admin', true)
+      ON CONFLICT (username) DO NOTHING;
+      
+      INSERT INTO sales_associates (id, name, email, user_id, is_active)
+      SELECT u.id, 'System Administrator', 'admin@inventorypro.com', u.id, true
+      FROM users u WHERE u.username = 'admin'
+      ON CONFLICT (id) DO NOTHING;
+    "
+    echo "✅ Admin user created successfully!"
+  else
+    echo "❌ Tables not created properly, admin user creation skipped"
+  fi
   
   echo "✅ Database setup completed!"
 else

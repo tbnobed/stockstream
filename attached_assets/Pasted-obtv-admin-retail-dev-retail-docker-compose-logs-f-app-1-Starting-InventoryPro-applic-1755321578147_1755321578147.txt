@@ -1,0 +1,99 @@
+obtv-admin@retail-dev:~/retail$ docker compose logs -f
+app-1       | 🚀 Starting InventoryPro application...
+app-1       | ⏳ Waiting for database connection...
+app-1       | postgres:5432 - accepting connections
+app-1       | ✅ Database connection established
+app-1       | 📊 Checking database schema...
+app-1       | 🔧 Database schema not found, running migrations...
+app-1       |
+app-1       | > rest-express@1.0.0 db:push
+postgres-1  |
+app-1       | > drizzle-kit push
+postgres-1  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+postgres-1  |
+postgres-1  | 2025-08-16 05:18:42.931 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+postgres-1  | 2025-08-16 05:18:42.931 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2025-08-16 05:18:42.931 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2025-08-16 05:18:42.932 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2025-08-16 05:18:42.935 UTC [29] LOG:  database system was shut down at 2025-08-16 05:16:58 UTC
+postgres-1  | 2025-08-16 05:18:42.944 UTC [1] LOG:  database system is ready to accept connections
+app-1       |
+postgres-1  | 2025-08-16 05:18:53.583 UTC [41] ERROR:  relation "users" does not exist at character 15
+postgres-1  | 2025-08-16 05:18:53.583 UTC [41] STATEMENT:  SELECT 1 FROM users LIMIT 1;
+postgres-1  | 2025-08-16 05:19:05.500 UTC [51] ERROR:  relation "users" does not exist at character 18
+postgres-1  | 2025-08-16 05:19:05.500 UTC [51] STATEMENT:
+postgres-1  |       INSERT INTO users (username, associate_code, first_name, last_name, email, role, is_active)
+postgres-1  |       VALUES ('admin', 'ADMIN1', 'System', 'Administrator', 'admin@inventorypro.com', 'admin', true)
+postgres-1  |       ON CONFLICT (username) DO NOTHING;
+postgres-1  |
+postgres-1  |       INSERT INTO sales_associates (id, name, email, user_id, is_active)
+postgres-1  |       SELECT u.id, 'System Administrator', 'admin@inventorypro.com', u.id, true
+postgres-1  |       FROM users u WHERE u.username = 'admin'
+postgres-1  |       ON CONFLICT (id) DO NOTHING;
+postgres-1  |
+app-1       | No config path provided, using default 'drizzle.config.ts'
+app-1       | Reading config file '/app/drizzle.config.ts'
+app-1       | Using 'pg' driver for database querying
+app-1       | [⣷] Pulling schema from database...
+[⣯] Pulling schema from database...
+[✓] Pulling schema from database...
+app-1       |
+app-1       | Is inventory_items table created or renamed from another table?
+app-1       | ❯ + inventory_items            create table
+app-1       | npm notice
+app-1       | npm notice New major version of npm available! 10.8.2 -> 11.5.2
+app-1       | npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+app-1       | npm notice To update run: npm install -g npm@11.5.2
+app-1       | npm notice
+app-1       |   ~ app_logs › inventory_items rename table🌱 Creating default admin user...
+app-1       | ERROR:  relation "users" does not exist
+app-1       | LINE 2:     INSERT INTO users (username, associate_code, first_name,...
+app-1       |                         ^
+app-1       | ✅ Database setup completed!
+app-1       | 🌐 Starting application server...
+app-1       | 5:19:06 AM [express] serving on port 5000
+
+app-1       | Login error: ErrorEvent {
+app-1       |   [Symbol(kTarget)]: WebSocket {
+app-1       |     _events: [Object: null prototype] {
+app-1       |       error: [Function],
+app-1       |       message: [Function],
+app-1       |       close: [Function],
+app-1       |       open: [Function]
+app-1       |     },
+app-1       |     _eventsCount: 4,
+app-1       |     _maxListeners: undefined,
+app-1       |     _binaryType: 'arraybuffer',
+app-1       |     _closeCode: 1006,
+app-1       |     _closeFrameReceived: false,
+app-1       |     _closeFrameSent: false,
+app-1       |     _closeMessage: <Buffer >,
+app-1       |     _closeTimer: null,
+app-1       |     _errorEmitted: true,
+app-1       |     _extensions: {},
+app-1       |     _paused: false,
+app-1       |     _protocol: '',
+app-1       |     _readyState: 3,
+app-1       |     _receiver: null,
+app-1       |     _sender: null,
+app-1       |     _socket: null,
+app-1       |     _bufferedAmount: 0,
+app-1       |     _isServer: false,
+app-1       |     _redirects: 0,
+app-1       |     _autoPong: true,
+app-1       |     _url: 'wss://postgres/v2',
+app-1       |     _req: null,
+app-1       |     [Symbol(kCapture)]: false
+app-1       |   },
+app-1       |   [Symbol(kType)]: 'error',
+app-1       |   [Symbol(kError)]: Error: connect ECONNREFUSED 172.18.0.2:443
+app-1       |       at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1555:16) {
+app-1       |     errno: -111,
+app-1       |     code: 'ECONNREFUSED',
+app-1       |     syscall: 'connect',
+app-1       |     address: '172.18.0.2',
+app-1       |     port: 443
+app-1       |   },
+app-1       |   [Symbol(kMessage)]: 'connect ECONNREFUSED 172.18.0.2:443'
+app-1       | }
+app-1       | 5:19:19 AM [express] POST /api/auth/login 500 in 117ms :: {"message":"Login failed"}
