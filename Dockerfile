@@ -35,10 +35,11 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built application from builder stage
+# Copy built application from builder stage  
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nextjs:nodejs /app/client/dist ./client/dist
 COPY --from=builder --chown=nextjs:nodejs /app/server ./server
+# Copy static assets to the expected location for production serving
+COPY --from=builder --chown=nextjs:nodejs /app/dist/public ./server/public
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
 COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
