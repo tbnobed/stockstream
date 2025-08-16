@@ -191,13 +191,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search inventory items (partial matching)
   app.get("/api/inventory/search/:term", async (req, res) => {
     try {
-      const searchTerm = req.params.term.trim();
+      let searchTerm = req.params.term.trim();
+      
+      // Decode URL-encoded search terms
+      try {
+        searchTerm = decodeURIComponent(searchTerm);
+      } catch (e) {
+        console.log("Could not decode search term, using as-is");
+      }
+      
+      console.log("Search request for:", searchTerm);
+      
       if (!searchTerm) {
         res.json([]);
         return;
       }
       
-      const items = await storage.searchInventoryItems(searchTerm);
+      // Try to parse JSON if it looks like JSON
+      let actualSearchTerm = searchTerm;
+      if (searchTerm.startsWith('{') && searchTerm.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(searchTerm);
+          console.log("Parsed JSON search term:", parsed);
+          // Extract the actual search value from JSON
+          actualSearchTerm = parsed.sku || parsed.id || parsed.name || searchTerm;
+          console.log("Using extracted search term:", actualSearchTerm);
+        } catch (e) {
+          console.log("Failed to parse JSON search term, using as-is");
+        }
+      }
+      
+      const items = await storage.searchInventoryItems(actualSearchTerm);
+      console.log("Search results count:", items.length);
       res.json(items);
     } catch (error) {
       console.error("Search inventory error:", error);

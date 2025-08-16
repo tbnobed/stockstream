@@ -343,9 +343,28 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         try {
           const result = await codeReader.current!.decodeOnceFromVideoDevice(undefined, video);
           if (result) {
-            console.log("QR Code detected:", result.getText());
+            const scannedText = result.getText().trim();
+            console.log("QR Code detected:", scannedText);
+            console.log("QR Code length:", scannedText.length);
+            console.log("QR Code type:", typeof scannedText);
+            
+            // Try to parse if it's JSON format
+            try {
+              const parsed = JSON.parse(scannedText);
+              console.log("QR Code parsed as JSON:", parsed);
+              // If it has an id or sku field, use that
+              const searchValue = parsed.sku || parsed.id || parsed.name || scannedText;
+              console.log("Using search value:", searchValue);
+              clearInterval(scanInterval);
+              onScan(searchValue);
+              stopScanning();
+              return;
+            } catch (e) {
+              console.log("QR Code is not JSON, using raw text");
+            }
+            
             clearInterval(scanInterval);
-            onScan(result.getText());
+            onScan(scannedText);
             stopScanning();
           }
         } catch (err: any) {
