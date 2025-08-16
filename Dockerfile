@@ -44,6 +44,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/server/vite-docker.ts ./server/vi
 COPY --from=builder --chown=nextjs:nodejs /app/dist/public ./server/public
 COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
 COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 
 # Switch to non-root user

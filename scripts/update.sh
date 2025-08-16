@@ -26,6 +26,10 @@ docker-compose build app
 echo "📊 Running database migrations..."
 docker-compose run --rm app sh -c "npm install --include=dev && npm run db:push"
 
+# Seed database with initial admin user if not exists
+echo "🌱 Ensuring admin user exists..."
+docker-compose run --rm app node scripts/seed-docker.js
+
 # Restart application with new image
 echo "🔄 Restarting application..."
 docker-compose up -d app

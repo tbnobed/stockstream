@@ -73,6 +73,10 @@ sleep 10
 echo "📊 Running database migrations..."
 docker-compose run --rm app sh -c "npm install --include=dev && npm run db:push"
 
+# Seed database with initial admin user
+echo "🌱 Seeding database with admin user..."
+docker-compose run --rm app node scripts/seed-docker.js
+
 echo "🚀 Starting application..."
 docker-compose up -d
 

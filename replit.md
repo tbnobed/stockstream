@@ -145,3 +145,6 @@ The Docker configuration now properly handles the two-stage build process where 
 - **Emergency fix**: Created fix-deployment.sh script for immediate migration resolution
 - **Path resolution fix**: Fixed import.meta.dirname issue in Docker bundled environment using sed replacement
 - **Docker compatibility**: Updated Dockerfile to properly handle Node.js path resolution in production containers
+- **Admin account seeding**: Added automatic admin user creation during Docker deployment
+- **Production scripts**: Created seed-docker.js and seed-production.sh for reliable admin setup
+- **Deployment enhancement**: Updated deploy.sh and update.sh to automatically seed admin account
