@@ -15,16 +15,20 @@ done
 
 echo "✅ Database connection established"
 
+# Drop existing tables if they exist to avoid conflicts
+echo "📊 Cleaning existing database..."
+psql "$DATABASE_URL" -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1
+
 # Check if users table exists
-echo "📊 Checking database schema..."
+echo "📋 Verifying clean database..."
 USERS_EXISTS=$(psql "$DATABASE_URL" -t -c "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='users');" 2>/dev/null | tr -d ' \n' || echo "false")
 
 if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EXISTS" ]; then
     echo "🔧 Users table not found, initializing database..."
     
-    # Create schema with drizzle
+    # Create schema with drizzle (non-interactive)
     echo "📋 Creating database schema..."
-    npx drizzle-kit push --force --config=/app/drizzle.config.ts
+    echo "yes" | npx drizzle-kit push --force --config=/app/drizzle.config.ts
     
     # Wait for schema creation
     sleep 3
