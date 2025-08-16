@@ -44,17 +44,24 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     USERS_CREATED=$(psql "$DATABASE_URL" -t -c "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='users');" 2>/dev/null | tr -d ' \n' || echo "false")
     
     if [ "$USERS_CREATED" = "t" ] || [ "$USERS_CREATED" = "true" ]; then
-        echo "🌱 Creating default admin user..."
+        echo "🌱 Creating default admin user and sales associate..."
         psql "$DATABASE_URL" -c "
         INSERT INTO users (username, associate_code, first_name, last_name, email, role, is_active)
         VALUES ('admin', 'ADMIN1', 'System', 'Administrator', 'admin@inventorypro.com', 'admin', true)
         ON CONFLICT (username) DO NOTHING;
         
+        -- Ensure sales_associates table has proper records for all users
         INSERT INTO sales_associates (id, name, email, user_id, is_active, created_at)
-        SELECT u.id, 'System Administrator', 'admin@inventorypro.com', u.id, true, NOW()
-        FROM users u WHERE u.username = 'admin'
+        SELECT u.id, 
+               COALESCE(u.first_name || ' ' || u.last_name, u.username) as name,
+               COALESCE(u.email, u.username || '@inventorypro.com') as email,
+               u.id, 
+               u.is_active, 
+               NOW()
+        FROM users u 
+        WHERE NOT EXISTS (SELECT 1 FROM sales_associates sa WHERE sa.id = u.id)
         ON CONFLICT (id) DO NOTHING;
-        " >/dev/null 2>&1 && echo "✅ Admin user created successfully" || echo "⚠️  Admin user creation skipped (may already exist)"
+        " >/dev/null 2>&1 && echo "✅ Admin user and sales associate created successfully" || echo "⚠️  User creation may have been skipped (records may already exist)"
         
         echo "✅ Database initialization completed"
     else
@@ -63,6 +70,21 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     fi
 else
     echo "✅ Database already initialized"
+    
+    # Even if database exists, ensure all users have corresponding sales_associate records
+    echo "🔄 Verifying user-to-sales-associate mapping..."
+    psql "$DATABASE_URL" -c "
+    INSERT INTO sales_associates (id, name, email, user_id, is_active, created_at)
+    SELECT u.id, 
+           COALESCE(u.first_name || ' ' || u.last_name, u.username) as name,
+           COALESCE(u.email, u.username || '@inventorypro.com') as email,
+           u.id, 
+           u.is_active, 
+           NOW()
+    FROM users u 
+    WHERE NOT EXISTS (SELECT 1 FROM sales_associates sa WHERE sa.id = u.id)
+    ON CONFLICT (id) DO NOTHING;
+    " >/dev/null 2>&1 && echo "✅ User-to-sales-associate mapping verified" || echo "⚠️  Mapping verification completed with warnings"
 fi
 
 # Final health check

@@ -1,0 +1,122 @@
+inventorypro-app  | 7:04:24 AM [express] GET /api/inventory/search/SHI-BLA-LX-223 200 in 7ms :: [{"id":"86e2e742-490c-49…
+inventorypro-app  | Search request for: SHI-BLA-MX-825
+inventorypro-app  | Search results count: 1
+inventorypro-app  | 7:04:46 AM [express] GET /api/inventory/search/SHI-BLA-MX-825 200 in 6ms :: [{"id":"30a83c24-cd4b-49…
+inventorypro-app  | Creating sale with data: {
+inventorypro-app  |   "itemId": "86e2e742-490c-496d-8672-50afb835d023",
+inventorypro-app  |   "salesAssociateId": "2b0aa779-14ba-4363-a086-beb489083f26",
+inventorypro-app  |   "quantity": 2,
+inventorypro-app  |   "unitPrice": "25",
+inventorypro-app  |   "totalAmount": "50",
+inventorypro-app  |   "paymentMethod": "cash",
+inventorypro-app  |   "orderNumber": "ORD-894148"
+inventorypro-app  | }
+inventorypro-app  | Parsed sale data: {
+inventorypro-app  |   "orderNumber": "ORD-894148",
+inventorypro-app  |   "itemId": "86e2e742-490c-496d-8672-50afb835d023",
+inventorypro-app  |   "quantity": 2,
+inventorypro-app  |   "unitPrice": "25",
+inventorypro-app  |   "totalAmount": "50",
+inventorypro-app  |   "paymentMethod": "cash",
+inventorypro-app  |   "salesAssociateId": "2b0aa779-14ba-4363-a086-beb489083f26"
+inventorypro-app  | }
+inventorypro-app  | Creating sale with data: {
+inventorypro-app  |   "itemId": "30a83c24-cd4b-4955-a1ae-2093bbbcdd3c",
+inventorypro-app  |   "salesAssociateId": "2b0aa779-14ba-4363-a086-beb489083f26",
+inventorypro-app  |   "quantity": 2,
+inventorypro-app  |   "unitPrice": "25",
+inventorypro-app  |   "totalAmount": "50",
+inventorypro-app  |   "paymentMethod": "cash",
+inventorypro-app  |   "orderNumber": "ORD-894148"
+inventorypro-app  | }
+inventorypro-app  | Parsed sale data: {
+inventorypro-app  |   "orderNumber": "ORD-894148",
+inventorypro-app  |   "itemId": "30a83c24-cd4b-4955-a1ae-2093bbbcdd3c",
+inventorypro-app  |   "quantity": 2,
+inventorypro-app  |   "unitPrice": "25",
+inventorypro-app  |   "totalAmount": "50",
+inventorypro-app  |   "paymentMethod": "cash",
+inventorypro-app  |   "salesAssociateId": "2b0aa779-14ba-4363-a086-beb489083f26"
+inventorypro-app  | }
+inventorypro-app  | Sales creation error: PostgresError: insert or update on table "sales" violates foreign key constraint "sales_sales_associate_id_sales_associates_id_fk"
+inventorypro-app  |     at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:794:26)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9)
+inventorypro-app  |     at Socket.emit (node:events:517:28)
+inventorypro-app  |     at addChunk (node:internal/streams/readable:368:12)
+inventorypro-app  |     at readableAddChunk (node:internal/streams/readable:341:9)
+inventorypro-app  |     at Readable.push (node:internal/streams/readable:278:10)
+inventorypro-app  |     at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+inventorypro-app  |   severity_local: 'ERROR',
+inventorypro-app  |   severity: 'ERROR',
+inventorypro-app  |   code: '23503',
+inventorypro-app  |   detail: 'Key (sales_associate_id)=(2b0aa779-14ba-4363-a086-beb489083f26) is not present in table "sales_associates".',
+inventorypro-app  |   schema_name: 'public',
+inventorypro-app  |   table_name: 'sales',
+inventorypro-app  |   constraint_name: 'sales_sales_associate_id_sales_associates_id_fk',
+inventorypro-app  |   file: 'ri_triggers.c',
+inventorypro-app  |   line: '2596',
+inventorypro-app  |   routine: 'ri_ReportViolation'
+inventorypro-app  | }
+inventorypro-app  | Storage error: PostgresError: insert or update on table "sales" violates foreign key constraint "sales_sales_associate_id_sales_associates_id_fk"
+inventorypro-app  |     at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:794:26)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9)
+inventorypro-app  |     at Socket.emit (node:events:517:28)
+inventorypro-app  |     at addChunk (node:internal/streams/readable:368:12)
+inventorypro-app  |     at readableAddChunk (node:internal/streams/readable:341:9)
+inventorypro-app  |     at Readable.push (node:internal/streams/readable:278:10)
+inventorypro-app  |     at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+inventorypro-app  |   severity_local: 'ERROR',
+inventorypro-app  |   severity: 'ERROR',
+inventorypro-app  |   code: '23503',
+inventorypro-app  |   detail: 'Key (sales_associate_id)=(2b0aa779-14ba-4363-a086-beb489083f26) is not present in table "sales_associates".',
+inventorypro-app  |   schema_name: 'public',
+inventorypro-app  |   table_name: 'sales',
+inventorypro-app  |   constraint_name: 'sales_sales_associate_id_sales_associates_id_fk',
+inventorypro-app  |   file: 'ri_triggers.c',
+inventorypro-app  |   line: '2596',
+inventorypro-app  |   routine: 'ri_ReportViolation'
+inventorypro-app  | }
+inventorypro-app  | 7:04:54 AM [express] POST /api/sales 500 in 19ms :: {"message":"Failed to create sale","error":"inse…
+inventorypro-app  | Sales creation error: PostgresError: insert or update on table "sales" violates foreign key constraint "sales_sales_associate_id_sales_associates_id_fk"
+inventorypro-app  |     at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:794:26)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9)
+inventorypro-app  |     at Socket.emit (node:events:517:28)
+inventorypro-app  |     at addChunk (node:internal/streams/readable:368:12)
+inventorypro-app  |     at readableAddChunk (node:internal/streams/readable:341:9)
+inventorypro-app  |     at Readable.push (node:internal/streams/readable:278:10)
+inventorypro-app  |     at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+inventorypro-app  |   severity_local: 'ERROR',
+inventorypro-app  |   severity: 'ERROR',
+inventorypro-app  |   code: '23503',
+inventorypro-app  |   detail: 'Key (sales_associate_id)=(2b0aa779-14ba-4363-a086-beb489083f26) is not present in table "sales_associates".',
+inventorypro-app  |   schema_name: 'public',
+inventorypro-app  |   table_name: 'sales',
+inventorypro-app  |   constraint_name: 'sales_sales_associate_id_sales_associates_id_fk',
+inventorypro-app  |   file: 'ri_triggers.c',
+inventorypro-app  |   line: '2596',
+inventorypro-app  |   routine: 'ri_ReportViolation'
+inventorypro-app  | }
+inventorypro-app  | Storage error: PostgresError: insert or update on table "sales" violates foreign key constraint "sales_sales_associate_id_sales_associates_id_fk"
+inventorypro-app  |     at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:794:26)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9)
+inventorypro-app  |     at Socket.emit (node:events:517:28)
+inventorypro-app  |     at addChunk (node:internal/streams/readable:368:12)
+inventorypro-app  |     at readableAddChunk (node:internal/streams/readable:341:9)
+inventorypro-app  |     at Readable.push (node:internal/streams/readable:278:10)
+inventorypro-app  |     at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+inventorypro-app  |   severity_local: 'ERROR',
+inventorypro-app  |   severity: 'ERROR',
+inventorypro-app  |   code: '23503',
+inventorypro-app  |   detail: 'Key (sales_associate_id)=(2b0aa779-14ba-4363-a086-beb489083f26) is not present in table "sales_associates".',
+inventorypro-app  |   schema_name: 'public',
+inventorypro-app  |   table_name: 'sales',
+inventorypro-app  |   constraint_name: 'sales_sales_associate_id_sales_associates_id_fk',
+inventorypro-app  |   file: 'ri_triggers.c',
+inventorypro-app  |   line: '2596',
+inventorypro-app  |   routine: 'ri_ReportViolation'
+inventorypro-app  | }
+inventorypro-app  | 7:04:54 AM [express] POST /api/sales 500 in 15ms :: {"message":"Failed to create sale","error":"inse…
