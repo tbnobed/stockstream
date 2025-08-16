@@ -51,7 +51,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = await storage.getDashboardStats();
       res.json(stats);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+      console.error("Dashboard stats error:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch dashboard stats",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

@@ -385,42 +385,56 @@ export class DatabaseStorage implements IStorage {
     salesToday: number;
     lowStockCount: number;
   }> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const [revenueResult] = await db
-      .select({ total: sql<number>`COALESCE(SUM(${sales.totalAmount}), 0)` })
-      .from(sales);
-    
-    // Calculate total profit by joining sales with inventory items to get cost data
-    const [profitResult] = await db
-      .select({ 
-        totalProfit: sql<number>`COALESCE(SUM(${sales.totalAmount} - (${sales.quantity} * COALESCE(${inventoryItems.cost}, 0))), 0)` 
-      })
-      .from(sales)
-      .leftJoin(inventoryItems, eq(sales.itemId, inventoryItems.id));
-    
-    const [itemsResult] = await db
-      .select({ total: sql<number>`COALESCE(SUM(${inventoryItems.quantity}), 0)` })
-      .from(inventoryItems);
-    
-    const [salesTodayResult] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(sales)
-      .where(sql`${sales.saleDate} >= ${today}`);
-    
-    const [lowStockResult] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(inventoryItems)
-      .where(sql`${inventoryItems.quantity} <= ${inventoryItems.minStockLevel}`);
-    
-    return {
-      totalRevenue: Number(revenueResult.total) || 0,
-      totalProfit: Number(profitResult.totalProfit) || 0,
-      totalItems: Number(itemsResult.total) || 0,
-      salesToday: Number(salesTodayResult.count) || 0,
-      lowStockCount: Number(lowStockResult.count) || 0,
-    };
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Calculate total revenue (convert string to number)
+      const [revenueResult] = await db
+        .select({ total: sql<string>`COALESCE(SUM(CAST(${sales.totalAmount} AS NUMERIC)), 0)::text` })
+        .from(sales);
+      
+      // Calculate total profit by joining sales with inventory items to get cost data
+      const [profitResult] = await db
+        .select({ 
+          totalProfit: sql<string>`COALESCE(SUM(CAST(${sales.totalAmount} AS NUMERIC) - (${sales.quantity} * COALESCE(CAST(${inventoryItems.cost} AS NUMERIC), 0))), 0)::text` 
+        })
+        .from(sales)
+        .leftJoin(inventoryItems, eq(sales.itemId, inventoryItems.id));
+      
+      const [itemsResult] = await db
+        .select({ total: sql<number>`COALESCE(SUM(${inventoryItems.quantity}), 0)` })
+        .from(inventoryItems);
+      
+      const [salesTodayResult] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sales)
+        .where(sql`${sales.saleDate} >= ${today}`);
+      
+      const [lowStockResult] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(inventoryItems)
+        .where(sql`${inventoryItems.quantity} <= ${inventoryItems.minStockLevel}`);
+      
+      return {
+        totalRevenue: Number(revenueResult.total) || 0,
+        totalProfit: Number(profitResult.totalProfit) || 0,
+        totalItems: Number(itemsResult.total) || 0,
+        salesToday: Number(salesTodayResult.count) || 0,
+        lowStockCount: Number(lowStockResult.count) || 0,
+      };
+    } catch (error) {
+      console.error('Dashboard stats calculation error:', error);
+      
+      // Return safe defaults if calculation fails
+      return {
+        totalRevenue: 0,
+        totalProfit: 0,
+        totalItems: 0,
+        salesToday: 0,
+        lowStockCount: 0,
+      };
+    }
   }
 }
 
