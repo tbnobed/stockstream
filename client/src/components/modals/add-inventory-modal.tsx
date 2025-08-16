@@ -286,7 +286,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add Inventory Item"}</DialogTitle>
         </DialogHeader>
@@ -378,7 +378,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                     {isMultiVariant ? (
                       <div className="space-y-2">
                         <div className="text-sm text-muted-foreground">Select multiple colors:</div>
-                        <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                        <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
                           {ITEM_COLORS.map((color) => (
                             <div key={color} className="flex items-center space-x-2">
                               <Checkbox
@@ -535,7 +535,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                     {isMultiVariant ? (
                       <div className="space-y-2">
                         <div className="text-sm text-muted-foreground">Select multiple sizes:</div>
-                        <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
+                        <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto">
                           {ITEM_SIZES.map((size) => (
                             <div key={size} className="flex items-center space-x-2">
                               <Checkbox
@@ -761,7 +761,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                     : `${selectedSizes.length} size variants`
                   }
                 </div>
-                <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto">
+                <div className="grid grid-cols-4 gap-1 max-h-32 overflow-y-auto">
                   {(selectedColors.length > 0 ? selectedColors : [""]).map((color) =>
                     (selectedSizes.length > 0 ? selectedSizes : [""]).map((size) => (
                       <div key={`${color}-${size}`} className="text-xs p-2 bg-background rounded border">
