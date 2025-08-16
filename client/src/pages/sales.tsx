@@ -6,12 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import NewSaleModal from "@/components/modals/new-sale-modal";
+import SaleDetailsModal from "@/components/modals/sale-details-modal";
+import ReceiptModal from "@/components/receipt/receipt-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Sales() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
+  const [showSaleDetailsModal, setShowSaleDetailsModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
@@ -42,6 +47,21 @@ export default function Sales() {
       minute: '2-digit',
       hour12: true,
     });
+  };
+
+  const handleViewSale = (sale: any) => {
+    setSelectedSale(sale);
+    setShowSaleDetailsModal(true);
+  };
+
+  const handleShowReceipt = (sale: any) => {
+    setSelectedSale(sale);
+    setShowReceiptModal(true);
+  };
+
+  const handlePrintReceipt = () => {
+    setShowSaleDetailsModal(false);
+    setShowReceiptModal(true);
   };
 
   return (
@@ -223,10 +243,20 @@ export default function Sales() {
                         </td>
                         <td className="py-3">
                           <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" data-testid={`view-sale-${sale.id}`}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewSale(sale)}
+                              data-testid={`view-sale-${sale.id}`}
+                            >
                               View
                             </Button>
-                            <Button variant="ghost" size="sm" data-testid={`receipt-sale-${sale.id}`}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleShowReceipt(sale)}
+                              data-testid={`receipt-sale-${sale.id}`}
+                            >
                               Receipt
                             </Button>
                           </div>
@@ -245,6 +275,19 @@ export default function Sales() {
       <NewSaleModal
         open={showNewSaleModal}
         onOpenChange={setShowNewSaleModal}
+      />
+      
+      <SaleDetailsModal
+        sale={selectedSale}
+        open={showSaleDetailsModal}
+        onOpenChange={setShowSaleDetailsModal}
+        onPrintReceipt={handlePrintReceipt}
+      />
+      
+      <ReceiptModal
+        sale={selectedSale}
+        open={showReceiptModal}
+        onOpenChange={setShowReceiptModal}
       />
     </>
   );
