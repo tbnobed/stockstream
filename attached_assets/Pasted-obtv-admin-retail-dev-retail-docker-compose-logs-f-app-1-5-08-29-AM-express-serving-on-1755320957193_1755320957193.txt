@@ -1,0 +1,55 @@
+obtv-admin@retail-dev:~/retail$ docker compose logs -f
+app-1       | 5:08:29 AM [express] serving on port 5000
+postgres-1  |
+postgres-1  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+postgres-1  |
+postgres-1  | 2025-08-16 05:08:18.263 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+postgres-1  | 2025-08-16 05:08:18.263 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2025-08-16 05:08:18.263 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2025-08-16 05:08:18.264 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2025-08-16 05:08:18.268 UTC [30] LOG:  database system was shut down at 2025-08-16 05:00:46 UTC
+postgres-1  | 2025-08-16 05:08:18.276 UTC [1] LOG:  database system is ready to accept connections
+app-1       | Login error: ErrorEvent {
+app-1       |   [Symbol(kTarget)]: WebSocket {
+app-1       |     _events: [Object: null prototype] {
+app-1       |       error: [Function],
+app-1       |       message: [Function],
+app-1       |       close: [Function],
+app-1       |       open: [Function]
+app-1       |     },
+app-1       |     _eventsCount: 4,
+app-1       |     _maxListeners: undefined,
+app-1       |     _binaryType: 'arraybuffer',
+app-1       |     _closeCode: 1006,
+app-1       |     _closeFrameReceived: false,
+app-1       |     _closeFrameSent: false,
+app-1       |     _closeMessage: <Buffer >,
+app-1       |     _closeTimer: null,
+app-1       |     _errorEmitted: true,
+app-1       |     _extensions: {},
+app-1       |     _paused: false,
+app-1       |     _protocol: '',
+app-1       |     _readyState: 3,
+app-1       |     _receiver: null,
+app-1       |     _sender: null,
+app-1       |     _socket: null,
+app-1       |     _bufferedAmount: 0,
+app-1       |     _isServer: false,
+app-1       |     _redirects: 0,
+app-1       |     _autoPong: true,
+app-1       |     _url: 'wss://postgres/v2',
+app-1       |     _req: null,
+app-1       |     [Symbol(kCapture)]: false
+app-1       |   },
+app-1       |   [Symbol(kType)]: 'error',
+app-1       |   [Symbol(kError)]: Error: connect ECONNREFUSED 172.18.0.2:443
+app-1       |       at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1555:16) {
+app-1       |     errno: -111,
+app-1       |     code: 'ECONNREFUSED',
+app-1       |     syscall: 'connect',
+app-1       |     address: '172.18.0.2',
+app-1       |     port: 443
+app-1       |   },
+app-1       |   [Symbol(kMessage)]: 'connect ECONNREFUSED 172.18.0.2:443'
+app-1       | }
+app-1       | 5:09:01 AM [express] POST /api/auth/login 500 in 119ms :: {"message":"Login failed"}
