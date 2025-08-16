@@ -1,6 +1,6 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from "@shared/schema";
+const { drizzle } = require('drizzle-orm/postgres-js');
+const postgres = require('postgres');
+const schema = require("../shared/schema");
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -9,5 +9,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Use postgres-js for Docker deployment (standard PostgreSQL connection)
-export const connection = postgres(process.env.DATABASE_URL);
-export const db = drizzle({ client: connection, schema });
+const connection = postgres(process.env.DATABASE_URL);
+const db = drizzle({ client: connection, schema });
+
+module.exports = { db, connection };

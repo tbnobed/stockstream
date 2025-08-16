@@ -57,8 +57,7 @@ RUN apk add --no-cache postgresql-client
 COPY scripts/docker-entrypoint-simple.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Build the Docker-specific database module and compile TypeScript files
-RUN npx tsc server/db-docker.ts --outDir server --module commonjs --target es2020 --allowJs
+# Database module is already in CommonJS format, no compilation needed
 
 # Fix permissions for nextjs user
 RUN chown -R nextjs:nodejs /app
