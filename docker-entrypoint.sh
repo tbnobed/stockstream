@@ -35,12 +35,12 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     if [ "$USERS_CREATED" = "t" ] || [ "$USERS_CREATED" = "true" ]; then
         echo "🌱 Creating default admin user..."
         psql "$DATABASE_URL" -c "
-        INSERT INTO users (username, associate_code, first_name, last_name, email, role, is_active)
+        INSERT INTO users (username, \"associateCode\", \"firstName\", \"lastName\", email, role, \"isActive\")
         VALUES ('admin', 'ADMIN1', 'System', 'Administrator', 'admin@inventorypro.com', 'admin', true)
         ON CONFLICT (username) DO NOTHING;
         
-        INSERT INTO sales_associates (id, name, email, user_id, is_active)
-        SELECT u.id, 'System Administrator', 'admin@inventorypro.com', u.id, true
+        INSERT INTO sales_associates (id, name, email, \"userId\", \"isActive\", \"createdAt\")
+        SELECT u.id, 'System Administrator', 'admin@inventorypro.com', u.id, true, NOW()
         FROM users u WHERE u.username = 'admin'
         ON CONFLICT (id) DO NOTHING;
         " >/dev/null 2>&1 && echo "✅ Admin user created successfully" || echo "⚠️  Admin user creation skipped (may already exist)"
