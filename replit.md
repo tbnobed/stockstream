@@ -138,3 +138,5 @@ The Docker configuration now properly handles the two-stage build process where 
 - **Static file serving**: Fixed static asset copying to match the expected server directory structure
 - **Production paths**: Ensured built frontend assets are available at `server/public/` for production serving
 - **Build optimization**: Maintained correct file ownership and permissions for Docker security
+- **Database migrations**: Updated deployment script to use correct `npm run db:push` command instead of `db:migrate`
+- **Deployment success**: Docker build now completes successfully as confirmed by user testing

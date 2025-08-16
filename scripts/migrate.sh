@@ -24,18 +24,11 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Generate migration files if schema has changed
-echo "📊 Checking for schema changes..."
-npm run db:generate
+# Apply schema changes using Drizzle push
+echo "⬆️  Applying database schema changes..."
+npm run db:push
 
-# Apply migrations
-echo "⬆️  Applying database migrations..."
-npm run db:migrate
-
-# Seed initial data if needed
-if [ "$1" == "--seed" ]; then
-    echo "🌱 Seeding initial data..."
-    npm run db:seed
-fi
+# Note: This project uses Drizzle push workflow
+# For seeding data, run the application and use the admin interface
 
 echo "✅ Database migration completed successfully!"

@@ -71,7 +71,7 @@ sleep 10
 
 # Run database migrations
 echo "📊 Running database migrations..."
-docker-compose run --rm app npm run db:migrate
+docker-compose run --rm app npm run db:push
 
 echo "🚀 Starting application..."
 docker-compose up -d
