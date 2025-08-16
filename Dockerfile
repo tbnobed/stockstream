@@ -28,7 +28,9 @@ RUN echo "import { drizzle } from 'drizzle-orm/postgres-js';" > server/db.ts && 
 # Build frontend and backend
 RUN npm run build && \
     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && \
-    sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js
+    sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js && \
+    mkdir -p server/public && \
+    cp -r client/dist/* server/public/
 
 # Production stage
 FROM node:18-alpine AS production
