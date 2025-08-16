@@ -49,6 +49,12 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         throw new Error("Camera access requires HTTPS connection");
       }
 
+      // Quick check for server environment (headless/Docker)
+      const isServerEnvironment = !window.screen || window.screen.width === 0 || window.screen.height === 0;
+      if (isServerEnvironment) {
+        throw new Error("Camera not available in server environment. Use manual input instead.");
+      }
+
       console.log("Requesting camera permission...");
       
       // Get available devices first
@@ -117,7 +123,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           // Add timeout to prevent hanging
           const streamPromise = navigator.mediaDevices.getUserMedia(config);
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Camera access timeout')), 10000)
+            setTimeout(() => reject(new Error('Camera access timeout - no camera hardware detected')), 3000)
           );
           
           stream = await Promise.race([streamPromise, timeoutPromise]) as MediaStream;
@@ -260,7 +266,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
       } else if (err.message?.includes('not supported')) {
         setError("Camera access is not supported in this browser. Try using Chrome, Firefox, or Safari.");
       } else if (err.message?.includes('timeout')) {
-        setError("Camera access timed out. Please check your camera connection and try again.");
+        setError("No camera detected. This may be a server environment without camera hardware. Use manual SKU input instead.");
       } else {
         const errorMsg = err.message || err.toString() || 'Unknown camera error';
         setError(`Unable to access camera: ${errorMsg}. Try refreshing the page or using manual input below.`);
