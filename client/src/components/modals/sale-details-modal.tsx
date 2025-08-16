@@ -19,13 +19,13 @@ export default function SaleDetailsModal({
   onOpenChange,
   onPrintReceipt,
 }: SaleDetailsModalProps) {
-  if (!sale) return null;
-
-  // Fetch all items for this order
+  // Fetch all items for this order - hooks must be called before any conditional returns
   const { data: orderItems = [], isLoading } = useQuery<any[]>({
-    queryKey: [`/api/sales/order/${sale.orderNumber}`],
+    queryKey: [`/api/sales/order/${sale?.orderNumber || 'null'}`],
     enabled: open && !!sale?.orderNumber,
   });
+
+  if (!sale) return null;
 
   // Use order items if available, fallback to single sale
   const items = orderItems.length > 0 ? orderItems : [sale];
