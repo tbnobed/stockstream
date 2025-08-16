@@ -35,7 +35,7 @@ export default function Inventory() {
   const { toast } = useToast();
 
   const { data: inventoryItems, isLoading } = useQuery({
-    queryKey: ["/api/inventory"],
+    queryKey: ["/api/inventory", showArchivedItems ? "?includeArchived=true" : ""],
   });
 
   // Archive item mutation
@@ -84,10 +84,8 @@ export default function Inventory() {
       item.design?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesArchiveFilter = showArchivedItems ? !item.isActive : item.isActive;
     
-    return matchesSearch && matchesArchiveFilter;
+    return matchesSearch;
   });
 
   const formatCurrency = (amount: number) => {

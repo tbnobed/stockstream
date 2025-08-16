@@ -176,7 +176,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Inventory Items
   app.get("/api/inventory", isAuthenticated, async (req, res) => {
     try {
-      const items = await storage.getInventoryItems();
+      const includeArchived = req.query.includeArchived === 'true';
+      const items = await storage.getInventoryItems(includeArchived);
       res.json(items);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch inventory items" });
