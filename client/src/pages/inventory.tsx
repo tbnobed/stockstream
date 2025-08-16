@@ -90,39 +90,17 @@ export default function Inventory() {
       />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
-        {/* Search and Filters */}
+        {/* Search */}
         <Card className="p-4 md:p-6 mb-4 md:mb-6 border-border">
-          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                placeholder="Search by name, SKU, or type..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-                data-testid="input-search-inventory"
-              />
-            </div>
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowScanner(true)}
-                data-testid="button-scan-qr"
-                className="md:hidden"
-              >
-                <QrCode size={16} />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowAddSupplierModal(true)}
-                data-testid="button-add-supplier"
-              >
-                <Plus size={16} className="mr-1" />
-                Supplier
-              </Button>
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input
+              placeholder="Search by name, SKU, or type..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-inventory"
+            />
           </div>
         </Card>
 
