@@ -122,3 +122,14 @@ The application is structured as a monorepo with shared TypeScript types and sch
 - **Regular security updates** and monitoring
 
 The deployment system is production-ready and includes comprehensive documentation, automated scripts, and monitoring capabilities for reliable operation in Ubuntu environments.
+
+## Recent Changes
+
+### Docker Build Fix (August 16, 2025)
+- **Fixed Docker build failure**: Updated Dockerfile to install all dependencies (including dev dependencies) during build stage
+- **Build process**: Changed from `npm ci --only=production` to `npm ci` in builder stage to ensure vite and other build tools are available
+- **Production optimization**: Kept production-only dependencies in final production stage for minimal image size
+- **Import resolution**: Fixed TypeScript import path for edit-supplier-modal component using relative imports
+- **Error handling**: Improved error type handling in server routes.ts for better TypeScript compliance
+
+The Docker configuration now properly handles the two-stage build process where dev dependencies are needed for building but excluded from the final production image.

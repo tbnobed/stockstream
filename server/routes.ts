@@ -34,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const health = {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         uptime: process.uptime(),
         pid: process.pid
       };

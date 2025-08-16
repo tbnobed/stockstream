@@ -351,3 +351,4 @@ export default function EditSupplierModal({ open, onOpenChange, supplier, onClos
     </Dialog>
   );
 }
+

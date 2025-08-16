@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Plus, Building2, Phone, Mail, User, MapPin, Globe } from "lucide-react";
 import AddSupplierModal from "@/components/modals/add-supplier-modal";
-import EditSupplierModal from "@/components/modals/edit-supplier-modal";
+import EditSupplierModal from "./modals/edit-supplier-modal";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +51,7 @@ export default function SupplierManagement() {
     },
   });
 
-  const filteredSuppliers = suppliers ? suppliers.filter((supplier: any) =>
+  const filteredSuppliers = suppliers ? (suppliers as any[]).filter((supplier: any) =>
     supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.contactInfo?.toLowerCase().includes(searchTerm.toLowerCase())
   ) : [];
