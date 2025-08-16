@@ -12,10 +12,12 @@ import AdjustInventoryModal from "@/components/modals/adjust-inventory-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
 import PrintLabelModal from "@/components/modals/print-label-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore, Filter, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ITEM_TYPES, ITEM_COLORS, ITEM_SIZES, ITEM_DESIGNS, GROUP_TYPES, STYLE_GROUPS } from "../../../shared/categories";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -30,6 +32,15 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [showArchivedItems, setShowArchivedItems] = useState(false);
+  
+  // Filter states
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedDesign, setSelectedDesign] = useState<string>("");
+  const [selectedGroupType, setSelectedGroupType] = useState<string>("");
+  const [selectedStyleGroup, setSelectedStyleGroup] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -76,7 +87,17 @@ export default function Inventory() {
     },
   });
 
-  const filteredItems = (inventoryItems || []).filter((item: any) => {
+  const clearAllFilters = () => {
+    setSelectedType("");
+    setSelectedColor("");
+    setSelectedSize("");
+    setSelectedDesign("");
+    setSelectedGroupType("");
+    setSelectedStyleGroup("");
+    setSearchTerm("");
+  };
+
+  const filteredItems = (inventoryItems as any[] || []).filter((item: any) => {
     const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,7 +106,15 @@ export default function Inventory() {
       item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch;
+    const matchesType = !selectedType || item.type === selectedType;
+    const matchesColor = !selectedColor || item.color === selectedColor;
+    const matchesSize = !selectedSize || item.size === selectedSize;
+    const matchesDesign = !selectedDesign || item.design === selectedDesign;
+    const matchesGroupType = !selectedGroupType || item.groupType === selectedGroupType;
+    const matchesStyleGroup = !selectedStyleGroup || item.styleGroup === selectedStyleGroup;
+    
+    return matchesSearch && matchesType && matchesColor && matchesSize && 
+           matchesDesign && matchesGroupType && matchesStyleGroup;
   });
 
   const formatCurrency = (amount: number) => {
@@ -162,6 +191,15 @@ export default function Inventory() {
               />
             </div>
             <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                data-testid="button-toggle-filters"
+                className="flex items-center space-x-1"
+              >
+                <Filter size={16} />
+                <span>Filters</span>
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -191,6 +229,188 @@ export default function Inventory() {
               </Button>
             </div>
           </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="border-t border-border p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium">Filter by Categories</h4>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    data-testid="button-clear-filters"
+                    className="h-8 px-2 text-xs"
+                  >
+                    <X size={14} className="mr-1" />
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Type</label>
+                  <Select value={selectedType} onValueChange={setSelectedType}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-type">
+                      <SelectValue placeholder="All types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All types</SelectItem>
+                      {ITEM_TYPES.map((type: string) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Color</label>
+                  <Select value={selectedColor} onValueChange={setSelectedColor}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-color">
+                      <SelectValue placeholder="All colors" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All colors</SelectItem>
+                      {ITEM_COLORS.map((color: string) => (
+                        <SelectItem key={color} value={color}>{color}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Size</label>
+                  <Select value={selectedSize} onValueChange={setSelectedSize}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-size">
+                      <SelectValue placeholder="All sizes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All sizes</SelectItem>
+                      {ITEM_SIZES.map((size: string) => (
+                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Design</label>
+                  <Select value={selectedDesign} onValueChange={setSelectedDesign}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-design">
+                      <SelectValue placeholder="All designs" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All designs</SelectItem>
+                      {ITEM_DESIGNS.map((design: string) => (
+                        <SelectItem key={design} value={design}>{design}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Group Type</label>
+                  <Select value={selectedGroupType} onValueChange={setSelectedGroupType}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-group-type">
+                      <SelectValue placeholder="All groups" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All groups</SelectItem>
+                      {GROUP_TYPES.map((type: string) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Style Group</label>
+                  <Select value={selectedStyleGroup} onValueChange={setSelectedStyleGroup}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-style-group">
+                      <SelectValue placeholder="All styles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All styles</SelectItem>
+                      {STYLE_GROUPS.map((style: string) => (
+                        <SelectItem key={style} value={style}>{style}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Active Filters Display */}
+              {(selectedType || selectedColor || selectedSize || selectedDesign || selectedGroupType || selectedStyleGroup) && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-muted-foreground">Active filters:</span>
+                    {selectedType && (
+                      <Badge variant="secondary" className="text-xs">
+                        Type: {selectedType}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedType("")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedColor && (
+                      <Badge variant="secondary" className="text-xs">
+                        Color: {selectedColor}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedColor("")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedSize && (
+                      <Badge variant="secondary" className="text-xs">
+                        Size: {selectedSize}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedSize("")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedDesign && (
+                      <Badge variant="secondary" className="text-xs">
+                        Design: {selectedDesign}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedDesign("")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedGroupType && (
+                      <Badge variant="secondary" className="text-xs">
+                        Group: {selectedGroupType}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedGroupType("")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedStyleGroup && (
+                      <Badge variant="secondary" className="text-xs">
+                        Style: {selectedStyleGroup}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedStyleGroup("")} 
+                        />
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
 
         {/* Inventory Items */}
