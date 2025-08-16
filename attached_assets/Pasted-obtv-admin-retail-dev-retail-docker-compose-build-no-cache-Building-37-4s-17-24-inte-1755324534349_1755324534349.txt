@@ -1,0 +1,79 @@
+obtv-admin@retail-dev:~/retail$ docker-compose build --no-cache
+[+] Building 37.4s (17/24)
+ => [internal] load local bake definitions                                                                                                                                                                                                                                                                                                                                                                                        0.0s
+ => => reading from stdin 509B                                                                                                                                                                                                                                                                                                                                                                                                    0.0s
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                                                                                                                                                              0.0s
+ => => transferring dockerfile: 2.71kB                                                                                                                                                                                                                                                                                                                                                                                            0.0s
+ => [internal] load metadata for docker.io/library/node:18-alpine                                                                                                                                                                                                                                                                                                                                                                 0.3s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                                                                                                                                                                 0.0s
+ => => transferring context: 1.17kB                                                                                                                                                                                                                                                                                                                                                                                               0.0s
+ => [internal] load build context                                                                                                                                                                                                                                                                                                                                                                                                 0.1s
+ => => transferring context: 2.68MB                                                                                                                                                                                                                                                                                                                                                                                               0.1s
+ => CACHED [builder 1/7] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e                                                                                                                                                                                                                                                                                            0.0s
+ => [production  2/13] RUN apk add --no-cache dumb-init postgresql-client                                                                                                                                                                                                                                                                                                                                                         1.2s
+ => [builder 2/7] WORKDIR /app                                                                                                                                                                                                                                                                                                                                                                                                    0.1s
+ => [builder 3/7] COPY package*.json ./                                                                                                                                                                                                                                                                                                                                                                                           0.0s
+ => [builder 4/7] RUN npm ci                                                                                                                                                                                                                                                                                                                                                                                                     17.5s
+ => [production  3/13] RUN addgroup -g 1001 -S nodejs &&     adduser -S nextjs -u 1001                                                                                                                                                                                                                                                                                                                                            0.3s
+ => [production  4/13] WORKDIR /app                                                                                                                                                                                                                                                                                                                                                                                               0.0s
+ => [production  5/13] COPY package*.json ./                                                                                                                                                                                                                                                                                                                                                                                      0.0s
+ => [production  6/13] RUN npm ci && npm cache clean --force                                                                                                                                                                                                                                                                                                                                                                     18.5s
+ => [builder 5/7] COPY . .                                                                                                                                                                                                                                                                                                                                                                                                        0.0s
+ => [builder 6/7] RUN echo "import { drizzle } from 'drizzle-orm/postgres-js';" > server/db.ts &&     echo "import postgres from 'postgres';" >> server/db.ts &&     echo "import * as schema from '@shared/schema';" >> server/db.ts &&     echo "" >> server/db.ts &&     echo "if (!process.env.DATABASE_URL) {" >> server/db.ts &&     echo "  throw new Error('DATABASE_URL must be set.');" >> server/db.ts &&     echo "}  0.3s
+ => ERROR [builder 7/7] RUN npm run build &&     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist &&     sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js &&     mkdir -p server/public &&     cp -r client/dist/* server/public/                                                                                                                               19.1s
+------
+ > [builder 7/7] RUN npm run build &&     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist &&     sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js &&     mkdir -p server/public &&     cp -r client/dist/* server/public/:
+0.628
+0.628 > rest-express@1.0.0 build
+0.628 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+0.628
+1.040 vite v5.4.19 building for production...
+1.150 transforming...
+1.683 Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+1.683   npx update-browserslist-db@latest
+1.683   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+16.55 ✓ 3240 modules transformed.
+18.07 rendering chunks...
+18.11 computing gzip size...
+18.17 ../dist/public/index.html                     2.20 kB │ gzip:   0.86 kB
+18.17 ../dist/public/assets/index-DiuR7Y4Z.css     61.80 kB │ gzip:  11.13 kB
+18.17 ../dist/public/assets/index-C9wEBrP2.js   1,454.74 kB │ gzip: 406.15 kB
+18.17
+18.17 (!) Some chunks are larger than 500 kB after minification. Consider:
+18.17 - Using dynamic import() to code-split the application
+18.17 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+18.17 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+18.17 ✓ built in 17.09s
+18.28
+18.28   dist/index.js  33.8kb
+18.28
+18.28 ⚡ Done in 10ms
+19.07
+19.07   dist/index.js  33.8kb
+19.07
+19.07 ⚡ Done in 9ms
+19.09 cp: can't stat 'client/dist/*': No such file or directory
+------
+Dockerfile:29
+
+--------------------
+
+  28 |     # Build frontend and backend
+
+  29 | >>> RUN npm run build && \
+
+  30 | >>>     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && \
+
+  31 | >>>     sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js && \
+
+  32 | >>>     mkdir -p server/public && \
+
+  33 | >>>     cp -r client/dist/* server/public/
+
+  34 |
+
+--------------------
+
+failed to solve: process "/bin/sh -c npm run build &&     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist &&     sed -i 's|import\\.meta\\.dirname|\"/app/server\"|g' dist/index.js &&     mkdir -p server/public &&     cp -r client/dist/* server/public/" did not complete successfully: exit code: 1
+
+obtv-admin@retail-dev:~/retail$ -

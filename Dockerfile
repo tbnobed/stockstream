@@ -30,7 +30,7 @@ RUN npm run build && \
     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && \
     sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js && \
     mkdir -p server/public && \
-    cp -r client/dist/* server/public/
+    cp -r dist/public/* server/public/
 
 # Production stage
 FROM node:18-alpine AS production
