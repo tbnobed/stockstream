@@ -66,6 +66,21 @@ This will:
 - Verify deployment functionality
 - Provide rollback if needed
 
+### Archive Functionality Support
+
+```bash
+# Add archive/disable functionality to existing deployment
+./deploy-archive-functionality.sh
+```
+
+This will:
+- Create database backup
+- Add is_active boolean field to inventory_items table
+- Deploy archive and restore API endpoints
+- Update frontend with archive toggle and buttons
+- Verify archive functionality works correctly
+- Provide rollback if needed
+
 ## Architecture Overview
 
 ### Multi-Item Transaction Features
@@ -100,12 +115,20 @@ Enhanced inventory_items table with new categorization columns:
 ALTER TABLE inventory_items ADD COLUMN design TEXT;
 ALTER TABLE inventory_items ADD COLUMN group_type TEXT; 
 ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
+
+-- Added column for archive functionality
+ALTER TABLE inventory_items ADD COLUMN is_active BOOLEAN DEFAULT true;
 ```
 
 **Category Field Examples:**
 - **Design**: Lipstick, Cancer, Event-Specific
 - **Group Type**: Supporter, Ladies, Member-Only
 - **Style Group**: T-Shirt, V-Neck, Tank Top
+
+**Archive Functionality:**
+- **is_active**: Boolean field for soft delete (true = active, false = archived)
+- **Archive/Restore**: Items can be archived and restored while maintaining data integrity
+- **Toggle View**: Frontend can switch between showing active and archived items
 
 ### Container Architecture
 

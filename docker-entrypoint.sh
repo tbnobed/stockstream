@@ -186,6 +186,10 @@ BEGIN
         -- Set all existing items as active
         UPDATE inventory_items SET is_active = true WHERE is_active IS NULL;
         RAISE NOTICE 'Set all existing inventory items as active';
+    ELSE
+        -- Ensure existing items without is_active set are marked as active
+        UPDATE inventory_items SET is_active = true WHERE is_active IS NULL;
+        RAISE NOTICE 'Ensured all inventory items have is_active set';
     END IF;
     
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';

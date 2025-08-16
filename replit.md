@@ -105,3 +105,16 @@ The application uses Docker for containerization, with multi-stage builds for op
 - **Form improvements**: Added new fields to inventory creation and editing forms with proper validation
 - **Display enhancements**: Updated both mobile and desktop inventory views to show descriptions
 - **Backward compatibility**: All migrations safely handle existing data and missing columns
+
+### Archive/Disable Functionality Enhancement (August 16, 2025)
+- **Soft delete system**: Added is_active boolean field to inventory_items table for archive functionality
+- **Archive/restore API endpoints**: New PATCH endpoints for /archive and /restore operations
+- **Frontend archive interface**: Toggle button to switch between active and archived items view
+- **Enhanced inventory management**: Archive button for active items, restore button for archived items
+- **Database schema migration**: Automated addition of is_active column with proper defaults in docker-entrypoint.sh
+- **Production deployment script**: Created deploy-archive-functionality.sh for safe production deployment with backup
+- **Archive status preservation**: Archived items maintain all data and transaction history while being hidden from normal operations
+- **API query parameter**: Backend accepts includeArchived query parameter to control item visibility
+- **Mobile and desktop support**: Archive functionality works across all device interfaces with appropriate buttons
+- **Backward compatibility**: All existing items automatically marked as active during migration
+- **Docker integration**: Archive functionality fully integrated into containerized deployment with automated schema updates
