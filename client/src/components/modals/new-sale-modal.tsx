@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { QrCode, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { QrCode, X, Plus, Minus, ShoppingCart, Trash2 } from "lucide-react";
 import QRScanner from "@/components/qr-scanner";
 import { insertSaleSchema, type InsertSale } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
@@ -18,11 +20,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 
-const saleFormSchema = insertSaleSchema.extend({
-  sku: z.string().min(1, "SKU is required"),
+// Cart item type for multi-item transactions
+interface CartItem {
+  id: string;
+  sku: string;
+  name: string;
+  price: number;
+  quantity: number;
+  totalPrice: number;
+  availableStock: number;
+}
+
+const transactionFormSchema = z.object({
+  paymentMethod: z.enum(["cash", "venmo"]),
+  salesAssociateId: z.string().min(1, "Sales associate is required"),
 });
 
-type SaleFormData = z.infer<typeof saleFormSchema>;
+type TransactionFormData = z.infer<typeof transactionFormSchema>;
 
 interface NewSaleModalProps {
   open: boolean;
@@ -30,30 +44,24 @@ interface NewSaleModalProps {
 }
 
 export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) {
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showScanner, setShowScanner] = useState(false);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
-  
-
 
   const { data: associates = [] } = useQuery({
     queryKey: ["/api/associates"],
     enabled: isAdmin, // Only fetch associates if user is admin
   });
 
-  const form = useForm<SaleFormData>({
-    resolver: zodResolver(saleFormSchema),
+  const form = useForm<TransactionFormData>({
+    resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      sku: "",
-      quantity: 1,
-      unitPrice: "",
-      totalAmount: "",
       paymentMethod: "cash",
-      orderNumber: "",
-      itemId: "",
       salesAssociateId: "",
     },
   });
@@ -65,29 +73,55 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     }
   }, [user, open, form]);
 
-  const createSaleMutation = useMutation({
-    mutationFn: async (data: InsertSale) => {
-      const response = await apiRequest("POST", "/api/sales", data);
-      return response.json();
+  // Reset cart when modal opens/closes
+  useEffect(() => {
+    if (!open) {
+      setCart([]);
+      setSearchTerm("");
+      setSearchResults([]);
+      setSelectedQuantity(1);
+      form.reset();
+    }
+  }, [open, form]);
+
+  const processSaleMutation = useMutation({
+    mutationFn: async (data: { items: CartItem[], formData: TransactionFormData }) => {
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+      
+      // Process each item in the cart as individual sale records with same order number
+      const salesPromises = data.items.map(item => {
+        const saleData: InsertSale = {
+          itemId: item.id,
+          salesAssociateId: data.formData.salesAssociateId,
+          quantity: item.quantity,
+          unitPrice: item.price.toString(),
+          totalAmount: item.totalPrice.toString(),
+          paymentMethod: data.formData.paymentMethod,
+          orderNumber: orderNumber,
+        };
+        return apiRequest("POST", "/api/sales", saleData);
+      });
+      
+      await Promise.all(salesPromises);
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       onOpenChange(false);
-      form.reset();
-      setSelectedItem(null);
       toast({
         title: "Success",
-        description: "Sale processed successfully",
+        description: `Transaction completed! ${cart.length} item(s) processed.`,
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to process sale",
+        description: "Failed to process transaction",
         variant: "destructive",
       });
+      console.error("Sale processing error:", error);
     },
   });
 
@@ -98,17 +132,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     },
     onSuccess: (items) => {
       setSearchResults(items);
-      if (items.length === 1) {
-        // If only one result, auto-select it
-        const item = items[0];
-        setSelectedItem(item);
-        form.setValue("itemId", item.id);
-        form.setValue("unitPrice", item.price);
-        updateTotalAmount();
-      } else if (items.length === 0) {
-        setSelectedItem(null);
-        form.setValue("itemId", "");
-        form.setValue("unitPrice", "");
+      if (items.length === 0) {
         toast({
           title: "No items found",
           description: "No items match your search",
@@ -118,9 +142,6 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     },
     onError: () => {
       setSearchResults([]);
-      setSelectedItem(null);
-      form.setValue("itemId", "");
-      form.setValue("unitPrice", "");
       toast({
         title: "Search failed",
         description: "Failed to search inventory items",
@@ -129,164 +150,345 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     },
   });
 
-  const generateOrderNumber = () => {
-    return `ORD-${Date.now().toString().slice(-6)}`;
-  };
-
-  const updateTotalAmount = () => {
-    const quantity = form.getValues("quantity");
-    const unitPrice = Number(form.getValues("unitPrice"));
-    if (quantity && unitPrice) {
-      const total = quantity * unitPrice;
-      form.setValue("totalAmount", total.toFixed(2));
-    }
-  };
-
-  const onSkuChange = (sku: string) => {
-    form.setValue("sku", sku);
-    if (sku.trim()) {
-      searchItemsMutation.mutate(sku.trim());
+  // Cart management functions
+  const addToCart = (item: any) => {
+    const existingItem = cart.find(cartItem => cartItem.id === item.id);
+    
+    if (existingItem) {
+      // Increase quantity if item already in cart
+      if (existingItem.quantity + selectedQuantity > item.quantity) {
+        toast({
+          title: "Insufficient stock",
+          description: `Only ${item.quantity} units available`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setCart(cart.map(cartItem => 
+        cartItem.id === item.id 
+          ? { 
+              ...cartItem, 
+              quantity: cartItem.quantity + selectedQuantity,
+              totalPrice: (cartItem.quantity + selectedQuantity) * cartItem.price
+            }
+          : cartItem
+      ));
     } else {
-      setSearchResults([]);
-      setSelectedItem(null);
-      form.setValue("itemId", "");
-      form.setValue("unitPrice", "");
-      form.setValue("totalAmount", "");
+      // Add new item to cart
+      if (selectedQuantity > item.quantity) {
+        toast({
+          title: "Insufficient stock",
+          description: `Only ${item.quantity} units available`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const cartItem: CartItem = {
+        id: item.id,
+        sku: item.sku,
+        name: item.name,
+        price: item.price,
+        quantity: selectedQuantity,
+        totalPrice: selectedQuantity * item.price,
+        availableStock: item.quantity,
+      };
+      
+      setCart([...cart, cartItem]);
     }
-  };
-
-  const selectItem = (item: any) => {
-    setSelectedItem(item);
-    form.setValue("sku", item.sku);
-    form.setValue("itemId", item.id);
-    form.setValue("unitPrice", item.price);
-    updateTotalAmount();
+    
+    setSearchTerm("");
     setSearchResults([]);
+    setSelectedQuantity(1);
+    
+    toast({
+      title: "Item added",
+      description: `${item.name} added to cart`,
+    });
   };
 
-  const handleQRScan = (result: string) => {
-    onSkuChange(result);
-    setShowScanner(false);
-  };
-
-  const openScanner = () => {
-    setShowScanner(true);
-  };
-
-  const onSubmit = (data: SaleFormData) => {
-    if (!selectedItem) {
+  const updateCartItemQuantity = (itemId: string, newQuantity: number) => {
+    const item = cart.find(cartItem => cartItem.id === itemId);
+    if (!item) return;
+    
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+    
+    if (newQuantity > item.availableStock) {
       toast({
-        title: "Error",
-        description: "Please select a valid item",
+        title: "Insufficient stock",
+        description: `Only ${item.availableStock} units available`,
         variant: "destructive",
       });
       return;
     }
+    
+    setCart(cart.map(cartItem => 
+      cartItem.id === itemId 
+        ? { 
+            ...cartItem, 
+            quantity: newQuantity,
+            totalPrice: newQuantity * cartItem.price
+          }
+        : cartItem
+    ));
+  };
 
-    const saleData: InsertSale = {
-      orderNumber: generateOrderNumber(),
-      itemId: data.itemId,
-      quantity: data.quantity,
-      unitPrice: Number(data.unitPrice).toFixed(2),
-      totalAmount: Number(data.totalAmount).toFixed(2),
-      paymentMethod: data.paymentMethod,
-      salesAssociateId: data.salesAssociateId,
-    };
+  const removeFromCart = (itemId: string) => {
+    setCart(cart.filter(item => item.id !== itemId));
+    toast({
+      title: "Item removed",
+      description: "Item removed from cart",
+    });
+  };
 
-    console.log("Submitting sale data:", saleData);
-    createSaleMutation.mutate(saleData);
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const getTotalAmount = () => {
+    return cart.reduce((total, item) => total + item.totalPrice, 0);
+  };
+
+  const onSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.trim()) {
+      searchItemsMutation.mutate(value.trim());
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleQRScan = (result: string) => {
+    onSearchChange(result);
+    setShowScanner(false);
+  };
+
+  const onSubmit = (data: TransactionFormData) => {
+    if (cart.length === 0) {
+      toast({
+        title: "Empty cart",
+        description: "Please add items to cart before processing",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    processSaleMutation.mutate({ items: cart, formData: data });
   };
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New Sale</DialogTitle>
-            <DialogDescription id="dialog-description">
-              Process a new sale transaction by scanning or entering item details
+            <DialogTitle>New Sale Transaction</DialogTitle>
+            <DialogDescription>
+              Add multiple items to cart and process as one transaction
             </DialogDescription>
           </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="sku"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Search Item (SKU or Description)</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        placeholder="Scan QR code or type SKU..."
-                        {...field}
-                        onChange={(e) => onSkuChange(e.target.value)}
-                        data-testid="input-sku-search"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={openScanner}
-                        className="absolute right-2 top-1/2 -translate-y-1/2"
-                        data-testid="button-qr-scan"
-                      >
-                        <QrCode size={16} />
-                      </Button>
+          
+          {/* Item Search Section */}
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  placeholder="Scan QR code or type SKU..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  data-testid="input-item-search"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setShowScanner(true)}
+                data-testid="button-scan-qr"
+              >
+                <QrCode size={20} />
+              </Button>
+            </div>
+            
+            {/* Quantity Selector for Adding Items */}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="quantity">Quantity:</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedQuantity(Math.max(1, selectedQuantity - 1))}
+                  data-testid="button-decrease-quantity"
+                >
+                  <Minus size={16} />
+                </Button>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  value={selectedQuantity}
+                  onChange={(e) => setSelectedQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-20 text-center"
+                  data-testid="input-selected-quantity"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedQuantity(selectedQuantity + 1)}
+                  data-testid="button-increase-quantity"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="border rounded-md p-2 space-y-2 max-h-32 overflow-y-auto">
+                {searchResults.map((item: any) => (
+                  <div key={item.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">SKU: {item.sku} • ${item.price} • Stock: {item.quantity}</p>
                     </div>
-                  </FormControl>
-                  <FormMessage />
-                  
-                  {/* Search Results Dropdown */}
-                  {searchResults.length > 1 && (
-                    <div className="mt-2 p-2 border rounded-md bg-background">
-                      <p className="text-sm font-medium mb-2">Select an item:</p>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
-                        {searchResults.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => selectItem(item)}
-                            className="w-full text-left p-2 text-sm hover:bg-muted rounded border-b last:border-b-0"
-                            data-testid={`button-select-item-${item.id}`}
-                          >
-                            <div className="font-medium">{item.sku}</div>
-                            <div className="text-muted-foreground">{item.name} - ${item.price}</div>
-                          </button>
-                        ))}
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => addToCart(item)}
+                      data-testid={`button-add-item-${item.id}`}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Cart Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <ShoppingCart size={20} />
+                Cart ({cart.length} items)
+              </h3>
+              {cart.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearCart}
+                  data-testid="button-clear-cart"
+                >
+                  Clear Cart
+                </Button>
+              )}
+            </div>
+            
+            {cart.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Cart is empty. Search and add items above.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
+                {cart.map((item) => (
+                  <Card key={item.id} className="p-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                        <p className="text-sm">Unit Price: ${item.price.toFixed(2)}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
+                          data-testid={`button-decrease-cart-${item.id}`}
+                        >
+                          <Minus size={14} />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                          data-testid={`button-increase-cart-${item.id}`}
+                        >
+                          <Plus size={14} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeFromCart(item.id)}
+                          data-testid={`button-remove-cart-${item.id}`}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
                       </div>
                     </div>
-                  )}
-                  
-                  {selectedItem && (
-                    <div className="text-sm text-muted-foreground">
-                      Selected: {selectedItem.name} - ${selectedItem.price}
+                    <div className="mt-2 text-right">
+                      <Badge variant="secondary">
+                        Total: ${item.totalPrice.toFixed(2)}
+                      </Badge>
                     </div>
-                  )}
-                </FormItem>
-              )}
-            />
+                  </Card>
+                ))}
+              </div>
+            )}
             
-            <div className="grid grid-cols-2 gap-4">
+            {cart.length > 0 && (
+              <div className="text-right">
+                <p className="text-xl font-bold">
+                  Total Amount: ${getTotalAmount().toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Transaction Form */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="quantity"
+                name="salesAssociateId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(Number(e.target.value));
-                          updateTotalAmount();
-                        }}
-                        data-testid="input-quantity"
-                      />
-                    </FormControl>
+                    <FormLabel>Sales Associate</FormLabel>
+                    {isAdmin ? (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-sales-associate">
+                            <SelectValue placeholder="Select associate" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(associates as any[]).map((associate: any) => (
+                            <SelectItem key={associate.id} value={associate.id}>
+                              {associate.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <FormControl>
+                        <Input
+                          value={`${(user as any)?.firstName} ${(user as any)?.lastName}`.trim()}
+                          readOnly
+                          className="bg-muted"
+                          data-testid="input-current-associate"
+                        />
+                      </FormControl>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -294,142 +496,59 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
               
               <FormField
                 control={form.control}
-                name="unitPrice"
+                name="paymentMethod"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit Price</FormLabel>
+                    <FormLabel>Payment Method</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          updateTotalAmount();
-                        }}
-                        data-testid="input-unit-price"
-                      />
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                        data-testid="radio-payment-method"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="cash" id="cash" />
+                          <Label htmlFor="cash">Cash</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="venmo" id="venmo" />
+                          <Label htmlFor="venmo">Venmo</Label>
+                        </div>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="totalAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Total Amount</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      readOnly
-                      className="bg-muted"
-                      {...field}
-                      data-testid="input-total-amount"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="salesAssociateId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Sales Associate</FormLabel>
-                  {isAdmin ? (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-sales-associate">
-                          <SelectValue placeholder="Select associate" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(associates as any[]).map((associate: any) => (
-                          <SelectItem key={associate.id} value={associate.id}>
-                            {associate.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <FormControl>
-                      <Input
-                        value={`${(user as any)?.firstName} ${(user as any)?.lastName}`.trim()}
-                        readOnly
-                        className="bg-muted"
-                        data-testid="input-current-associate"
-                      />
-                    </FormControl>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Payment Method</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex space-x-4"
-                      data-testid="radio-payment-method"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="cash" id="cash" />
-                        <Label htmlFor="cash">Cash</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="venmo" id="venmo" />
-                        <Label htmlFor="venmo">Venmo</Label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                data-testid="button-cancel-sale"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createSaleMutation.isPending || !selectedItem}
-                data-testid="button-process-sale"
-              >
-                {createSaleMutation.isPending ? "Processing..." : "Process Sale"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-    
-    <QRScanner
-      isOpen={showScanner}
-      onScan={handleQRScan}
-      onClose={() => setShowScanner(false)}
-    />
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  data-testid="button-cancel-sale"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={processSaleMutation.isPending || cart.length === 0}
+                  data-testid="button-process-transaction"
+                >
+                  {processSaleMutation.isPending ? "Processing..." : `Process Transaction (${cart.length} items)`}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      <QRScanner
+        isOpen={showScanner}
+        onScan={handleQRScan}
+        onClose={() => setShowScanner(false)}
+      />
     </>
   );
 }
