@@ -49,9 +49,18 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
         throw new Error("Camera access requires HTTPS connection");
       }
 
-      // Quick check for server environment (headless/Docker)
-      const isServerEnvironment = !window.screen || window.screen.width === 0 || window.screen.height === 0;
-      if (isServerEnvironment) {
+      // Check for actual server environment (not mobile devices)
+      const isActualServerEnvironment = (
+        typeof window === 'undefined' || 
+        !window.screen || 
+        (window.screen.width === 0 && window.screen.height === 0) ||
+        navigator.userAgent.includes('HeadlessChrome')
+      );
+      
+      // Don't block mobile devices - they have cameras
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isActualServerEnvironment && !isMobile) {
         throw new Error("Camera not available in server environment. Use manual input instead.");
       }
 
@@ -123,7 +132,7 @@ export default function QRScanner({ onScan, onClose, isOpen }: QRScannerProps) {
           // Add timeout to prevent hanging
           const streamPromise = navigator.mediaDevices.getUserMedia(config);
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Camera access timeout - no camera hardware detected')), 3000)
+            setTimeout(() => reject(new Error('Camera access timeout')), 8000)
           );
           
           stream = await Promise.race([streamPromise, timeoutPromise]) as MediaStream;
