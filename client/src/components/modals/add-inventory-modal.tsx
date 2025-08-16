@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { X } from "lucide-react";
 import { insertInventoryItemSchema, type InsertInventoryItem } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
@@ -34,6 +37,9 @@ interface AddInventoryModalProps {
 
 export default function AddInventoryModal({ open, onOpenChange, editingItem, onClose }: AddInventoryModalProps) {
   const { toast } = useToast();
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [isMultiVariant, setIsMultiVariant] = useState(!editingItem);
 
   const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
@@ -201,12 +207,78 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   const handleClose = () => {
     onOpenChange(false);
     form.reset();
+    setSelectedColors([]);
+    setSelectedSizes([]);
+    setIsMultiVariant(!editingItem);
     if (onClose) onClose();
+  };
+
+  const createMultipleVariants = async (baseData: InsertInventoryItem) => {
+    if (!isMultiVariant || (selectedColors.length === 0 && selectedSizes.length === 0)) {
+      createItemMutation.mutate(baseData);
+      return;
+    }
+
+    const colors = selectedColors.length > 0 ? selectedColors : [baseData.color || ""];
+    const sizes = selectedSizes.length > 0 ? selectedSizes : [baseData.size || ""];
+    
+    // Generate all combinations
+    const variants = [];
+    for (const color of colors) {
+      for (const size of sizes) {
+        const variantData = {
+          ...baseData,
+          color,
+          size,
+          name: generateItemName({
+            type: baseData.type || undefined,
+            color,
+            size,
+            design: baseData.design || undefined,
+            groupType: baseData.groupType || undefined,
+            styleGroup: baseData.styleGroup || undefined,
+          }),
+          sku: generateCategorySKU({
+            type: baseData.type || undefined,
+            color,
+            size,
+            design: baseData.design || undefined,
+            groupType: baseData.groupType || undefined,
+            styleGroup: baseData.styleGroup || undefined,
+          })
+        };
+        variants.push(variantData);
+      }
+    }
+
+    try {
+      // Create all variants
+      for (const variant of variants) {
+        await apiRequest("POST", "/api/inventory", variant);
+      }
+      
+      toast({
+        title: "Success",
+        description: `Created ${variants.length} inventory variants successfully!`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      handleClose();
+    } catch (error) {
+      console.error("Failed to create variants:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create inventory variants. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const onSubmit = (data: InsertInventoryItem) => {
     if (editingItem) {
       updateItemMutation.mutate(data);
+    } else if (isMultiVariant && (selectedColors.length > 0 || selectedSizes.length > 0)) {
+      createMultipleVariants(data);
     } else {
       createItemMutation.mutate(data);
     }
@@ -253,6 +325,20 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 </FormItem>
               )}
             />
+
+            {!editingItem && (
+              <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg">
+                <Switch
+                  id="multi-variant"
+                  checked={isMultiVariant}
+                  onCheckedChange={setIsMultiVariant}
+                  data-testid="switch-multi-variant"
+                />
+                <label htmlFor="multi-variant" className="text-sm font-medium">
+                  Create multiple variants (different sizes/colors)
+                </label>
+              </div>
+            )}
             
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -289,23 +375,63 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Color</FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      setTimeout(autoPopulateFromCategories, 100);
-                    }} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-item-color">
-                          <SelectValue placeholder="Select color" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ITEM_COLORS.map((color) => (
-                          <SelectItem key={color} value={color}>
-                            {color}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isMultiVariant ? (
+                      <div className="space-y-2">
+                        <div className="text-sm text-muted-foreground">Select multiple colors:</div>
+                        <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                          {ITEM_COLORS.map((color) => (
+                            <div key={color} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`color-${color}`}
+                                checked={selectedColors.includes(color)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedColors([...selectedColors, color]);
+                                  } else {
+                                    setSelectedColors(selectedColors.filter(c => c !== color));
+                                  }
+                                }}
+                                data-testid={`checkbox-color-${color}`}
+                              />
+                              <label htmlFor={`color-${color}`} className="text-sm font-medium">
+                                {color}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        {selectedColors.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {selectedColors.map((color) => (
+                              <Badge key={color} variant="secondary" className="text-xs">
+                                {color}
+                                <X 
+                                  className="w-3 h-3 ml-1 cursor-pointer" 
+                                  onClick={() => setSelectedColors(selectedColors.filter(c => c !== color))}
+                                />
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setTimeout(autoPopulateFromCategories, 100);
+                      }} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-item-color">
+                            <SelectValue placeholder="Select color" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ITEM_COLORS.map((color) => (
+                            <SelectItem key={color} value={color}>
+                              {color}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -406,23 +532,63 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Size</FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      setTimeout(autoPopulateFromCategories, 100);
-                    }} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-item-size">
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ITEM_SIZES.map((size) => (
-                          <SelectItem key={size} value={size}>
-                            {size}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isMultiVariant ? (
+                      <div className="space-y-2">
+                        <div className="text-sm text-muted-foreground">Select multiple sizes:</div>
+                        <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
+                          {ITEM_SIZES.map((size) => (
+                            <div key={size} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`size-${size}`}
+                                checked={selectedSizes.includes(size)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedSizes([...selectedSizes, size]);
+                                  } else {
+                                    setSelectedSizes(selectedSizes.filter(s => s !== size));
+                                  }
+                                }}
+                                data-testid={`checkbox-size-${size}`}
+                              />
+                              <label htmlFor={`size-${size}`} className="text-sm font-medium">
+                                {size}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        {selectedSizes.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {selectedSizes.map((size) => (
+                              <Badge key={size} variant="secondary" className="text-xs">
+                                {size}
+                                <X 
+                                  className="w-3 h-3 ml-1 cursor-pointer" 
+                                  onClick={() => setSelectedSizes(selectedSizes.filter(s => s !== size))}
+                                />
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setTimeout(autoPopulateFromCategories, 100);
+                      }} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-item-size">
+                            <SelectValue placeholder="Select size" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ITEM_SIZES.map((size) => (
+                            <SelectItem key={size} value={size}>
+                              {size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -582,6 +748,30 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                 </FormItem>
               )}
             />
+
+            {/* Preview Section for Multi-Variant Mode */}
+            {isMultiVariant && (selectedColors.length > 0 || selectedSizes.length > 0) && (
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <h3 className="text-sm font-medium mb-2">Preview: Items to be created</h3>
+                <div className="text-xs text-muted-foreground mb-2">
+                  {selectedColors.length > 0 && selectedSizes.length > 0 
+                    ? `${selectedColors.length} colors × ${selectedSizes.length} sizes = ${selectedColors.length * selectedSizes.length} items`
+                    : selectedColors.length > 0 
+                    ? `${selectedColors.length} color variants`
+                    : `${selectedSizes.length} size variants`
+                  }
+                </div>
+                <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto">
+                  {(selectedColors.length > 0 ? selectedColors : [""]).map((color) =>
+                    (selectedSizes.length > 0 ? selectedSizes : [""]).map((size) => (
+                      <div key={`${color}-${size}`} className="text-xs p-2 bg-background rounded border">
+                        {[color, size].filter(Boolean).join(" - ") || "Base item"}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
             
             <div className="flex justify-end space-x-3 pt-4">
               <Button
@@ -599,6 +789,8 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
               >
                 {editingItem 
                   ? (updateItemMutation.isPending ? "Updating..." : "Update Item")
+                  : isMultiVariant && (selectedColors.length > 0 || selectedSizes.length > 0)
+                  ? (createItemMutation.isPending ? "Creating..." : `Create ${(selectedColors.length || 1) * (selectedSizes.length || 1)} Items`)
                   : (createItemMutation.isPending ? "Adding..." : "Add Item")
                 }
               </Button>
