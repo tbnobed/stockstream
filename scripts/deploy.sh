@@ -58,32 +58,23 @@ fi
 # Create logs directory
 mkdir -p logs
 
-# Check if user is in docker group
-if ! groups $USER | grep -q '\bdocker\b'; then
-    echo "⚠️  Docker group membership detected. You may need to log out and back in."
-    echo "🔧 Using sudo for Docker commands for now..."
-    DOCKER_CMD="sudo docker-compose"
-else
-    DOCKER_CMD="docker-compose"
-fi
-
 # Build and start services
 echo "🏗️  Building application..."
-$DOCKER_CMD build
+docker-compose build
 
 echo "🗄️  Starting database and running migrations..."
-$DOCKER_CMD up -d postgres
+docker-compose up -d postgres
 
 # Wait for database to be ready
 echo "⏳ Waiting for database to be ready..."
-sleep 15
+sleep 10
 
 # Run database migrations
 echo "📊 Running database migrations..."
-$DOCKER_CMD run --rm app npm run db:migrate
+docker-compose run --rm app npm run db:migrate
 
 echo "🚀 Starting application..."
-$DOCKER_CMD up -d
+docker-compose up -d
 
 echo "✅ Deployment complete!"
 echo ""
