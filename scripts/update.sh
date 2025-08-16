@@ -24,7 +24,7 @@ docker-compose build app
 
 # Run migrations
 echo "📊 Running database migrations..."
-docker-compose run --rm app npm run db:push
+docker-compose run --rm app sh -c "npm install --include=dev && npm run db:push"
 
 # Restart application with new image
 echo "🔄 Restarting application..."

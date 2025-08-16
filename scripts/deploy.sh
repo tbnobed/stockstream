@@ -69,9 +69,9 @@ docker-compose up -d postgres
 echo "⏳ Waiting for database to be ready..."
 sleep 10
 
-# Run database migrations
+# Run database migrations using the builder stage with dev dependencies
 echo "📊 Running database migrations..."
-docker-compose run --rm app npm run db:push
+docker-compose run --rm app sh -c "npm install --include=dev && npm run db:push"
 
 echo "🚀 Starting application..."
 docker-compose up -d
