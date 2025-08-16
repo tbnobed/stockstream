@@ -14,7 +14,7 @@ RUN npm ci
 COPY . .
 
 # Build the application and fix paths for Docker
-RUN vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist \
+RUN npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist \
     && sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js
 
 # Production stage
