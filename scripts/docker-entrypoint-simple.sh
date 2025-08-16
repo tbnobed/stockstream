@@ -12,11 +12,11 @@ done
 
 echo "✅ Database connection established"
 
-# Check if we need to run migrations by looking for any tables
+# Check if we need to run migrations by looking for users table specifically
 echo "📊 Checking database schema..."
-TABLE_COUNT=$(psql $DATABASE_URL -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null | tr -d ' ')
+USERS_TABLE_EXISTS=$(psql $DATABASE_URL -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users';" 2>/dev/null | tr -d ' ')
 
-if [ "$TABLE_COUNT" = "0" ] || [ -z "$TABLE_COUNT" ]; then
+if [ "$USERS_TABLE_EXISTS" = "0" ] || [ -z "$USERS_TABLE_EXISTS" ]; then
   echo "🔧 No tables found, creating database schema..."
   
   # Use drizzle-kit push with --force to skip prompts
@@ -39,7 +39,7 @@ if [ "$TABLE_COUNT" = "0" ] || [ -z "$TABLE_COUNT" ]; then
   
   echo "✅ Database setup completed!"
 else
-  echo "✅ Database already initialized ($TABLE_COUNT tables found)"
+  echo "✅ Database already initialized (users table found)"
 fi
 
 # Start the application
