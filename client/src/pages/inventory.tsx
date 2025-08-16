@@ -34,12 +34,12 @@ export default function Inventory() {
   const [showArchivedItems, setShowArchivedItems] = useState(false);
   
   // Filter states
-  const [selectedType, setSelectedType] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedDesign, setSelectedDesign] = useState<string>("");
-  const [selectedGroupType, setSelectedGroupType] = useState<string>("");
-  const [selectedStyleGroup, setSelectedStyleGroup] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<string>("all-types");
+  const [selectedColor, setSelectedColor] = useState<string>("all-colors");
+  const [selectedSize, setSelectedSize] = useState<string>("all-sizes");
+  const [selectedDesign, setSelectedDesign] = useState<string>("all-designs");
+  const [selectedGroupType, setSelectedGroupType] = useState<string>("all-groups");
+  const [selectedStyleGroup, setSelectedStyleGroup] = useState<string>("all-styles");
   const [showFilters, setShowFilters] = useState(false);
 
   const queryClient = useQueryClient();
@@ -88,12 +88,12 @@ export default function Inventory() {
   });
 
   const clearAllFilters = () => {
-    setSelectedType("");
-    setSelectedColor("");
-    setSelectedSize("");
-    setSelectedDesign("");
-    setSelectedGroupType("");
-    setSelectedStyleGroup("");
+    setSelectedType("all-types");
+    setSelectedColor("all-colors");
+    setSelectedSize("all-sizes");
+    setSelectedDesign("all-designs");
+    setSelectedGroupType("all-groups");
+    setSelectedStyleGroup("all-styles");
     setSearchTerm("");
   };
 
@@ -106,12 +106,12 @@ export default function Inventory() {
       item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = !selectedType || item.type === selectedType;
-    const matchesColor = !selectedColor || item.color === selectedColor;
-    const matchesSize = !selectedSize || item.size === selectedSize;
-    const matchesDesign = !selectedDesign || item.design === selectedDesign;
-    const matchesGroupType = !selectedGroupType || item.groupType === selectedGroupType;
-    const matchesStyleGroup = !selectedStyleGroup || item.styleGroup === selectedStyleGroup;
+    const matchesType = !selectedType || selectedType === "all-types" || item.type === selectedType;
+    const matchesColor = !selectedColor || selectedColor === "all-colors" || item.color === selectedColor;
+    const matchesSize = !selectedSize || selectedSize === "all-sizes" || item.size === selectedSize;
+    const matchesDesign = !selectedDesign || selectedDesign === "all-designs" || item.design === selectedDesign;
+    const matchesGroupType = !selectedGroupType || selectedGroupType === "all-groups" || item.groupType === selectedGroupType;
+    const matchesStyleGroup = !selectedStyleGroup || selectedStyleGroup === "all-styles" || item.styleGroup === selectedStyleGroup;
     
     return matchesSearch && matchesType && matchesColor && matchesSize && 
            matchesDesign && matchesGroupType && matchesStyleGroup;
@@ -257,7 +257,7 @@ export default function Inventory() {
                       <SelectValue placeholder="All types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All types</SelectItem>
+                      <SelectItem value="all-types">All types</SelectItem>
                       {ITEM_TYPES.map((type: string) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -272,7 +272,7 @@ export default function Inventory() {
                       <SelectValue placeholder="All colors" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All colors</SelectItem>
+                      <SelectItem value="all-colors">All colors</SelectItem>
                       {ITEM_COLORS.map((color: string) => (
                         <SelectItem key={color} value={color}>{color}</SelectItem>
                       ))}
@@ -287,7 +287,7 @@ export default function Inventory() {
                       <SelectValue placeholder="All sizes" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All sizes</SelectItem>
+                      <SelectItem value="all-sizes">All sizes</SelectItem>
                       {ITEM_SIZES.map((size: string) => (
                         <SelectItem key={size} value={size}>{size}</SelectItem>
                       ))}
@@ -302,7 +302,7 @@ export default function Inventory() {
                       <SelectValue placeholder="All designs" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All designs</SelectItem>
+                      <SelectItem value="all-designs">All designs</SelectItem>
                       {ITEM_DESIGNS.map((design: string) => (
                         <SelectItem key={design} value={design}>{design}</SelectItem>
                       ))}
@@ -317,7 +317,7 @@ export default function Inventory() {
                       <SelectValue placeholder="All groups" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All groups</SelectItem>
+                      <SelectItem value="all-groups">All groups</SelectItem>
                       {GROUP_TYPES.map((type: string) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
@@ -332,7 +332,7 @@ export default function Inventory() {
                       <SelectValue placeholder="All styles" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All styles</SelectItem>
+                      <SelectItem value="all-styles">All styles</SelectItem>
                       {STYLE_GROUPS.map((style: string) => (
                         <SelectItem key={style} value={style}>{style}</SelectItem>
                       ))}
@@ -342,67 +342,72 @@ export default function Inventory() {
               </div>
 
               {/* Active Filters Display */}
-              {(selectedType || selectedColor || selectedSize || selectedDesign || selectedGroupType || selectedStyleGroup) && (
+              {(selectedType && selectedType !== "all-types" || 
+                selectedColor && selectedColor !== "all-colors" || 
+                selectedSize && selectedSize !== "all-sizes" || 
+                selectedDesign && selectedDesign !== "all-designs" || 
+                selectedGroupType && selectedGroupType !== "all-groups" || 
+                selectedStyleGroup && selectedStyleGroup !== "all-styles") && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex flex-wrap gap-2">
                     <span className="text-xs text-muted-foreground">Active filters:</span>
-                    {selectedType && (
+                    {selectedType && selectedType !== "all-types" && (
                       <Badge variant="secondary" className="text-xs">
                         Type: {selectedType}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedType("")} 
+                          onClick={() => setSelectedType("all-types")} 
                         />
                       </Badge>
                     )}
-                    {selectedColor && (
+                    {selectedColor && selectedColor !== "all-colors" && (
                       <Badge variant="secondary" className="text-xs">
                         Color: {selectedColor}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedColor("")} 
+                          onClick={() => setSelectedColor("all-colors")} 
                         />
                       </Badge>
                     )}
-                    {selectedSize && (
+                    {selectedSize && selectedSize !== "all-sizes" && (
                       <Badge variant="secondary" className="text-xs">
                         Size: {selectedSize}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedSize("")} 
+                          onClick={() => setSelectedSize("all-sizes")} 
                         />
                       </Badge>
                     )}
-                    {selectedDesign && (
+                    {selectedDesign && selectedDesign !== "all-designs" && (
                       <Badge variant="secondary" className="text-xs">
                         Design: {selectedDesign}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedDesign("")} 
+                          onClick={() => setSelectedDesign("all-designs")} 
                         />
                       </Badge>
                     )}
-                    {selectedGroupType && (
+                    {selectedGroupType && selectedGroupType !== "all-groups" && (
                       <Badge variant="secondary" className="text-xs">
                         Group: {selectedGroupType}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedGroupType("")} 
+                          onClick={() => setSelectedGroupType("all-groups")} 
                         />
                       </Badge>
                     )}
-                    {selectedStyleGroup && (
+                    {selectedStyleGroup && selectedStyleGroup !== "all-styles" && (
                       <Badge variant="secondary" className="text-xs">
                         Style: {selectedStyleGroup}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedStyleGroup("")} 
+                          onClick={() => setSelectedStyleGroup("all-styles")} 
                         />
                       </Badge>
                     )}
