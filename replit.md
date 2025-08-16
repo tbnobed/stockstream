@@ -67,3 +67,26 @@ The application uses Docker for containerization, with multi-stage builds for op
 - **Date Handling**: `date-fns`
 - **ID Generation**: `nanoid`
 - **Conditional ClassNames**: `clsx`, `tailwind-merge`
+
+## Recent Changes
+
+### Multi-Item Transaction System (August 16, 2025)
+- **Shopping cart functionality**: Complete rewrite of sales modal to support multiple items per transaction
+- **Database schema fix**: Removed unique constraint on order_number field to allow multiple sales records with same order number
+- **Cart management**: Added/remove items, adjust quantities, stock validation, and real-time total calculation
+- **QR scanner integration**: Enhanced QR scanning to add items directly to cart with quantity selection
+- **Price type conversion**: Fixed string-to-number conversion for database price fields to prevent display errors
+- **Transaction processing**: All items in cart processed as separate sales records sharing single order number
+- **Inventory validation**: Prevents overselling with real-time stock level checks during cart operations
+- **Enhanced UX**: Clear cart display, quantity controls, item removal, and comprehensive transaction confirmation
+
+### Docker Deployment for Multi-Item Transactions (August 16, 2025)
+- **Production deployment scripts**: Created deploy-multi-item.sh for new deployments with comprehensive feature verification
+- **Update mechanism**: Built update-multi-item.sh for upgrading existing deployments with database backup and rollback capability
+- **Schema migration**: Enhanced docker-entrypoint.sh to automatically remove order_number unique constraint during container startup
+- **Feature verification**: Added automated checks to ensure multi-item transaction functionality is properly configured
+- **Deployment documentation**: Created comprehensive README-DOCKER-DEPLOYMENT.md with troubleshooting and maintenance guides
+- **Backup integration**: Automated database backup during updates to prevent data loss
+- **Health monitoring**: Enhanced health checks to verify API endpoints and database connectivity
+- **Environment configuration**: Extended environment variables for multi-item cart and QR scanner settings
+- **Production hardening**: Security considerations, resource limits, and monitoring capabilities for production deployment
