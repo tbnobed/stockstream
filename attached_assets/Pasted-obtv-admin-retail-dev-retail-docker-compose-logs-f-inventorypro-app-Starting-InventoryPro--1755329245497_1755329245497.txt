@@ -1,0 +1,164 @@
+obtv-admin@retail-dev:~/retail$ docker compose logs -f
+inventorypro-app  | 🚀 Starting InventoryPro application...
+inventorypro-app  | 📋 Auto-applying production database fixes...
+inventorypro-app  | ⏳ Waiting for database connection...
+inventorypro-app  | ✅ Database connection established
+inventorypro-app  | 📊 Checking database schema...
+inventorypro-app  | ✅ Database already initialized
+inventorypro-app  | 🔄 Applying production constraint fixes...
+inventorypro-app  | NOTICE:  Production constraint fixes applied successfully
+inventorypro-app  | DO
+inventorypro-app  | ✅ Production constraints configured for multi-item transactions
+inventorypro-app  | 🔍 Performing final health check...
+inventorypro-app  | ✅ Database health check passed
+inventorypro-app  | 🌐 Starting application server...
+inventorypro-app  | 7:26:56 AM [express] serving on port 5000
+inventorypro-app  | 7:26:58 AM [express] GET /api/auth/user 304 in 50ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef",…
+inventorypro-app  | 7:26:58 AM [express] GET /api/associates 304 in 40ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | 7:26:58 AM [express] GET /api/suppliers 304 in 68ms :: []
+inventorypro-app  | 7:26:58 AM [express] GET /api/inventory 304 in 78ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:26:58 AM [express] GET /api/inventory/low-stock 304 in 77ms :: []
+inventorypro-app  | 7:26:58 AM [express] GET /api/sales 304 in 89ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:26:58 AM [express] GET /api/dashboard/stats 200 in 92ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-app  | 7:26:59 AM [express] GET /api/auth/user 304 in 5ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 7:26:59 AM [express] GET /api/associates 304 in 23ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | 7:26:59 AM [express] GET /api/inventory/low-stock 304 in 10ms :: []
+inventorypro-app  | 7:26:59 AM [express] GET /api/suppliers 304 in 21ms :: []
+inventorypro-app  | 7:26:59 AM [express] GET /api/inventory 304 in 20ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:26:59 AM [express] GET /api/sales 304 in 21ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:26:59 AM [express] GET /api/dashboard/stats 304 in 22ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-app  | 7:27:00 AM [express] GET /api/auth/user 304 in 5ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 7:27:00 AM [express] GET /api/inventory 304 in 15ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:27:00 AM [express] GET /api/inventory/low-stock 304 in 10ms :: []
+inventorypro-app  | 7:27:00 AM [express] GET /api/suppliers 304 in 23ms :: []
+inventorypro-app  | 7:27:00 AM [express] GET /api/associates 304 in 22ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | 7:27:00 AM [express] GET /api/sales 304 in 20ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:27:00 AM [express] GET /api/dashboard/stats 304 in 21ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-app  | 7:27:00 AM [express] GET /api/auth/user 304 in 4ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 7:27:00 AM [express] GET /api/suppliers 304 in 18ms :: []
+inventorypro-app  | 7:27:00 AM [express] GET /api/associates 304 in 23ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | 7:27:00 AM [express] GET /api/inventory 304 in 19ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:27:00 AM [express] GET /api/sales 304 in 18ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | 7:27:00 AM [express] GET /api/inventory/low-stock 304 in 14ms :: []
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:27:00 AM [express] GET /api/dashboard/stats 304 in 20ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-app  | 7:27:01 AM [express] GET /api/auth/user 304 in 4ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 7:27:01 AM [express] GET /api/suppliers 304 in 19ms :: []
+inventorypro-app  | 7:27:01 AM [express] GET /api/sales 304 in 24ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | 7:27:01 AM [express] GET /api/inventory 304 in 15ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:27:01 AM [express] GET /api/inventory/low-stock 304 in 18ms :: []
+inventorypro-app  | 7:27:01 AM [express] GET /api/associates 304 in 23ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:27:01 AM [express] GET /api/dashboard/stats 304 in 17ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-app  | 7:27:01 AM [express] GET /api/auth/user 304 in 4ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 7:27:02 AM [express] GET /api/suppliers 304 in 20ms :: []
+inventorypro-app  | 7:27:02 AM [express] GET /api/inventory 304 in 18ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:27:02 AM [express] GET /api/inventory/low-stock 304 in 12ms :: []
+inventorypro-app  | 7:27:02 AM [express] GET /api/sales 304 in 19ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | 7:27:02 AM [express] GET /api/associates 304 in 29ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:27:02 AM [express] GET /api/dashboard/stats 304 in 21ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-app  | 7:27:02 AM [express] GET /api/auth/user 304 in 3ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 7:27:02 AM [express] GET /api/suppliers 304 in 17ms :: []
+inventorypro-app  | 7:27:02 AM [express] GET /api/inventory/low-stock 304 in 19ms :: []
+inventorypro-app  | 7:27:02 AM [express] GET /api/sales 304 in 25ms :: [{"id":"f4d2d872-a1f2-43f4-913e-653e3586633e","or…
+inventorypro-app  | 7:27:02 AM [express] GET /api/inventory 304 in 31ms :: [{"id":"86e2e742-490c-496d-8672-50afb835d023"…
+inventorypro-app  | 7:27:02 AM [express] GET /api/associates 304 in 38ms :: [{"id":"2b0aa779-14ba-4363-a086-beb489083f26…
+inventorypro-app  | Dashboard stats calculation error: TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be of type string or an instance of Buffer or ArrayBuffer. Received an instance of Date
+inventorypro-app  |     at new NodeError (node:internal/errors:405:5)
+inventorypro-app  |     at Function.byteLength (node:buffer:779:11)
+inventorypro-app  |     at Function.str (file:///app/node_modules/postgres/src/bytes.js:22:27)
+inventorypro-app  |     at file:///app/node_modules/postgres/src/connection.js:944:16
+inventorypro-app  |     at Array.forEach (<anonymous>)
+inventorypro-app  |     at Bind (file:///app/node_modules/postgres/src/connection.js:934:16)
+inventorypro-app  |     at prepared (file:///app/node_modules/postgres/src/connection.js:204:7)
+inventorypro-app  |     at ParameterDescription (file:///app/node_modules/postgres/src/connection.js:613:58)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9) {
+inventorypro-app  |   code: 'ERR_INVALID_ARG_TYPE'
+inventorypro-app  | }
+inventorypro-app  | 7:27:02 AM [express] GET /api/dashboard/stats 304 in 33ms :: {"totalRevenue":0,"totalProfit":0,"tota…
+inventorypro-db   |
+inventorypro-db   | PostgreSQL Database directory appears to contain a database; Skipping initialization
+inventorypro-db   |
+inventorypro-db   | 2025-08-16 07:26:49.994 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-16 07:26:49.995 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+inventorypro-db   | 2025-08-16 07:26:49.995 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+inventorypro-db   | 2025-08-16 07:26:49.996 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-16 07:26:50.000 UTC [30] LOG:  database system was shut down at 2025-08-16 07:25:33 UTC
+inventorypro-db   | 2025-08-16 07:26:50.009 UTC [1] LOG:  database system is ready to accept connections

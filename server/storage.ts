@@ -388,6 +388,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const todayISOString = today.toISOString();
       
       // Calculate total revenue (convert string to number)
       const [revenueResult] = await db
@@ -409,7 +410,7 @@ export class DatabaseStorage implements IStorage {
       const [salesTodayResult] = await db
         .select({ count: sql<number>`COUNT(*)` })
         .from(sales)
-        .where(sql`${sales.saleDate} >= ${today}`);
+        .where(sql`${sales.saleDate} >= ${todayISOString}`);
       
       const [lowStockResult] = await db
         .select({ count: sql<number>`COUNT(*)` })
