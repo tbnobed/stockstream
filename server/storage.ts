@@ -267,6 +267,23 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
+  async getSalesByOrderNumber(orderNumber: string): Promise<SaleWithDetails[]> {
+    return db
+      .select()
+      .from(sales)
+      .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
+      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .where(eq(sales.orderNumber, orderNumber))
+      .orderBy(sales.saleDate)
+      .then(rows => 
+        rows.map(row => ({
+          ...row.sales,
+          item: row.inventory_items,
+          salesAssociate: row.sales_associates
+        }))
+      );
+  }
+
   async getSale(id: string): Promise<SaleWithDetails | undefined> {
     const [result] = await db
       .select()

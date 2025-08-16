@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Package, Calendar, User, CreditCard, Hash, DollarSign } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 interface SaleDetailsModalProps {
   sale: any;
@@ -18,6 +20,17 @@ export default function SaleDetailsModal({
   onPrintReceipt,
 }: SaleDetailsModalProps) {
   if (!sale) return null;
+
+  // Fetch all items for this order
+  const { data: orderItems = [], isLoading } = useQuery<any[]>({
+    queryKey: [`/api/sales/order/${sale.orderNumber}`],
+    enabled: open && !!sale?.orderNumber,
+  });
+
+  // Use order items if available, fallback to single sale
+  const items = orderItems.length > 0 ? orderItems : [sale];
+  const firstItem = items[0];
+  const totalAmount = items.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -58,7 +71,7 @@ export default function SaleDetailsModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
           {/* Order Information */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -67,7 +80,7 @@ export default function SaleDetailsModal({
                 <span className="text-sm font-medium">Order Number</span>
               </div>
               <Badge variant="outline" className="font-mono">
-                {sale.orderNumber}
+                {firstItem.orderNumber}
               </Badge>
             </div>
 
@@ -77,7 +90,7 @@ export default function SaleDetailsModal({
                 <span className="text-sm font-medium">Sale Date</span>
               </div>
               <span className="text-sm text-muted-foreground">
-                {formatDate(sale.saleDate)}
+                {formatDate(firstItem.saleDate)}
               </span>
             </div>
 
@@ -87,55 +100,66 @@ export default function SaleDetailsModal({
                 <span className="text-sm font-medium">Sales Associate</span>
               </div>
               <span className="text-sm font-medium">
-                {sale.salesAssociate?.name || 'Unknown'}
+                {firstItem.salesAssociate?.name || 'Unknown'}
               </span>
             </div>
           </div>
 
           <Separator />
 
-          {/* Item Details */}
+          {/* Items Details */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Item Details</span>
+              <span className="text-sm font-medium">Items ({items.length})</span>
             </div>
             
-            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <h4 className="font-medium text-sm">{sale.item?.name || 'Unknown Item'}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    SKU: {sale.item?.sku || 'N/A'}
-                  </p>
-                  {sale.item?.type && (
-                    <div className="flex gap-2 text-xs">
-                      {sale.item.type && (
-                        <Badge variant="secondary" className="text-xs">
-                          {sale.item.type}
-                        </Badge>
-                      )}
-                      {sale.item.size && (
-                        <Badge variant="secondary" className="text-xs">
-                          Size: {sale.item.size}
-                        </Badge>
-                      )}
-                      {sale.item.color && (
-                        <Badge variant="secondary" className="text-xs">
-                          {sale.item.color}
-                        </Badge>
-                      )}
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground">Loading items...</div>
+            ) : (
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={index} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <h4 className="font-medium text-sm">{item.item?.name || 'Unknown Item'}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          SKU: {item.item?.sku || 'N/A'}
+                        </p>
+                        {item.item?.type && (
+                          <div className="flex gap-2 text-xs">
+                            {item.item.type && (
+                              <Badge variant="secondary" className="text-xs">
+                                {item.item.type}
+                              </Badge>
+                            )}
+                            {item.item.size && (
+                              <Badge variant="secondary" className="text-xs">
+                                Size: {item.item.size}
+                              </Badge>
+                            )}
+                            {item.item.color && (
+                              <Badge variant="secondary" className="text-xs">
+                                {item.item.color}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="text-xs text-muted-foreground">Qty: {item.quantity}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Unit: {formatCurrency(Number(item.unitPrice) || 0)}
+                        </div>
+                        <div className="text-xs font-medium">
+                          {formatCurrency(Number(item.totalAmount) || 0)}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="text-right space-y-1">
-                  <div className="text-xs text-muted-foreground">Qty: {sale.quantity}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Unit: {formatCurrency(Number(sale.unitPrice) || 0)}
                   </div>
-                </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
           <Separator />
@@ -147,18 +171,18 @@ export default function SaleDetailsModal({
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Payment Method</span>
               </div>
-              <Badge className={getPaymentMethodColor(sale.paymentMethod)}>
-                {sale.paymentMethod?.toUpperCase() || 'UNKNOWN'}
+              <Badge className={getPaymentMethodColor(firstItem.paymentMethod)}>
+                {firstItem.paymentMethod?.toUpperCase() || 'UNKNOWN'}
               </Badge>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Total Amount</span>
+                <span className="text-sm font-medium">Order Total</span>
               </div>
               <span className="text-lg font-bold text-primary">
-                {formatCurrency(Number(sale.totalAmount) || 0)}
+                {formatCurrency(totalAmount)}
               </span>
             </div>
           </div>

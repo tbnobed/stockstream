@@ -344,6 +344,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/sales/order/:orderNumber", isAuthenticated, async (req, res) => {
+    try {
+      const { orderNumber } = req.params;
+      const orderSales = await storage.getSalesByOrderNumber(orderNumber);
+      if (orderSales.length === 0) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(orderSales);
+    } catch (error) {
+      console.error("Error fetching order sales:", error);
+      res.status(500).json({ message: "Failed to fetch order details" });
+    }
+  });
+
   app.post("/api/sales", isAuthenticated, async (req, res) => {
     try {
       console.log("Creating sale with data:", JSON.stringify(req.body, null, 2));

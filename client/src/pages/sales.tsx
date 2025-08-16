@@ -64,6 +64,11 @@ export default function Sales() {
     setShowReceiptModal(true);
   };
 
+  // Update the modals to pass orderItems instead of single sale when available
+  const getOrderItems = (orderNumber: string) => {
+    return sales.filter(sale => sale.orderNumber === orderNumber);
+  };
+
   return (
     <>
       <Header

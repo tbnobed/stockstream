@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Printer, Download } from "lucide-react";
 import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface ReceiptModalProps {
   sale: any;
@@ -14,6 +15,17 @@ export default function ReceiptModal({ sale, open, onOpenChange }: ReceiptModalP
   const receiptRef = useRef<HTMLDivElement>(null);
 
   if (!sale) return null;
+
+  // Fetch all items for this order
+  const { data: orderItems = [], isLoading } = useQuery<any[]>({
+    queryKey: [`/api/sales/order/${sale.orderNumber}`],
+    enabled: open && !!sale?.orderNumber,
+  });
+
+  // Use order items if available, fallback to single sale
+  const items = orderItems.length > 0 ? orderItems : [sale];
+  const firstItem = items[0];
+  const totalAmount = items.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -96,34 +108,34 @@ export default function ReceiptModal({ sale, open, onOpenChange }: ReceiptModalP
   };
 
   const handleDownload = () => {
+    const itemsText = items.map(item => `
+${item.item?.name || 'Unknown Item'}
+SKU: ${item.item?.sku || 'N/A'}
+${item.item?.type ? `Type: ${item.item.type}` : ''}
+${item.item?.size ? `Size: ${item.item.size}` : ''}
+${item.item?.color ? `Color: ${item.item.color}` : ''}
+Qty: ${item.quantity} x ${formatCurrency(Number(item.unitPrice) || 0)} = ${formatCurrency(Number(item.totalAmount) || 0)}
+    `).join('\n');
+
     const receiptText = `
 INVENTORYPRO
 Sales Receipt
 ${'-'.repeat(32)}
 
-Order #: ${sale.orderNumber}
-Date: ${formatDate(sale.saleDate)}
-Associate: ${sale.salesAssociate?.name || 'Unknown'}
+Order #: ${firstItem.orderNumber}
+Date: ${formatDate(firstItem.saleDate)}
+Associate: ${firstItem.salesAssociate?.name || 'Unknown'}
 
 ${'-'.repeat(32)}
-ITEM DETAILS
+ITEM DETAILS (${items.length} items)
 ${'-'.repeat(32)}
-
-${sale.item?.name || 'Unknown Item'}
-SKU: ${sale.item?.sku || 'N/A'}
-${sale.item?.type ? `Type: ${sale.item.type}` : ''}
-${sale.item?.size ? `Size: ${sale.item.size}` : ''}
-${sale.item?.color ? `Color: ${sale.item.color}` : ''}
-
-Qty: ${sale.quantity}
-Unit Price: ${formatCurrency(Number(sale.unitPrice) || 0)}
-
+${itemsText}
 ${'-'.repeat(32)}
 PAYMENT
 ${'-'.repeat(32)}
 
-Method: ${sale.paymentMethod?.toUpperCase() || 'UNKNOWN'}
-Total: ${formatCurrency(Number(sale.totalAmount) || 0)}
+Method: ${firstItem.paymentMethod?.toUpperCase() || 'UNKNOWN'}
+Total: ${formatCurrency(totalAmount)}
 
 ${'-'.repeat(32)}
 
@@ -136,7 +148,7 @@ Generated: ${new Date().toLocaleString()}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `receipt-${sale.orderNumber}.txt`;
+    a.download = `receipt-${firstItem.orderNumber}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -157,7 +169,7 @@ Generated: ${new Date().toLocaleString()}
           {/* Receipt Content */}
           <div 
             ref={receiptRef} 
-            className="bg-white text-black p-4 border rounded-lg font-mono text-sm receipt-content"
+            className="bg-white text-black p-4 border rounded-lg font-mono text-sm receipt-content max-h-[60vh] overflow-y-auto"
           >
             <div className="space-y-2">
               {/* Header */}
@@ -171,40 +183,55 @@ Generated: ${new Date().toLocaleString()}
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span>Order #:</span>
-                  <span className="font-bold">{sale.orderNumber}</span>
+                  <span className="font-bold">{firstItem.orderNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Date:</span>
-                  <span>{formatDate(sale.saleDate)}</span>
+                  <span>{formatDate(firstItem.saleDate)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Associate:</span>
-                  <span>{sale.salesAssociate?.name || 'Unknown'}</span>
+                  <span>{firstItem.salesAssociate?.name || 'Unknown'}</span>
                 </div>
               </div>
 
               <div className="border-b border-dashed border-gray-400 my-2"></div>
 
-              {/* Item Details */}
-              <div className="space-y-1">
-                <div className="font-bold text-center">ITEM DETAILS</div>
-                <div className="border-b border-dashed border-gray-400 my-1"></div>
-                
-                <div className="font-bold">{sale.item?.name || 'Unknown Item'}</div>
-                <div>SKU: {sale.item?.sku || 'N/A'}</div>
-                {sale.item?.type && <div>Type: {sale.item.type}</div>}
-                {sale.item?.size && <div>Size: {sale.item.size}</div>}
-                {sale.item?.color && <div>Color: {sale.item.color}</div>}
-                
-                <div className="flex justify-between mt-2">
-                  <span>Qty:</span>
-                  <span>{sale.quantity}</span>
+              {/* Items Details */}
+              {isLoading ? (
+                <div className="text-center">Loading items...</div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="font-bold text-center">ITEM DETAILS ({items.length})</div>
+                  <div className="border-b border-dashed border-gray-400 my-1"></div>
+                  
+                  {items.map((item, index) => (
+                    <div key={index} className="space-y-1 mb-3">
+                      <div className="font-bold">{item.item?.name || 'Unknown Item'}</div>
+                      <div>SKU: {item.item?.sku || 'N/A'}</div>
+                      {item.item?.type && <div>Type: {item.item.type}</div>}
+                      {item.item?.size && <div>Size: {item.item.size}</div>}
+                      {item.item?.color && <div>Color: {item.item.color}</div>}
+                      
+                      <div className="flex justify-between">
+                        <span>Qty:</span>
+                        <span>{item.quantity}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Unit Price:</span>
+                        <span>{formatCurrency(Number(item.unitPrice) || 0)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>Subtotal:</span>
+                        <span>{formatCurrency(Number(item.totalAmount) || 0)}</span>
+                      </div>
+                      {index < items.length - 1 && (
+                        <div className="border-b border-dotted border-gray-300 my-2"></div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex justify-between">
-                  <span>Unit Price:</span>
-                  <span>{formatCurrency(Number(sale.unitPrice) || 0)}</span>
-                </div>
-              </div>
+              )}
 
               <div className="border-b border-dashed border-gray-400 my-2"></div>
 
@@ -215,11 +242,11 @@ Generated: ${new Date().toLocaleString()}
                 
                 <div className="flex justify-between">
                   <span>Method:</span>
-                  <span>{sale.paymentMethod?.toUpperCase() || 'UNKNOWN'}</span>
+                  <span>{firstItem.paymentMethod?.toUpperCase() || 'UNKNOWN'}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg mt-2">
                   <span>TOTAL:</span>
-                  <span>{formatCurrency(Number(sale.totalAmount) || 0)}</span>
+                  <span>{formatCurrency(totalAmount)}</span>
                 </div>
               </div>
 
