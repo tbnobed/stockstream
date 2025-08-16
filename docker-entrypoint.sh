@@ -173,6 +173,21 @@ BEGIN
         RAISE NOTICE 'Added style_group column to inventory_items';
     END IF;
     
+    -- 4. Add is_active field for archive functionality
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'inventory_items' 
+        AND column_name = 'is_active' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE inventory_items ADD COLUMN is_active BOOLEAN DEFAULT true;
+        RAISE NOTICE 'Added is_active column to inventory_items';
+        
+        -- Set all existing items as active
+        UPDATE inventory_items SET is_active = true WHERE is_active IS NULL;
+        RAISE NOTICE 'Set all existing inventory items as active';
+    END IF;
+    
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
 " && echo "✅ Production constraints and schema configured for multi-item transactions and category fields" || echo "⚠️  Constraint and schema configuration completed with warnings"
