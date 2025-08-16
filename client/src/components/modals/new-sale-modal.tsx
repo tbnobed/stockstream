@@ -189,9 +189,9 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
         id: item.id,
         sku: item.sku,
         name: item.name,
-        price: item.price,
+        price: Number(item.price),
         quantity: selectedQuantity,
-        totalPrice: selectedQuantity * item.price,
+        totalPrice: selectedQuantity * Number(item.price),
         availableStock: item.quantity,
       };
       
@@ -354,7 +354,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                   <div key={item.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
                     <div>
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">SKU: {item.sku} • ${item.price} • Stock: {item.quantity}</p>
+                      <p className="text-sm text-muted-foreground">SKU: {item.sku} • ${Number(item.price).toFixed(2)} • Stock: {item.quantity}</p>
                     </div>
                     <Button
                       type="button"
@@ -402,7 +402,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                       <div className="flex-1">
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
-                        <p className="text-sm">Unit Price: ${item.price.toFixed(2)}</p>
+                        <p className="text-sm">Unit Price: ${Number(item.price).toFixed(2)}</p>
                       </div>
                       
                       <div className="flex items-center gap-2">
