@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Header from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
@@ -12,8 +12,10 @@ import AdjustInventoryModal from "@/components/modals/adjust-inventory-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
 import PrintLabelModal from "@/components/modals/print-label-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -27,20 +29,66 @@ export default function Inventory() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showScanner, setShowScanner] = useState(false);
+  const [showArchivedItems, setShowArchivedItems] = useState(false);
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: inventoryItems, isLoading } = useQuery({
     queryKey: ["/api/inventory"],
   });
 
-  const filteredItems = inventoryItems?.filter((item: any) =>
-    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.design?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Archive item mutation
+  const archiveMutation = useMutation({
+    mutationFn: (itemId: string) => apiRequest(`/api/inventory/${itemId}/archive`, "PATCH"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Item archived",
+        description: "The inventory item has been archived successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to archive the item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Restore item mutation
+  const restoreMutation = useMutation({
+    mutationFn: (itemId: string) => apiRequest(`/api/inventory/${itemId}/restore`, "PATCH"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Item restored",
+        description: "The inventory item has been restored successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to restore the item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredItems = (inventoryItems || []).filter((item: any) => {
+    const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.design?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesArchiveFilter = showArchivedItems ? !item.isActive : item.isActive;
+    
+    return matchesSearch && matchesArchiveFilter;
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -85,6 +133,14 @@ export default function Inventory() {
     setShowAdjustModal(true);
   };
 
+  const handleArchiveItem = (item: any) => {
+    archiveMutation.mutate(item.id);
+  };
+
+  const handleRestoreItem = (item: any) => {
+    restoreMutation.mutate(item.id);
+  };
+
   return (
     <>
       <Header
@@ -116,6 +172,15 @@ export default function Inventory() {
                 className="md:hidden"
               >
                 <QrCode size={16} />
+              </Button>
+              <Button 
+                variant={showArchivedItems ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setShowArchivedItems(!showArchivedItems)}
+                data-testid="button-toggle-archived"
+              >
+                {showArchivedItems ? <ArchiveRestore size={16} className="mr-1" /> : <Archive size={16} className="mr-1" />}
+                {showArchivedItems ? "Show Active" : "Show Archived"}
               </Button>
               <Button 
                 variant="outline" 
@@ -202,51 +267,87 @@ export default function Inventory() {
                         </div>
                         
                         <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditItem(item)}
-                            data-testid={`edit-item-${item.id}`}
-                          >
-                            <Edit size={14} className="mr-1" />
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleAddStock(item)}
-                            data-testid={`add-stock-${item.id}`}
-                          >
-                            <Plus size={14} className="mr-1" />
-                            Add
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleAdjustInventory(item)}
-                            data-testid={`adjust-item-${item.id}`}
-                          >
-                            <Minus size={14} className="mr-1" />
-                            Adjust
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleViewHistory(item)}
-                            data-testid={`view-history-${item.id}`}
-                          >
-                            <History size={14} />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handlePrintLabel(item)}
-                            data-testid={`print-label-${item.id}`}
-                            className="col-span-2"
-                          >
-                            <Package size={14} className="mr-1" />
-                            Print Label
-                          </Button>
+                          {item.isActive ? (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditItem(item)}
+                                data-testid={`edit-item-${item.id}`}
+                              >
+                                <Edit size={14} className="mr-1" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleAddStock(item)}
+                                data-testid={`add-stock-${item.id}`}
+                              >
+                                <Plus size={14} className="mr-1" />
+                                Add
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleAdjustInventory(item)}
+                                data-testid={`adjust-item-${item.id}`}
+                              >
+                                <Minus size={14} className="mr-1" />
+                                Adjust
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewHistory(item)}
+                                data-testid={`view-history-${item.id}`}
+                              >
+                                <History size={14} />
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handlePrintLabel(item)}
+                                data-testid={`print-label-${item.id}`}
+                              >
+                                <Package size={14} className="mr-1" />
+                                Label
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleArchiveItem(item)}
+                                data-testid={`archive-item-${item.id}`}
+                                disabled={archiveMutation.isPending}
+                              >
+                                <Archive size={14} className="mr-1" />
+                                Archive
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewHistory(item)}
+                                data-testid={`view-history-${item.id}`}
+                                className="col-span-1"
+                              >
+                                <History size={14} />
+                              </Button>
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                onClick={() => handleRestoreItem(item)}
+                                data-testid={`restore-item-${item.id}`}
+                                disabled={restoreMutation.isPending}
+                                className="col-span-1"
+                              >
+                                <ArchiveRestore size={14} className="mr-1" />
+                                Restore
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </Card>
                     );
@@ -335,46 +436,81 @@ export default function Inventory() {
                           </td>
                           <td className="py-3">
                             <div className="flex items-center space-x-1">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleEditItem(item)}
-                                data-testid={`edit-item-${item.id}`}
-                              >
-                                <Edit size={14} />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleAddStock(item)}
-                                data-testid={`add-stock-${item.id}`}
-                              >
-                                <Plus size={14} />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleAdjustInventory(item)}
-                                data-testid={`adjust-item-${item.id}`}
-                              >
-                                <Minus size={14} />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleViewHistory(item)}
-                                data-testid={`view-history-${item.id}`}
-                              >
-                                <History size={14} />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handlePrintLabel(item)}
-                                data-testid={`print-label-${item.id}`}
-                              >
-                                <Package size={14} />
-                              </Button>
+                              {item.isActive ? (
+                                <>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleEditItem(item)}
+                                    data-testid={`edit-item-${item.id}`}
+                                  >
+                                    <Edit size={14} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleAddStock(item)}
+                                    data-testid={`add-stock-${item.id}`}
+                                  >
+                                    <Plus size={14} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleAdjustInventory(item)}
+                                    data-testid={`adjust-item-${item.id}`}
+                                  >
+                                    <Minus size={14} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleViewHistory(item)}
+                                    data-testid={`view-history-${item.id}`}
+                                  >
+                                    <History size={14} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handlePrintLabel(item)}
+                                    data-testid={`print-label-${item.id}`}
+                                  >
+                                    <Package size={14} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleArchiveItem(item)}
+                                    data-testid={`archive-item-${item.id}`}
+                                    disabled={archiveMutation.isPending}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Archive size={14} />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleViewHistory(item)}
+                                    data-testid={`view-history-${item.id}`}
+                                  >
+                                    <History size={14} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleRestoreItem(item)}
+                                    data-testid={`restore-item-${item.id}`}
+                                    disabled={restoreMutation.isPending}
+                                    className="text-primary hover:text-primary"
+                                  >
+                                    <ArchiveRestore size={14} />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>

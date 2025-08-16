@@ -60,6 +60,7 @@ export const inventoryItems = pgTable("inventory_items", {
   quantity: integer("quantity").notNull().default(0),
   minStockLevel: integer("min_stock_level").default(10),
   supplierId: uuid("supplier_id").references(() => suppliers.id),
+  isActive: boolean("is_active").default(true), // For archiving items
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

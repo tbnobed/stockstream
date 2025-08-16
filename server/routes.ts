@@ -283,6 +283,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Archive inventory item
+  app.patch("/api/inventory/:id/archive", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const archivedItem = await storage.archiveInventoryItem(id);
+      res.json(archivedItem);
+    } catch (error) {
+      console.error("Error archiving inventory item:", error);
+      res.status(500).json({ message: "Failed to archive inventory item" });
+    }
+  });
+
+  // Restore inventory item
+  app.patch("/api/inventory/:id/restore", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const restoredItem = await storage.restoreInventoryItem(id);
+      res.json(restoredItem);
+    } catch (error) {
+      console.error("Error restoring inventory item:", error);
+      res.status(500).json({ message: "Failed to restore inventory item" });
+    }
+  });
+
   app.post("/api/inventory/:id/add-stock", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;

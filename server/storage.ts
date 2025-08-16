@@ -44,12 +44,14 @@ export interface IStorage {
   deleteSupplier(id: string): Promise<boolean>;
   
   // Inventory Items
-  getInventoryItems(): Promise<InventoryItemWithSupplier[]>;
+  getInventoryItems(includeArchived?: boolean): Promise<InventoryItemWithSupplier[]>;
   getInventoryItem(id: string): Promise<InventoryItemWithSupplier | undefined>;
   getInventoryItemBySku(sku: string): Promise<InventoryItemWithSupplier | undefined>;
-  searchInventoryItems(searchTerm: string): Promise<InventoryItemWithSupplier[]>;
+  searchInventoryItems(searchTerm: string, includeArchived?: boolean): Promise<InventoryItemWithSupplier[]>;
   createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem>;
   updateInventoryItem(id: string, item: Partial<InventoryItem>): Promise<InventoryItem>;
+  archiveInventoryItem(id: string): Promise<InventoryItem>;
+  restoreInventoryItem(id: string): Promise<InventoryItem>;
   addStockToItem(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItemWithSupplier[]>;
   
@@ -154,18 +156,23 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getInventoryItems(): Promise<InventoryItemWithSupplier[]> {
-    return db
+  async getInventoryItems(includeArchived: boolean = false): Promise<InventoryItemWithSupplier[]> {
+    const query = db
       .select()
       .from(inventoryItems)
       .leftJoin(suppliers, eq(inventoryItems.supplierId, suppliers.id))
-      .orderBy(inventoryItems.sku)
-      .then(rows => 
-        rows.map(row => ({
-          ...row.inventory_items,
-          supplier: row.suppliers
-        }))
-      );
+      .orderBy(inventoryItems.sku);
+    
+    if (!includeArchived) {
+      query.where(eq(inventoryItems.isActive, true));
+    }
+    
+    return query.then(rows => 
+      rows.map(row => ({
+        ...row.inventory_items,
+        supplier: row.suppliers
+      }))
+    );
   }
 
   async getInventoryItem(id: string): Promise<InventoryItemWithSupplier | undefined> {
@@ -198,20 +205,31 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async searchInventoryItems(searchTerm: string): Promise<InventoryItemWithSupplier[]> {
+  async searchInventoryItems(searchTerm: string, includeArchived: boolean = false): Promise<InventoryItemWithSupplier[]> {
+    const whereConditions = [
+      or(
+        ilike(inventoryItems.sku, `%${searchTerm}%`),
+        ilike(inventoryItems.name, `%${searchTerm}%`),
+        ilike(inventoryItems.description, `%${searchTerm}%`),
+        ilike(inventoryItems.type, `%${searchTerm}%`),
+        ilike(inventoryItems.color, `%${searchTerm}%`),
+        ilike(inventoryItems.design, `%${searchTerm}%`),
+        ilike(inventoryItems.groupType, `%${searchTerm}%`),
+        ilike(inventoryItems.styleGroup, `%${searchTerm}%`)
+      )
+    ];
+
+    if (!includeArchived) {
+      whereConditions.push(eq(inventoryItems.isActive, true));
+    }
+
     const results = await db
       .select()
       .from(inventoryItems)
       .leftJoin(suppliers, eq(inventoryItems.supplierId, suppliers.id))
-      .where(
-        or(
-          ilike(inventoryItems.sku, `%${searchTerm}%`),
-          ilike(inventoryItems.name, `%${searchTerm}%`),
-          ilike(inventoryItems.description, `%${searchTerm}%`)
-        )
-      )
+      .where(and(...whereConditions))
       .orderBy(inventoryItems.sku)
-      .limit(10); // Limit results to avoid overwhelming the UI
+      .limit(10);
     
     return results.map(result => ({
       ...result.inventory_items,
@@ -236,12 +254,33 @@ export class DatabaseStorage implements IStorage {
     return updatedItem;
   }
 
+  async archiveInventoryItem(id: string): Promise<InventoryItem> {
+    const [archivedItem] = await db
+      .update(inventoryItems)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(inventoryItems.id, id))
+      .returning();
+    return archivedItem;
+  }
+
+  async restoreInventoryItem(id: string): Promise<InventoryItem> {
+    const [restoredItem] = await db
+      .update(inventoryItems)
+      .set({ isActive: true, updatedAt: new Date() })
+      .where(eq(inventoryItems.id, id))
+      .returning();
+    return restoredItem;
+  }
+
   async getLowStockItems(): Promise<InventoryItemWithSupplier[]> {
     return db
       .select()
       .from(inventoryItems)
       .leftJoin(suppliers, eq(inventoryItems.supplierId, suppliers.id))
-      .where(sql`${inventoryItems.quantity} <= ${inventoryItems.minStockLevel}`)
+      .where(and(
+        sql`${inventoryItems.quantity} <= ${inventoryItems.minStockLevel}`,
+        eq(inventoryItems.isActive, true)
+      ))
       .orderBy(inventoryItems.sku)
       .then(rows => 
         rows.map(row => ({
