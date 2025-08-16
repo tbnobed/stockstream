@@ -74,7 +74,7 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
 
 export const sales = pgTable("sales", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  orderNumber: varchar("order_number", { length: 20 }).notNull().unique(),
+  orderNumber: varchar("order_number", { length: 20 }).notNull(),
   itemId: uuid("item_id").notNull().references(() => inventoryItems.id),
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
