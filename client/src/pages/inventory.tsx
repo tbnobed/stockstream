@@ -35,7 +35,11 @@ export default function Inventory() {
   const filteredItems = inventoryItems?.filter((item: any) =>
     item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.type?.toLowerCase().includes(searchTerm.toLowerCase())
+    item.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.design?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const formatCurrency = (amount: number) => {
@@ -96,7 +100,7 @@ export default function Inventory() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
-                placeholder="Search by name, SKU, or type..."
+                placeholder="Search by name, SKU, type, description, design, group type, or style..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -152,6 +156,9 @@ export default function Inventory() {
                             <h4 className="font-semibold text-secondary" data-testid={`item-name-${item.id}`}>
                               {item.name}
                             </h4>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground mb-1">{item.description}</p>
+                            )}
                             <p className="text-sm font-mono text-muted-foreground">
                               SKU: {item.sku}
                             </p>
