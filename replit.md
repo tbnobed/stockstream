@@ -83,7 +83,10 @@ The application uses Docker for containerization, with multi-stage builds for op
 ### Docker Deployment for Multi-Item Transactions (August 16, 2025)
 - **Production deployment scripts**: Created deploy-multi-item.sh for new deployments with comprehensive feature verification
 - **Update mechanism**: Built update-multi-item.sh for upgrading existing deployments with database backup and rollback capability
-- **Schema migration**: Enhanced docker-entrypoint.sh to automatically remove order_number unique constraint during container startup
+- **Automated constraint fixes**: Enhanced docker-entrypoint.sh to automatically handle all production database issues on container startup
+- **User-sales associate mapping**: Automatic creation of missing sales_associate records for all users during startup
+- **Order number constraint removal**: Automatic removal of unique constraints blocking multi-item transactions
+- **Zero-manual intervention**: All database fixes applied automatically during build/startup - no manual scripts required
 - **Feature verification**: Added automated checks to ensure multi-item transaction functionality is properly configured
 - **Deployment documentation**: Created comprehensive README-DOCKER-DEPLOYMENT.md with troubleshooting and maintenance guides
 - **Backup integration**: Automated database backup during updates to prevent data loss
