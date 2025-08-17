@@ -513,10 +513,22 @@ export default function Sales() {
                       </div>
                       
                       <div className="flex space-x-2 pt-3 border-t">
-                        <Button variant="outline" size="sm" className="flex-1" data-testid={`view-sale-${sale.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1" 
+                          onClick={() => handleViewSale(sale)}
+                          data-testid={`view-sale-${sale.id}`}
+                        >
                           View
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1" data-testid={`receipt-sale-${sale.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1" 
+                          onClick={() => handleShowReceipt(sale)}
+                          data-testid={`receipt-sale-${sale.id}`}
+                        >
                           Receipt
                         </Button>
                       </div>
