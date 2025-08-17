@@ -204,54 +204,57 @@ export default function Inventory() {
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
         {/* Search and Filters */}
-        <Card className="p-4 md:p-6 mb-4 md:mb-6 border-border">
-          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+        <Card className="p-3 md:p-6 mb-3 md:mb-6 border-border">
+          <div className="flex flex-col space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
               <Input
-                placeholder="Search by name, SKU, type, description, design, group type, or style..."
+                placeholder="Search items..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10"
+                className="pl-9 h-9 text-sm md:h-10"
                 data-testid="input-search-inventory"
               />
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setShowFilters(!showFilters)}
                 data-testid="button-toggle-filters"
-                className="flex items-center space-x-1"
+                className="flex items-center h-9 px-3"
               >
-                <Filter size={16} />
-                <span>Filters</span>
+                <Filter size={14} />
+                <span className="ml-1 hidden sm:inline">Filters</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowScanner(true)}
                 data-testid="button-scan-qr"
-                className="md:hidden"
+                className="md:hidden h-9 px-3"
               >
-                <QrCode size={16} />
+                <QrCode size={14} />
               </Button>
               <Button 
                 variant={showArchivedItems ? "default" : "outline"}
                 size="sm" 
                 onClick={() => setShowArchivedItems(!showArchivedItems)}
                 data-testid="button-toggle-archived"
+                className="h-9 px-3"
               >
-                {showArchivedItems ? <ArchiveRestore size={16} className="mr-1" /> : <Archive size={16} className="mr-1" />}
-                {showArchivedItems ? "Show Active" : "Show Archived"}
+                {showArchivedItems ? <ArchiveRestore size={14} className="mr-1" /> : <Archive size={14} className="mr-1" />}
+                <span className="hidden sm:inline">{showArchivedItems ? "Active" : "Archived"}</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowAddSupplierModal(true)}
                 data-testid="button-add-supplier"
+                className="h-9 px-3"
               >
-                <Plus size={16} className="mr-1" />
-                Supplier
+                <Plus size={14} className="mr-1" />
+                <span className="hidden sm:inline">Supplier</span>
               </Button>
             </div>
           </div>
@@ -275,7 +278,7 @@ export default function Inventory() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Type</label>
                   <Select value={selectedType} onValueChange={(value) => handleFilterChange(setSelectedType, value)}>
@@ -479,63 +482,52 @@ export default function Inventory() {
             ) : (
               <>
                 {/* Mobile Card Layout */}
-                <div className="block md:hidden space-y-4">
+                <div className="block md:hidden space-y-3">
                   {paginatedItems.map((item: any) => {
                     const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
                     
                     return (
-                      <Card key={item.id} className="p-4 border-border">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h4 className="font-semibold text-secondary" data-testid={`item-name-${item.id}`}>
+                      <Card key={item.id} className="p-3 border-border bg-card">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-secondary text-sm leading-tight" data-testid={`item-name-${item.id}`}>
                               {item.name}
                             </h4>
-                            {item.description && (
-                              <p className="text-xs text-muted-foreground mb-1">{item.description}</p>
-                            )}
-                            <p className="text-sm font-mono text-muted-foreground">
-                              SKU: {item.sku}
+                            <p className="text-xs font-mono text-muted-foreground mt-1">
+                              {item.sku}
                             </p>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
+                            )}
                           </div>
                           <Badge variant={
                             stockStatus === "low" ? "destructive" :
                             stockStatus === "medium" ? "secondary" : "default"
-                          }>
-                            {stockStatus === "low" && <AlertTriangle className="mr-1" size={12} />}
-                            {stockStatus === "low" ? "Low Stock" :
-                             stockStatus === "medium" ? "Medium" : "In Stock"}
+                          } className="ml-2 flex-shrink-0">
+                            {stockStatus === "low" && <AlertTriangle className="mr-1" size={10} />}
+                            {stockStatus === "low" ? "Low" :
+                             stockStatus === "medium" ? "Med" : "OK"}
                           </Badge>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                          <div>
-                            <p className="text-muted-foreground">Type</p>
-                            <p className="font-medium capitalize">{item.type}</p>
+                        {/* Compact info grid */}
+                        <div className="grid grid-cols-3 gap-2 text-xs mb-3 bg-muted/30 p-2 rounded">
+                          <div className="text-center">
+                            <p className="text-muted-foreground">Price</p>
+                            <p className="font-semibold text-sm">{formatCurrency(Number(item.price))}</p>
                           </div>
-                          <div>
-                            <p className="text-muted-foreground">Selling Price</p>
-                            <p className="font-medium">{formatCurrency(Number(item.price))}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Cost</p>
-                            <p className="font-medium">{item.cost ? formatCurrency(Number(item.cost)) : "N/A"}</p>
-                          </div>
-                          <div>
+                          <div className="text-center">
                             <p className="text-muted-foreground">Stock</p>
-                            <p className="font-medium">{item.quantity} / {item.minStockLevel} min</p>
+                            <p className="font-semibold text-sm">{item.quantity}</p>
                           </div>
-                          <div>
-                            <p className="text-muted-foreground">Profit Margin</p>
-                            <p className="font-medium">
-                              {item.cost && item.price ? 
-                                `${(((Number(item.price) - Number(item.cost)) / Number(item.price)) * 100).toFixed(1)}%` : 
-                                "N/A"
-                              }
-                            </p>
+                          <div className="text-center">
+                            <p className="text-muted-foreground">Type</p>
+                            <p className="font-semibold text-sm capitalize truncate">{item.type}</p>
                           </div>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2 pt-3 border-t">
+                        {/* Action buttons in horizontal scroll */}
+                        <div className="flex gap-2 overflow-x-auto pb-1">
                           {item.isActive ? (
                             <>
                               <Button 
@@ -543,8 +535,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleEditItem(item)}
                                 data-testid={`edit-item-${item.id}`}
+                                className="flex-shrink-0 h-8 px-3 text-xs"
                               >
-                                <Edit size={14} className="mr-1" />
+                                <Edit size={12} className="mr-1" />
                                 Edit
                               </Button>
                               <Button 
@@ -552,8 +545,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleAddStock(item)}
                                 data-testid={`add-stock-${item.id}`}
+                                className="flex-shrink-0 h-8 px-3 text-xs"
                               >
-                                <Plus size={14} className="mr-1" />
+                                <Plus size={12} className="mr-1" />
                                 Add
                               </Button>
                               <Button 
@@ -561,8 +555,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleAdjustInventory(item)}
                                 data-testid={`adjust-item-${item.id}`}
+                                className="flex-shrink-0 h-8 px-3 text-xs"
                               >
-                                <Minus size={14} className="mr-1" />
+                                <Minus size={12} className="mr-1" />
                                 Adjust
                               </Button>
                               <Button 
@@ -570,16 +565,18 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleViewHistory(item)}
                                 data-testid={`view-history-${item.id}`}
+                                className="flex-shrink-0 h-8 px-2 text-xs"
                               >
-                                <History size={14} />
+                                <History size={12} />
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handlePrintLabel(item)}
                                 data-testid={`print-label-${item.id}`}
+                                className="flex-shrink-0 h-8 px-3 text-xs"
                               >
-                                <Package size={14} className="mr-1" />
+                                <Package size={12} className="mr-1" />
                                 Label
                               </Button>
                               <Button 
@@ -588,8 +585,9 @@ export default function Inventory() {
                                 onClick={() => handleArchiveItem(item)}
                                 data-testid={`archive-item-${item.id}`}
                                 disabled={archiveMutation.isPending}
+                                className="flex-shrink-0 h-8 px-3 text-xs"
                               >
-                                <Archive size={14} className="mr-1" />
+                                <Archive size={12} className="mr-1" />
                                 Archive
                               </Button>
                             </>
@@ -600,9 +598,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleViewHistory(item)}
                                 data-testid={`view-history-${item.id}`}
-                                className="col-span-1"
+                                className="flex-shrink-0 h-8 px-2 text-xs"
                               >
-                                <History size={14} />
+                                <History size={12} />
                               </Button>
                               <Button 
                                 variant="default" 
@@ -610,9 +608,9 @@ export default function Inventory() {
                                 onClick={() => handleRestoreItem(item)}
                                 data-testid={`restore-item-${item.id}`}
                                 disabled={restoreMutation.isPending}
-                                className="col-span-1"
+                                className="flex-shrink-0 h-8 px-3 text-xs"
                               >
-                                <ArchiveRestore size={14} className="mr-1" />
+                                <ArchiveRestore size={12} className="mr-1" />
                                 Restore
                               </Button>
                             </>
@@ -789,34 +787,35 @@ export default function Inventory() {
                   </table>
                 </div>
 
-                {/* Pagination Controls */}
+                {/* Pagination Controls - Mobile Optimized */}
                 {totalPages > 1 && (
-                  <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-border space-y-4 md:space-y-0">
-                    <div className="text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-border space-y-3 sm:space-y-0">
+                    <div className="text-xs text-muted-foreground order-2 sm:order-1">
                       Page {currentPage} of {totalPages}
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 order-1 sm:order-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setCurrentPage(currentPage - 1)}
                         disabled={currentPage === 1}
                         data-testid="button-prev-page"
+                        className="h-8 px-3"
                       >
-                        <ChevronLeft size={16} />
-                        Previous
+                        <ChevronLeft size={14} />
+                        <span className="hidden sm:inline ml-1">Prev</span>
                       </Button>
                       <div className="flex items-center space-x-1">
-                        {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                        {[...Array(Math.min(3, totalPages))].map((_, index) => {
                           let pageNumber;
-                          if (totalPages <= 5) {
+                          if (totalPages <= 3) {
                             pageNumber = index + 1;
-                          } else if (currentPage <= 3) {
+                          } else if (currentPage <= 2) {
                             pageNumber = index + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNumber = totalPages - 4 + index;
+                          } else if (currentPage >= totalPages - 1) {
+                            pageNumber = totalPages - 2 + index;
                           } else {
-                            pageNumber = currentPage - 2 + index;
+                            pageNumber = currentPage - 1 + index;
                           }
                           
                           return (
@@ -825,7 +824,7 @@ export default function Inventory() {
                               variant={currentPage === pageNumber ? "default" : "outline"}
                               size="sm"
                               onClick={() => setCurrentPage(pageNumber)}
-                              className="w-8 h-8 p-0"
+                              className="h-8 w-8 p-0 text-xs"
                               data-testid={`button-page-${pageNumber}`}
                             >
                               {pageNumber}
@@ -839,9 +838,10 @@ export default function Inventory() {
                         onClick={() => setCurrentPage(currentPage + 1)}
                         disabled={currentPage === totalPages}
                         data-testid="button-next-page"
+                        className="h-8 px-3"
                       >
-                        Next
-                        <ChevronRight size={16} />
+                        <span className="hidden sm:inline mr-1">Next</span>
+                        <ChevronRight size={14} />
                       </Button>
                     </div>
                   </div>
