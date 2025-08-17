@@ -487,47 +487,47 @@ export default function Inventory() {
                     const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
                     
                     return (
-                      <Card key={item.id} className="p-3 border-border bg-card">
-                        <div className="flex justify-between items-start mb-2">
+                      <Card key={item.id} className="p-4 border-border bg-card min-h-[180px]">
+                        <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-secondary text-sm leading-tight" data-testid={`item-name-${item.id}`}>
+                            <h4 className="font-semibold text-secondary text-base leading-tight" data-testid={`item-name-${item.id}`}>
                               {item.name}
                             </h4>
-                            <p className="text-xs font-mono text-muted-foreground mt-1">
+                            <p className="text-sm font-mono text-muted-foreground mt-1">
                               {item.sku}
                             </p>
                             {item.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
+                              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{item.description}</p>
                             )}
                           </div>
                           <Badge variant={
                             stockStatus === "low" ? "destructive" :
                             stockStatus === "medium" ? "secondary" : "default"
                           } className="ml-2 flex-shrink-0">
-                            {stockStatus === "low" && <AlertTriangle className="mr-1" size={10} />}
-                            {stockStatus === "low" ? "Low" :
-                             stockStatus === "medium" ? "Med" : "OK"}
+                            {stockStatus === "low" && <AlertTriangle className="mr-1" size={12} />}
+                            {stockStatus === "low" ? "Low Stock" :
+                             stockStatus === "medium" ? "Medium" : "In Stock"}
                           </Badge>
                         </div>
                         
-                        {/* Compact info grid */}
-                        <div className="grid grid-cols-3 gap-2 text-xs mb-3 bg-muted/30 p-2 rounded">
+                        {/* Expanded info grid */}
+                        <div className="grid grid-cols-3 gap-3 text-sm mb-4 bg-muted/30 p-3 rounded">
                           <div className="text-center">
-                            <p className="text-muted-foreground">Price</p>
-                            <p className="font-semibold text-sm">{formatCurrency(Number(item.price))}</p>
+                            <p className="text-muted-foreground text-xs">Price</p>
+                            <p className="font-semibold">{formatCurrency(Number(item.price))}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-muted-foreground">Stock</p>
-                            <p className="font-semibold text-sm">{item.quantity}</p>
+                            <p className="text-muted-foreground text-xs">Stock</p>
+                            <p className="font-semibold">{item.quantity}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-muted-foreground">Type</p>
-                            <p className="font-semibold text-sm capitalize truncate">{item.type}</p>
+                            <p className="text-muted-foreground text-xs">Type</p>
+                            <p className="font-semibold capitalize truncate">{item.type}</p>
                           </div>
                         </div>
                         
-                        {/* Action buttons in horizontal scroll */}
-                        <div className="flex gap-2 overflow-x-auto pb-1">
+                        {/* Action buttons in wrapped grid */}
+                        <div className="grid grid-cols-3 gap-2">
                           {item.isActive ? (
                             <>
                               <Button 
@@ -535,9 +535,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleEditItem(item)}
                                 data-testid={`edit-item-${item.id}`}
-                                className="flex-shrink-0 h-8 px-3 text-xs"
+                                className="h-9 text-xs"
                               >
-                                <Edit size={12} className="mr-1" />
+                                <Edit size={14} className="mr-1" />
                                 Edit
                               </Button>
                               <Button 
@@ -545,9 +545,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleAddStock(item)}
                                 data-testid={`add-stock-${item.id}`}
-                                className="flex-shrink-0 h-8 px-3 text-xs"
+                                className="h-9 text-xs"
                               >
-                                <Plus size={12} className="mr-1" />
+                                <Plus size={14} className="mr-1" />
                                 Add
                               </Button>
                               <Button 
@@ -555,9 +555,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleAdjustInventory(item)}
                                 data-testid={`adjust-item-${item.id}`}
-                                className="flex-shrink-0 h-8 px-3 text-xs"
+                                className="h-9 text-xs"
                               >
-                                <Minus size={12} className="mr-1" />
+                                <Minus size={14} className="mr-1" />
                                 Adjust
                               </Button>
                               <Button 
@@ -565,18 +565,18 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleViewHistory(item)}
                                 data-testid={`view-history-${item.id}`}
-                                className="flex-shrink-0 h-8 px-2 text-xs"
+                                className="h-9 text-xs"
                               >
-                                <History size={12} />
+                                <History size={14} />
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handlePrintLabel(item)}
                                 data-testid={`print-label-${item.id}`}
-                                className="flex-shrink-0 h-8 px-3 text-xs"
+                                className="h-9 text-xs"
                               >
-                                <Package size={12} className="mr-1" />
+                                <Package size={14} className="mr-1" />
                                 Label
                               </Button>
                               <Button 
@@ -585,9 +585,9 @@ export default function Inventory() {
                                 onClick={() => handleArchiveItem(item)}
                                 data-testid={`archive-item-${item.id}`}
                                 disabled={archiveMutation.isPending}
-                                className="flex-shrink-0 h-8 px-3 text-xs"
+                                className="h-9 text-xs"
                               >
-                                <Archive size={12} className="mr-1" />
+                                <Archive size={14} className="mr-1" />
                                 Archive
                               </Button>
                             </>
@@ -598,9 +598,9 @@ export default function Inventory() {
                                 size="sm"
                                 onClick={() => handleViewHistory(item)}
                                 data-testid={`view-history-${item.id}`}
-                                className="flex-shrink-0 h-8 px-2 text-xs"
+                                className="h-9 text-xs col-span-1"
                               >
-                                <History size={12} />
+                                <History size={14} />
                               </Button>
                               <Button 
                                 variant="default" 
@@ -608,9 +608,9 @@ export default function Inventory() {
                                 onClick={() => handleRestoreItem(item)}
                                 data-testid={`restore-item-${item.id}`}
                                 disabled={restoreMutation.isPending}
-                                className="flex-shrink-0 h-8 px-3 text-xs"
+                                className="h-9 text-xs col-span-2"
                               >
-                                <ArchiveRestore size={12} className="mr-1" />
+                                <ArchiveRestore size={14} className="mr-1" />
                                 Restore
                               </Button>
                             </>
