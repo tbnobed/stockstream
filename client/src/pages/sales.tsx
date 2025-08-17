@@ -11,6 +11,7 @@ import ReceiptModal from "@/components/receipt/receipt-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function Sales() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
@@ -59,6 +60,67 @@ export default function Sales() {
     setShowReceiptModal(true);
   };
 
+  const exportSales = () => {
+    if (!filteredSales || filteredSales.length === 0) {
+      return;
+    }
+
+    let csvContent = "";
+    const timestamp = format(new Date(), 'yyyy-MM-dd-HHmm');
+    
+    // Add header
+    csvContent += "Sales Export\n";
+    csvContent += `Generated: ${format(new Date(), 'MMM dd, yyyy HH:mm')}\n`;
+    csvContent += `Total Transactions: ${filteredSales.length}\n\n`;
+    
+    // Add CSV headers
+    const headers = [
+      "Order Number",
+      "Date",
+      "Item Name",
+      "SKU",
+      "Quantity",
+      "Unit Price",
+      "Total Amount",
+      "Payment Method",
+      "Sales Associate",
+      "Associate Code"
+    ];
+    csvContent += headers.join(",") + "\n";
+    
+    // Add data rows
+    filteredSales.forEach((sale: any) => {
+      const row = [
+        `"${sale.orderNumber || ''}"`,
+        `"${format(new Date(sale.saleDate), 'yyyy-MM-dd HH:mm')}"`,
+        `"${sale.item?.name || 'Unknown'}"`,
+        `"${sale.item?.sku || 'N/A'}"`,
+        sale.quantity || 0,
+        Number(sale.unitPrice || 0).toFixed(2),
+        Number(sale.totalAmount || 0).toFixed(2),
+        `"${sale.paymentMethod || 'Unknown'}"`,
+        `"${sale.salesAssociate?.name || 'Unknown'}"`,
+        `"${sale.salesAssociate?.code || 'N/A'}"`
+      ];
+      csvContent += row.join(",") + "\n";
+    });
+    
+    // Add summary
+    const totalRevenue = filteredSales.reduce((sum: number, sale: any) => sum + Number(sale.totalAmount || 0), 0);
+    csvContent += `\nSummary\n`;
+    csvContent += `Total Revenue,${totalRevenue.toFixed(2)}\n`;
+    csvContent += `Average Transaction,${(totalRevenue / filteredSales.length).toFixed(2)}\n`;
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sales-export-${timestamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handlePrintReceipt = () => {
     setShowSaleDetailsModal(false);
     setShowReceiptModal(true);
@@ -96,7 +158,13 @@ export default function Sales() {
                 Filter
               </Button>
             </div>
-            <Button variant="outline" size="sm" data-testid="button-export-sales">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportSales}
+              data-testid="button-export-sales"
+              disabled={!filteredSales || filteredSales.length === 0}
+            >
               <Download className="mr-0 md:mr-2" size={16} />
               <span className="hidden sm:inline ml-2">Export</span>
             </Button>
