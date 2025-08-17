@@ -65,7 +65,12 @@ export default function Associates() {
   };
 
   const getAssociateSales = (associateId: string) => {
-    return sales.filter((sale: any) => sale.associateId === associateId);
+    console.log("Getting sales for associate:", associateId);
+    console.log("Total sales:", sales.length);
+    console.log("Sample sale:", sales[0]);
+    const filtered = sales.filter((sale: any) => sale.salesAssociateId === associateId);
+    console.log("Filtered sales:", filtered.length);
+    return filtered;
   };
 
   const getAssociateRevenue = (associateId: string) => {
