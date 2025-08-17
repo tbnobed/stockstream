@@ -88,8 +88,29 @@ export default function MobileSales() {
 
   // Add item to cart by SKU
   const addItemBySku = () => {
+    console.log("Looking for SKU:", skuInput);
+    console.log("Available inventory SKUs:", inventory.map((i: InventoryItem) => i.sku));
+    
     const item = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku.toLowerCase() === skuInput.toLowerCase());
+    
     if (!item) {
+      console.log("Item not found for SKU:", skuInput);
+      // Try a more flexible search
+      const partialMatch = (inventory as InventoryItem[]).find((i: InventoryItem) => 
+        i.sku.toLowerCase().includes(skuInput.toLowerCase()) || 
+        skuInput.toLowerCase().includes(i.sku.toLowerCase())
+      );
+      
+      if (partialMatch) {
+        console.log("Found partial match:", partialMatch.sku);
+        setSkuInput(partialMatch.sku);
+        toast({
+          title: "Similar item found",
+          description: `Found ${partialMatch.name} (${partialMatch.sku}). Try again?`,
+        });
+        return;
+      }
+      
       toast({
         title: "Item not found",
         description: "No item found with that SKU",
