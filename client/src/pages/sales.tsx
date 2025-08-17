@@ -10,7 +10,7 @@ import NewSaleModal from "@/components/modals/new-sale-modal";
 import SaleDetailsModal from "@/components/modals/sale-details-modal";
 import ReceiptModal from "@/components/receipt/receipt-modal";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Filter, X, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -22,6 +22,12 @@ export default function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedAssociate, setSelectedAssociate] = useState<string>("all-associates");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("all-payments");
+  const [selectedDateRange, setSelectedDateRange] = useState<string>("all-time");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
 
@@ -29,11 +35,71 @@ export default function Sales() {
     queryKey: ["/api/sales"],
   });
 
-  const filteredSales = sales.filter((sale: any) =>
-    sale.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.salesAssociate?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { data: salesAssociates = [] } = useQuery<any[]>({
+    queryKey: ['/api/associates']
+  });
+
+  const filteredSales = sales.filter((sale: any) => {
+    // Search filter
+    const matchesSearch = sale.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           sale.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           sale.salesAssociate?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Associate filter
+    const matchesAssociate = selectedAssociate === "all-associates" || 
+                            sale.salesAssociate?.id === selectedAssociate;
+    
+    // Payment method filter
+    const matchesPayment = selectedPaymentMethod === "all-payments" || 
+                          sale.paymentMethod === selectedPaymentMethod;
+    
+    // Date range filter
+    let matchesDate = true;
+    const saleDate = new Date(sale.saleDate);
+    const now = new Date();
+    
+    switch (selectedDateRange) {
+      case "today":
+        matchesDate = saleDate.toDateString() === now.toDateString();
+        break;
+      case "last-7-days":
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        matchesDate = saleDate >= sevenDaysAgo;
+        break;
+      case "last-30-days":
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        matchesDate = saleDate >= thirtyDaysAgo;
+        break;
+      case "last-60-days":
+        const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+        matchesDate = saleDate >= sixtyDaysAgo;
+        break;
+      case "last-90-days":
+        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        matchesDate = saleDate >= ninetyDaysAgo;
+        break;
+      case "this-month":
+        matchesDate = saleDate.getMonth() === now.getMonth() && 
+                     saleDate.getFullYear() === now.getFullYear();
+        break;
+      case "last-month":
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        matchesDate = saleDate >= lastMonth && saleDate <= lastMonthEnd;
+        break;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          const startDate = new Date(customStartDate);
+          const endDate = new Date(customEndDate + "T23:59:59");
+          matchesDate = saleDate >= startDate && saleDate <= endDate;
+        }
+        break;
+      default:
+        matchesDate = true;
+    }
+    
+    return matchesSearch && matchesAssociate && matchesPayment && matchesDate;
+  });
 
   // Pagination logic
   const totalItems = filteredSales.length;
@@ -51,6 +117,22 @@ export default function Sales() {
   // Reset to first page when items per page changes
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(parseInt(value));
+    setCurrentPage(1);
+  };
+
+  // Reset to first page when filters change
+  const handleFilterChange = (filterSetter: (value: string) => void, value: string) => {
+    filterSetter(value);
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedAssociate("all-associates");
+    setSelectedPaymentMethod("all-payments");
+    setSelectedDateRange("all-time");
+    setCustomStartDate("");
+    setCustomEndDate("");
+    setSearchTerm("");
     setCurrentPage(1);
   };
 
@@ -176,8 +258,14 @@ export default function Sales() {
                   data-testid="input-search-sales"
                 />
               </div>
-              <Button variant="outline" size="sm" data-testid="button-filter-sales">
-                Filter
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                data-testid="button-toggle-filters"
+                className="flex items-center space-x-1"
+              >
+                <Filter size={16} />
+                <span>Filters</span>
               </Button>
             </div>
             <Button 
@@ -191,6 +279,153 @@ export default function Sales() {
               <span className="hidden sm:inline ml-2">Export</span>
             </Button>
           </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="border-t border-border pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium">Filter Sales</h4>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    data-testid="button-clear-filters"
+                    className="h-8 px-2 text-xs"
+                  >
+                    <X size={14} className="mr-1" />
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Sales Associate Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Sales Associate</label>
+                  <Select value={selectedAssociate} onValueChange={(value) => handleFilterChange(setSelectedAssociate, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-associate">
+                      <SelectValue placeholder="All associates" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-associates">All associates</SelectItem>
+                      {(salesAssociates as any[])?.map((associate: any) => (
+                        <SelectItem key={associate.id} value={associate.id}>
+                          {associate.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Payment Method Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Payment Method</label>
+                  <Select value={selectedPaymentMethod} onValueChange={(value) => handleFilterChange(setSelectedPaymentMethod, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-payment">
+                      <SelectValue placeholder="All payments" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-payments">All payments</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="venmo">Venmo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Date Range</label>
+                  <Select value={selectedDateRange} onValueChange={(value) => handleFilterChange(setSelectedDateRange, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-date-range">
+                      <SelectValue placeholder="All time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-time">All time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="last-7-days">Last 7 days</SelectItem>
+                      <SelectItem value="last-30-days">Last 30 days</SelectItem>
+                      <SelectItem value="last-60-days">Last 60 days</SelectItem>
+                      <SelectItem value="last-90-days">Last 90 days</SelectItem>
+                      <SelectItem value="this-month">This month</SelectItem>
+                      <SelectItem value="last-month">Last month</SelectItem>
+                      <SelectItem value="custom">Custom range</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Custom Date Range */}
+                {selectedDateRange === "custom" && (
+                  <div className="space-y-1 lg:col-span-2">
+                    <label className="text-xs font-medium text-muted-foreground">Custom Date Range</label>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="h-8 text-xs"
+                        placeholder="Start date"
+                        data-testid="input-start-date"
+                      />
+                      <Input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="h-8 text-xs"
+                        placeholder="End date"
+                        data-testid="input-end-date"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Active Filters Display */}
+              {(selectedAssociate !== "all-associates" || 
+                selectedPaymentMethod !== "all-payments" || 
+                selectedDateRange !== "all-time") && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-muted-foreground">Active filters:</span>
+                    {selectedAssociate !== "all-associates" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Associate: {(salesAssociates as any[])?.find((a: any) => a.id === selectedAssociate)?.name}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedAssociate("all-associates")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedPaymentMethod !== "all-payments" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Payment: {selectedPaymentMethod === "cash" ? "Cash" : "Venmo"}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedPaymentMethod("all-payments")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedDateRange !== "all-time" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Date: {selectedDateRange === "custom" ? `${customStartDate} to ${customEndDate}` : selectedDateRange.replace('-', ' ')}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => {
+                            setSelectedDateRange("all-time");
+                            setCustomStartDate("");
+                            setCustomEndDate("");
+                          }} 
+                        />
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
 
         {/* Sales Transactions */}
