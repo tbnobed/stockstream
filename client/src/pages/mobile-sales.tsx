@@ -46,6 +46,8 @@ export default function MobileSales() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
+  const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
 
   // Fetch inventory items
@@ -234,12 +236,38 @@ export default function MobileSales() {
     }
   };
 
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSkuInput(value);
+    
+    if (value.trim().length > 0) {
+      // Filter inventory items that match the search
+      const filtered = inventory.filter((item: InventoryItem) =>
+        item.sku.toLowerCase().includes(value.toLowerCase()) ||
+        item.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setSearchResults(filtered.slice(0, 5)); // Show max 5 results
+      setShowResults(true);
+    } else {
+      setSearchResults([]);
+      setShowResults(false);
+    }
+  };
+
   // Handle SKU input submit
   const handleSkuSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (skuInput.trim()) {
       addItemBySku();
+      setShowResults(false);
     }
+  };
+
+  // Handle selecting an item from search results
+  const handleSelectSearchResult = (item: InventoryItem) => {
+    setSkuInput(item.sku);
+    setShowResults(false);
+    addItemToCart(item);
   };
 
   // Handle QR scan result
@@ -329,18 +357,45 @@ export default function MobileSales() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <form onSubmit={handleSkuSubmit} className="flex gap-2">
-              <Input
-                value={skuInput}
-                onChange={(e) => setSkuInput(e.target.value)}
-                placeholder="Scan QR code or enter SKU"
-                className="text-lg"
-                data-testid="input-sku"
-              />
-              <Button type="submit" disabled={!skuInput.trim()} data-testid="button-add-sku">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </form>
+            <div className="relative">
+              <form onSubmit={handleSkuSubmit} className="flex gap-2">
+                <Input
+                  value={skuInput}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => skuInput && setShowResults(true)}
+                  onBlur={() => setTimeout(() => setShowResults(false), 200)}
+                  placeholder="Scan QR code or enter SKU"
+                  className="text-lg"
+                  data-testid="input-sku"
+                />
+                <Button type="submit" disabled={!skuInput.trim()} data-testid="button-add-sku">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </form>
+              
+              {/* Search Results Dropdown */}
+              {showResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-64 overflow-y-auto">
+                  {searchResults.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleSelectSearchResult(item)}
+                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                      data-testid={`search-result-${item.sku}`}
+                    >
+                      <div className="font-medium text-sm">{item.name}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <span>SKU: {item.sku}</span>
+                        <span>•</span>
+                        <span>${item.price}</span>
+                        <span>•</span>
+                        <span>{item.quantity} in stock</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             
             <Button
               onClick={() => setShowScanner(true)}
