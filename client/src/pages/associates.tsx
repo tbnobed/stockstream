@@ -7,9 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, MoreHorizontal } from "lucide-react";
+import { Plus, Mail, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 import { insertSalesAssociateSchema, type InsertSalesAssociate } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Associates() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedAssociate, setSelectedAssociate] = useState<any>(null);
   const { toast } = useToast();
 
   const { data: associates = [], isLoading } = useQuery<any[]>({
@@ -75,6 +78,27 @@ export default function Associates() {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  };
+
+  const handleViewDetails = (associate: any) => {
+    setSelectedAssociate(associate);
+    setShowDetailsModal(true);
+  };
+
+  const handleEditAssociate = (associate: any) => {
+    // TODO: Implement edit functionality
+    toast({
+      title: "Edit Associate",
+      description: "Edit functionality will be implemented soon",
+    });
+  };
+
+  const handleDeleteAssociate = (associate: any) => {
+    // TODO: Implement delete functionality  
+    toast({
+      title: "Delete Associate",
+      description: "Delete functionality will be implemented soon",
+    });
   };
 
   return (
@@ -220,7 +244,14 @@ export default function Associates() {
                           </div>
                         </div>
                         
-                        <Button variant="outline" size="sm" className="w-full" data-testid={`view-associate-${associate.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full" 
+                          data-testid={`view-associate-${associate.id}`}
+                          onClick={() => handleViewDetails(associate)}
+                        >
+                          <Eye size={14} className="mr-2" />
                           View Details
                         </Button>
                       </div>
@@ -245,9 +276,30 @@ export default function Associates() {
                               {associate.isActive ? "Active" : "Inactive"}
                             </Badge>
                           </div>
-                          <Button variant="ghost" size="sm" data-testid={`associate-menu-${associate.id}`}>
-                            <MoreHorizontal size={16} />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" data-testid={`associate-menu-${associate.id}`}>
+                                <MoreHorizontal size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewDetails(associate)}>
+                                <Eye className="mr-2" size={14} />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEditAssociate(associate)}>
+                                <Edit className="mr-2" size={14} />
+                                Edit Associate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteAssociate(associate)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2" size={14} />
+                                Delete Associate
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                         
                         <div className="space-y-3">
@@ -272,7 +324,14 @@ export default function Associates() {
                         </div>
                         
                         <div className="mt-4 pt-4 border-t border-border">
-                          <Button variant="outline" size="sm" className="w-full" data-testid={`view-associate-${associate.id}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full" 
+                            data-testid={`view-associate-${associate.id}`}
+                            onClick={() => handleViewDetails(associate)}
+                          >
+                            <Eye size={14} className="mr-2" />
                             View Details
                           </Button>
                         </div>
@@ -285,6 +344,79 @@ export default function Associates() {
           </div>
         </Card>
       </main>
+
+      {/* Associate Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Eye size={20} className="text-primary" />
+              <span>Associate Details</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedAssociate && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-lg">
+                    {selectedAssociate.name ? selectedAssociate.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'NA'}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-secondary">{selectedAssociate.name || "Unknown Associate"}</h3>
+                  <p className="text-sm font-mono text-blue-600 dark:text-blue-400">Code: {selectedAssociate.associateCode}</p>
+                  <Badge variant={selectedAssociate.isActive ? "default" : "secondary"} className="mt-1">
+                    {selectedAssociate.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedAssociate.email && (
+                <div className="flex items-center space-x-2">
+                  <Mail size={16} className="text-muted-foreground" />
+                  <span className="text-sm">{selectedAssociate.email}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="p-3 text-center">
+                  <div className="text-2xl font-bold text-primary">{getAssociateSales(selectedAssociate.id).length}</div>
+                  <div className="text-xs text-muted-foreground">Total Sales</div>
+                </Card>
+                <Card className="p-3 text-center">
+                  <div className="text-2xl font-bold text-accent">{formatCurrency(getAssociateRevenue(selectedAssociate.id))}</div>
+                  <div className="text-xs text-muted-foreground">Revenue</div>
+                </Card>
+                <Card className="p-3 text-center">
+                  <div className="text-2xl font-bold text-secondary">
+                    {getAssociateSales(selectedAssociate.id).length > 0 
+                      ? formatCurrency(getAssociateRevenue(selectedAssociate.id) / getAssociateSales(selectedAssociate.id).length) 
+                      : "$0.00"
+                    }
+                  </div>
+                  <div className="text-xs text-muted-foreground">Avg Sale</div>
+                </Card>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Recent Sales</h4>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {getAssociateSales(selectedAssociate.id).slice(0, 5).map((sale: any) => (
+                    <div key={sale.id} className="flex justify-between items-center p-2 bg-muted rounded text-sm">
+                      <span>{sale.orderNumber}</span>
+                      <span className="font-medium">{formatCurrency(Number(sale.totalAmount))}</span>
+                    </div>
+                  ))}
+                  {getAssociateSales(selectedAssociate.id).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No sales yet</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
