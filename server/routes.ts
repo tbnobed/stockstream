@@ -105,6 +105,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/associates/:id", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, email } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Name is required" });
+      }
+
+      const updateData = {
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ').slice(1).join(' ') || '',
+        email: email || null,
+      };
+
+      const updatedUser = await storage.updateUser(id, updateData);
+      res.json({
+        id: updatedUser.id,
+        name: `${updatedUser.firstName} ${updatedUser.lastName}`.trim(),
+        email: updatedUser.email,
+        associateCode: updatedUser.associateCode,
+        isActive: updatedUser.isActive,
+      });
+    } catch (error) {
+      console.error("Update associate error:", error);
+      res.status(500).json({ message: "Failed to update associate" });
+    }
+  });
+
   // Suppliers
   app.get("/api/suppliers", isAuthenticated, async (req, res) => {
     try {

@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Associates() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAssociate, setSelectedAssociate] = useState<any>(null);
   const { toast } = useToast();
 
@@ -31,6 +32,13 @@ export default function Associates() {
   });
 
   const form = useForm<{name: string; email?: string}>({
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
+
+  const editForm = useForm<{name: string; email?: string}>({
     defaultValues: {
       name: "",
       email: "",
@@ -60,17 +68,42 @@ export default function Associates() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: {name: string; email?: string} }) => {
+      const response = await apiRequest("PATCH", `/api/associates/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/associates"] });
+      setShowEditModal(false);
+      setSelectedAssociate(null);
+      editForm.reset();
+      toast({
+        title: "Success",
+        description: "Sales associate updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update sales associate",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: {name: string; email?: string}) => {
     createMutation.mutate(data);
   };
 
+  const onEditSubmit = (data: {name: string; email?: string}) => {
+    if (selectedAssociate) {
+      updateMutation.mutate({ id: selectedAssociate.id, data });
+    }
+  };
+
   const getAssociateSales = (associateId: string) => {
-    console.log("Getting sales for associate:", associateId);
-    console.log("Total sales:", sales.length);
-    console.log("Sample sale:", sales[0]);
-    const filtered = sales.filter((sale: any) => sale.salesAssociateId === associateId);
-    console.log("Filtered sales:", filtered.length);
-    return filtered;
+    return sales.filter((sale: any) => sale.salesAssociateId === associateId);
   };
 
   const getAssociateRevenue = (associateId: string) => {
@@ -91,11 +124,12 @@ export default function Associates() {
   };
 
   const handleEditAssociate = (associate: any) => {
-    // TODO: Implement edit functionality
-    toast({
-      title: "Edit Associate",
-      description: "Edit functionality will be implemented soon",
+    setSelectedAssociate(associate);
+    editForm.reset({
+      name: associate.name || "",
+      email: associate.email || "",
     });
+    setShowEditModal(true);
   };
 
   const handleDeleteAssociate = (associate: any) => {
@@ -419,6 +453,67 @@ export default function Associates() {
                 </div>
               </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Associate Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="w-full max-w-md mx-auto bg-background border-border">
+          <DialogHeader>
+            <DialogTitle className="text-secondary">Edit Associate</DialogTitle>
+          </DialogHeader>
+          
+          {selectedAssociate && (
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter full name" {...field} data-testid="input-edit-associate-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email (Optional)</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Enter email address" {...field} data-testid="input-edit-associate-email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowEditModal(false)}
+                    data-testid="button-cancel-edit-associate"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                    data-testid="button-save-edit-associate"
+                  >
+                    {updateMutation.isPending ? "Updating..." : "Update Associate"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
         </DialogContent>
       </Dialog>
