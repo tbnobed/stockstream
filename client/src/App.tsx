@@ -31,14 +31,21 @@ const isMobileDevice = () => {
   return isMobileUserAgent || (isTouchDevice && window.innerWidth < 1024);
 };
 
-function MobileRedirect() {
+function MobileRedirect({ userRole }: { userRole: string }) {
   const [location, navigate] = useLocation();
   
   useEffect(() => {
-    if (isMobileDevice() && location === '/') {
-      navigate('/mobile-sales');
+    if (isMobileDevice() && location !== '/mobile-sales') {
+      // For associates, always redirect to mobile sales unless already there
+      if (userRole === 'associate') {
+        navigate('/mobile-sales');
+      }
+      // For admins, only redirect from root page
+      else if (userRole === 'admin' && location === '/') {
+        navigate('/mobile-sales');
+      }
     }
-  }, [location, navigate]);
+  }, [location, navigate, userRole]);
   
   return null;
 }
@@ -61,7 +68,7 @@ function AuthenticatedApp() {
 
   return (
     <div className="flex h-screen bg-background">
-      <MobileRedirect />
+      <MobileRedirect userRole={userRole} />
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Switch>
