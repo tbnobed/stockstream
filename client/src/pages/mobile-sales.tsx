@@ -336,6 +336,26 @@ export default function MobileSales() {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
           </p>
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.location.href = '/'}
+              className="text-xs h-6 px-2"
+              data-testid="button-dashboard"
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant="ghost"  
+              size="sm"
+              onClick={() => window.location.href = '/inventory'}
+              className="text-xs h-6 px-2"
+              data-testid="button-inventory"
+            >
+              Inventory
+            </Button>
+          </div>
         </div>
         <Button 
           variant="outline" 

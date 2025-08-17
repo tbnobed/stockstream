@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,12 +16,52 @@ import Login from "@/pages/login";
 import MobileSales from "@/pages/mobile-sales";
 import Sidebar from "@/components/layout/sidebar";
 
+// Mobile detection utility
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isMobileUserAgent = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+  
+  // Also check for touch screen and screen size (16:9 mobile aspect ratios)
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const screenRatio = window.screen.width / window.screen.height;
+  const isMobileRatio = screenRatio < 1 || (screenRatio > 1.7 && screenRatio < 1.8); // Portrait or 16:9 landscape
+  
+  return isMobileUserAgent || (isTouchDevice && window.innerWidth < 1024);
+};
+
+function MobileRedirect() {
+  const [location, navigate] = useLocation();
+  
+  useEffect(() => {
+    if (isMobileDevice() && location === '/') {
+      navigate('/mobile-sales');
+    }
+  }, [location, navigate]);
+  
+  return null;
+}
+
 function AuthenticatedApp() {
   const { user } = useAuth();
   const userRole = (user as any)?.role || 'associate';
+  const [location] = useLocation();
+  
+  // Check if we're on mobile sales page - use full screen layout
+  const isMobileSalesPage = location === '/mobile-sales';
+  
+  if (isMobileSalesPage) {
+    return (
+      <div className="min-h-screen bg-background">
+        <MobileSales />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
+      <MobileRedirect />
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Switch>
