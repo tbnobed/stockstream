@@ -22,6 +22,7 @@ import {
   Camera,
   LogOut
 } from "lucide-react";
+import QRScanner from "@/components/qr-scanner";
 
 interface InventoryItem {
   id: string;
@@ -44,6 +45,7 @@ export default function MobileSales() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
 
   // Fetch inventory items
@@ -204,6 +206,27 @@ export default function MobileSales() {
     }
   };
 
+  // Handle QR scan result
+  const handleQRScan = (result: string) => {
+    console.log("QR code scanned:", result);
+    setSkuInput(result);
+    setShowScanner(false);
+    
+    // Automatically add item if valid SKU
+    const item = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku.toLowerCase() === result.toLowerCase());
+    if (item) {
+      setSkuInput(result);
+      // Use setTimeout to ensure state is updated before calling addItemBySku
+      setTimeout(() => addItemBySku(), 100);
+    } else {
+      // Keep the scanned value in input for manual review
+      toast({
+        title: "Scanned code",
+        description: "Please verify the SKU and add manually if needed",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-20">
       {/* Header */}
@@ -235,18 +258,30 @@ export default function MobileSales() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSkuSubmit} className="flex gap-2">
-            <Input
-              value={skuInput}
-              onChange={(e) => setSkuInput(e.target.value)}
-              placeholder="Scan QR code or enter SKU"
-              className="text-lg"
-              data-testid="input-sku"
-            />
-            <Button type="submit" disabled={!skuInput.trim()} data-testid="button-add-sku">
-              <Plus className="h-4 w-4" />
+          <div className="space-y-3">
+            <form onSubmit={handleSkuSubmit} className="flex gap-2">
+              <Input
+                value={skuInput}
+                onChange={(e) => setSkuInput(e.target.value)}
+                placeholder="Scan QR code or enter SKU"
+                className="text-lg"
+                data-testid="input-sku"
+              />
+              <Button type="submit" disabled={!skuInput.trim()} data-testid="button-add-sku">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </form>
+            
+            <Button
+              onClick={() => setShowScanner(true)}
+              className="w-full"
+              variant="outline"
+              data-testid="button-open-scanner"
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Scan QR Code
             </Button>
-          </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -368,6 +403,13 @@ export default function MobileSales() {
           </CardContent>
         </Card>
       )}
+
+      {/* QR Scanner Modal */}
+      <QRScanner 
+        isOpen={showScanner}
+        onScan={handleQRScan}
+        onClose={() => setShowScanner(false)}
+      />
     </div>
   );
 }

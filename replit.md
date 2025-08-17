@@ -161,3 +161,13 @@ The application uses Docker for containerization, with multi-stage builds for op
 - **Category-specific defaults**: Each category has its own default report type (Sales Summary for sales, Inventory Status for inventory, Cost Analysis for revenue)
 - **Admin permission handling**: Sales by Associate report only appears for admin users within the sales reports category
 - **Improved user experience**: Users now see only relevant report types based on their selection, reducing confusion and improving workflow efficiency
+
+### Sales Associate Management and Mobile Terminal QR Enhancement (August 17, 2025)
+- **Associates data association fix**: Corrected field mapping from associateId to salesAssociateId ensuring proper sales data linkage in associate details
+- **Complete edit associate functionality**: Added edit modal with form validation, PATCH API endpoint, and database operations for updating associate information
+- **Mobile terminal QR integration**: Added camera-based QR code scanning to mobile sales terminal with dedicated scan button
+- **Enhanced mobile workflow**: Users can now tap "Scan QR Code" button to access camera for instant SKU scanning and automatic cart addition
+- **Automatic item processing**: Scanned QR codes automatically populate SKU field and attempt to add valid items to cart with proper validation
+- **Fallback handling**: Invalid or unrecognized QR codes populate input field for manual verification while providing user feedback
+- **Camera permissions**: QR scanner includes comprehensive error handling for camera access, HTTPS requirements, and device compatibility
+- **Seamless integration**: QR scanning functionality works alongside existing manual SKU entry without disrupting current workflow
