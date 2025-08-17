@@ -58,11 +58,19 @@ export default function MobileSales() {
     console.log("Looking for SKU:", skuInput);
     console.log("Available inventory SKUs:", inventory.map((i: InventoryItem) => i.sku));
     
-    const item = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku.toLowerCase() === skuInput.toLowerCase());
+    // First try exact match
+    let item = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku.toLowerCase() === skuInput.toLowerCase());
+    
+    // If no exact match, try trimmed comparison (handle whitespace issues)
+    if (!item) {
+      item = (inventory as InventoryItem[]).find((i: InventoryItem) => 
+        i.sku.toLowerCase().trim() === skuInput.toLowerCase().trim()
+      );
+    }
     
     if (!item) {
       console.log("Item not found for SKU:", skuInput);
-      // Try a more flexible search
+      // Try a more flexible search only if exact matches fail
       const partialMatch = (inventory as InventoryItem[]).find((i: InventoryItem) => 
         i.sku.toLowerCase().includes(skuInput.toLowerCase()) || 
         skuInput.toLowerCase().includes(i.sku.toLowerCase())
@@ -70,11 +78,16 @@ export default function MobileSales() {
       
       if (partialMatch) {
         console.log("Found partial match:", partialMatch.sku);
+        // Auto-correct the SKU and try again
         setSkuInput(partialMatch.sku);
-        toast({
-          title: "Similar item found",
-          description: `Found ${partialMatch.name} (${partialMatch.sku}). Try again?`,
-        });
+        setTimeout(() => {
+          // Recursively call with corrected SKU
+          const correctedItem = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku === partialMatch.sku);
+          if (correctedItem) {
+            // Add the corrected item directly
+            addItemToCart(correctedItem);
+          }
+        }, 100);
         return;
       }
       
@@ -85,6 +98,12 @@ export default function MobileSales() {
       });
       return;
     }
+
+    addItemToCart(item);
+  };
+
+  // Helper function to add item to cart
+  const addItemToCart = (item: InventoryItem) => {
 
     if (item.quantity <= 0) {
       toast({
@@ -229,19 +248,53 @@ export default function MobileSales() {
     setSkuInput(result);
     setShowScanner(false);
     
-    // Automatically add item if valid SKU
-    const item = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku.toLowerCase() === result.toLowerCase());
-    if (item) {
-      setSkuInput(result);
-      // Use setTimeout to ensure state is updated before calling addItemBySku
-      setTimeout(() => addItemBySku(), 100);
-    } else {
-      // Keep the scanned value in input for manual review
-      toast({
-        title: "Scanned code",
-        description: "Please verify the SKU and add manually if needed",
-      });
-    }
+    // Automatically add item if valid SKU - use a more direct approach
+    setTimeout(() => {
+      const item = (inventory as InventoryItem[]).find((i: InventoryItem) => i.sku.toLowerCase() === result.toLowerCase());
+      if (item) {
+        console.log("Direct match found for scanned SKU:", result);
+        // Add item directly to cart
+        if (item.quantity <= 0) {
+          toast({
+            title: "Out of stock",
+            description: "This item is currently out of stock",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const existingCartItem = cart.find(c => c.id === item.id);
+        if (existingCartItem) {
+          if (existingCartItem.cartQuantity >= item.quantity) {
+            toast({
+              title: "Insufficient stock",
+              description: "Cannot add more items than available in stock",
+              variant: "destructive",
+            });
+            return;
+          }
+          setCart(cart.map(c => 
+            c.id === item.id 
+              ? { ...c, cartQuantity: c.cartQuantity + 1 }
+              : c
+          ));
+        } else {
+          setCart(prevCart => [...prevCart, { ...item, cartQuantity: 1 }]);
+        }
+
+        setSkuInput("");
+        toast({
+          title: "Item added",
+          description: `${item.name} added to cart via QR scan`,
+        });
+      } else {
+        toast({
+          title: "Item not found",
+          description: "No item found with that QR code",
+          variant: "destructive",
+        });
+      }
+    }, 100);
   };
 
   return (
