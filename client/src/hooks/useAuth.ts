@@ -30,6 +30,9 @@ export function useAuth() {
 
   const logout = () => {
     localStorage.removeItem("auth_token");
+    // Clear mobile redirect session flags to ensure proper redirect on next login
+    sessionStorage.removeItem("justLoggedIn");
+    sessionStorage.removeItem("hasNavigated");
     window.location.href = "/login";
   };
 

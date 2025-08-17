@@ -35,22 +35,30 @@ function MobileRedirect({ userRole }: { userRole: string }) {
   const [location, navigate] = useLocation();
   
   useEffect(() => {
-    // Only redirect on initial app load/login, not on explicit navigation
-    const shouldRedirect = isMobileDevice() && (
-      location === '/login' || 
-      (location === '/' && document.referrer === '' && !sessionStorage.getItem('hasNavigated'))
-    );
+    if (!isMobileDevice()) return;
     
-    if (shouldRedirect) {
-      if (userRole === 'associate') {
-        navigate('/mobile-sales');
-      } else if (userRole === 'admin') {
-        navigate('/mobile-sales');
-      }
+    // Check if user just logged in (came from login page or initial load)
+    const isPostLogin = sessionStorage.getItem('justLoggedIn') === 'true';
+    const isInitialLoad = !sessionStorage.getItem('hasNavigated');
+    
+    // For associates: always redirect to mobile-sales on login or initial load
+    if (userRole === 'associate' && (isPostLogin || (isInitialLoad && location === '/'))) {
+      navigate('/mobile-sales');
+      sessionStorage.removeItem('justLoggedIn');
+      sessionStorage.setItem('hasNavigated', 'true');
+      return;
     }
     
-    // Mark that user has navigated to prevent auto-redirect
-    if (location !== '/login') {
+    // For admins: redirect to mobile-sales on login or initial load unless explicitly navigating
+    if (userRole === 'admin' && (isPostLogin || (isInitialLoad && location === '/'))) {
+      navigate('/mobile-sales');
+      sessionStorage.removeItem('justLoggedIn');
+      sessionStorage.setItem('hasNavigated', 'true');
+      return;
+    }
+    
+    // Mark that user has navigated to prevent auto-redirect on future navigation
+    if (location !== '/login' && !isPostLogin) {
       sessionStorage.setItem('hasNavigated', 'true');
     }
   }, [location, navigate, userRole]);

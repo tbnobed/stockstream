@@ -21,6 +21,8 @@ export default function Login() {
 
     try {
       await login(associateCode);
+      // Set flag to indicate user just logged in (for mobile redirect)
+      sessionStorage.setItem('justLoggedIn', 'true');
       toast({
         title: "Login successful",
         description: "Welcome to InventoryPro!",
