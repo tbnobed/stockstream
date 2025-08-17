@@ -336,30 +336,30 @@ export default function MobileSales() {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Welcome, {(user as any)?.firstName} {(user as any)?.lastName}
           </p>
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-3">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => window.location.href = '/'}
-              className="text-xs h-6 px-2"
+              className="text-xs h-8 px-3 bg-white/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 font-medium"
               data-testid="button-dashboard"
             >
               Dashboard
             </Button>
             <Button
-              variant="ghost"  
+              variant="outline"  
               size="sm"
               onClick={() => window.location.href = '/inventory'}
-              className="text-xs h-6 px-2"
+              className="text-xs h-8 px-3 bg-white/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-600 font-medium"
               data-testid="button-inventory"
             >
               Inventory
             </Button>
             <Button
-              variant="ghost"  
+              variant="outline"  
               size="sm"
               onClick={() => window.location.href = '/sales'}
-              className="text-xs h-6 px-2"
+              className="text-xs h-8 px-3 bg-white/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 font-medium"
               data-testid="button-sales"
             >
               Sales
