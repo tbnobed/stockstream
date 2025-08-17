@@ -106,6 +106,23 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     
     // Apply additional filters
     filteredSales = filteredSales.filter((sale: any) => {
+      // Category filtering (takes priority over associate filtering)
+      if (selectedCategory !== "all-categories") {
+        const item = sale.item;
+        if (!item) return false;
+        
+        // Check if the item matches any of the category filters
+        const categoryMatch = (
+          selectedCategory === item.type ||
+          selectedCategory === item.color ||
+          selectedCategory === item.design ||
+          selectedCategory === item.groupType ||
+          selectedCategory === item.styleGroup
+        );
+        
+        if (!categoryMatch) return false;
+      }
+      
       // Associate filtering (only if category filter is not active)
       if (selectedAssociate !== "all-associates" && selectedCategory === "all-categories") {
         if (sale.salesAssociateId !== selectedAssociate) return false;
@@ -143,6 +160,20 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         report = generateInventoryAdjustments(filteredSales);
         break;
       case "category-performance":
+        // Apply specific category filtering for category performance reports
+        if (selectedCategory !== "all-categories") {
+          filteredSales = filteredSales.filter((sale: any) => {
+            const item = sale.item;
+            if (!item) return false;
+            return (
+              selectedCategory === item.type ||
+              selectedCategory === item.color ||
+              selectedCategory === item.design ||
+              selectedCategory === item.groupType ||
+              selectedCategory === item.styleGroup
+            );
+          });
+        }
         report = generateCategoryPerformance(filteredSales);
         break;
       case "cost-analysis":
@@ -324,6 +355,47 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
   };
 
   const generateCategoryPerformance = (filteredSales: any[]) => {
+    // If a specific category is selected, focus only on that category's performance
+    if (selectedCategory !== "all-categories") {
+      const categoryValue = selectedCategory;
+      const categoryType = getCategoryType(selectedCategory);
+      
+      // Get all items that match this specific category
+      const categoryItems = filteredSales.reduce((acc: any, sale: any) => {
+        const item = sale.item;
+        if (!item) return acc;
+        
+        const itemKey = item.id || item.sku;
+        if (!acc[itemKey]) {
+          acc[itemKey] = {
+            name: item.name || 'Unknown',
+            sku: item.sku || 'N/A',
+            category: categoryValue,
+            categoryType: categoryType,
+            totalSales: 0,
+            totalRevenue: 0,
+            totalUnits: 0,
+            avgPrice: 0
+          };
+        }
+        
+        const stat = acc[itemKey];
+        stat.totalSales += 1;
+        stat.totalRevenue += parseFloat(sale.totalAmount || 0);
+        stat.totalUnits += parseInt(sale.quantity || 1);
+        stat.avgPrice = stat.totalRevenue / stat.totalUnits;
+        
+        return acc;
+      }, {});
+      
+      return { 
+        selectedCategory: categoryValue,
+        selectedCategoryType: categoryType,
+        categoryItems: Object.values(categoryItems)
+      };
+    }
+    
+    // Otherwise, show performance across all categories
     const categoryStats = filteredSales.reduce((acc: any, sale: any) => {
       const item = sale.item;
       if (!item) return acc;
@@ -359,6 +431,16 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     }, {});
     
     return { categoryStats };
+  };
+  
+  // Helper function to determine which category type a value belongs to
+  const getCategoryType = (categoryValue: string): string => {
+    if (ITEM_TYPES.includes(categoryValue as any)) return 'Type';
+    if (ITEM_COLORS.includes(categoryValue as any)) return 'Color';
+    if (ITEM_DESIGNS.includes(categoryValue as any)) return 'Design';
+    if (GROUP_TYPES.includes(categoryValue as any)) return 'Group Type';
+    if (STYLE_GROUPS.includes(categoryValue as any)) return 'Style Group';
+    return 'Unknown';
   };
 
   const generateCostAnalysis = () => {
@@ -574,14 +656,29 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
 
       case "category-performance":
         csvContent += "Category Performance Analysis\n\n";
-        Object.entries(generatedReport.categoryStats || {}).forEach(([categoryType, stats]: [string, any]) => {
-          csvContent += `${categoryType.toUpperCase()} Performance\n`;
-          csvContent += "Value,Sales Count,Revenue,Units Sold,Avg Price\n";
-          Object.values(stats).forEach((stat: any) => {
-            csvContent += `"${stat.name}",${stat.totalSales},${stat.totalRevenue.toFixed(2)},${stat.totalUnits},${stat.avgPrice.toFixed(2)}\n`;
+        
+        // Handle specific category filtering
+        if (generatedReport.selectedCategory && generatedReport.categoryItems) {
+          csvContent += `${generatedReport.selectedCategoryType}: ${generatedReport.selectedCategory}\n\n`;
+          csvContent += "Item Name,SKU,Sales Count,Revenue,Units Sold,Avg Price\n";
+          (generatedReport.categoryItems || [])
+            .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
+            .forEach((item: any) => {
+              csvContent += `"${item.name}",${item.sku},${item.totalSales},${item.totalRevenue.toFixed(2)},${item.totalUnits},${item.avgPrice.toFixed(2)}\n`;
+            });
+        } else {
+          // Handle all categories
+          Object.entries(generatedReport.categoryStats || {}).forEach(([categoryType, stats]: [string, any]) => {
+            csvContent += `${categoryType.toUpperCase()} Performance\n`;
+            csvContent += "Value,Sales Count,Revenue,Units Sold,Avg Price\n";
+            Object.values(stats)
+              .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
+              .forEach((stat: any) => {
+                csvContent += `"${stat.name}",${stat.totalSales},${stat.totalRevenue.toFixed(2)},${stat.totalUnits},${stat.avgPrice.toFixed(2)}\n`;
+              });
+            csvContent += "\n";
           });
-          csvContent += "\n";
-        });
+        }
         break;
 
       case "cost-analysis":
@@ -831,13 +928,57 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         );
 
       case "category-performance":
+        // Handle specific category filtering display
+        if (generatedReport.selectedCategory && generatedReport.categoryItems) {
+          return (
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded">
+                <h4 className="font-semibold text-blue-900">
+                  {generatedReport.selectedCategoryType}: {generatedReport.selectedCategory}
+                </h4>
+                <p className="text-sm text-blue-700">
+                  Showing performance for all items in this category
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                {(generatedReport.categoryItems || [])
+                  .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
+                  .map((item: any) => (
+                  <div key={item.sku} className="flex justify-between items-center p-3 border rounded">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        SKU: {item.sku} • {item.totalSales} sales • {item.totalUnits} units
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(item.totalRevenue)}</p>
+                      <p className="text-sm text-muted-foreground">Avg: {formatCurrency(item.avgPrice)}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {(!generatedReport.categoryItems || generatedReport.categoryItems.length === 0) && (
+                  <div className="text-center p-8 text-muted-foreground">
+                    <p>No sales found for this category in the selected date range.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+        
+        // Handle all categories display
         return (
           <div className="space-y-6">
             {Object.entries(generatedReport.categoryStats || {}).map(([categoryType, stats]: [string, any]) => (
               <div key={categoryType}>
                 <h4 className="font-medium mb-4 capitalize">{categoryType} Performance</h4>
                 <div className="space-y-2">
-                  {Object.values(stats).map((stat: any) => (
+                  {Object.values(stats)
+                    .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
+                    .map((stat: any) => (
                     <div key={stat.name} className="flex justify-between items-center p-3 border rounded">
                       <div>
                         <p className="font-medium">{stat.name}</p>
@@ -1043,11 +1184,56 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all-categories">All Categories</SelectItem>
-                    <SelectItem value="type">Filter by Type</SelectItem>
-                    <SelectItem value="color">Filter by Color</SelectItem>
-                    <SelectItem value="design">Filter by Design</SelectItem>
-                    <SelectItem value="group-type">Filter by Group</SelectItem>
-                    <SelectItem value="style-group">Filter by Style</SelectItem>
+                    
+                    {/* Item Types */}
+                    {ITEM_TYPES.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Types</div>
+                        {ITEM_TYPES.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Colors */}
+                    {ITEM_COLORS.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Colors</div>
+                        {ITEM_COLORS.map(color => (
+                          <SelectItem key={color} value={color}>{color}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Designs */}
+                    {ITEM_DESIGNS.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Designs</div>
+                        {ITEM_DESIGNS.map(design => (
+                          <SelectItem key={design} value={design}>{design}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Group Types */}
+                    {GROUP_TYPES.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Group Types</div>
+                        {GROUP_TYPES.map(groupType => (
+                          <SelectItem key={groupType} value={groupType}>{groupType}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Style Groups */}
+                    {STYLE_GROUPS.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Style Groups</div>
+                        {STYLE_GROUPS.map(styleGroup => (
+                          <SelectItem key={styleGroup} value={styleGroup}>{styleGroup}</SelectItem>
+                        ))}
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

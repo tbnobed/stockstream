@@ -139,3 +139,14 @@ The application uses Docker for containerization, with multi-stage builds for op
 - **Clear all filters**: Single-click option to reset all filters and return to complete dataset view
 - **Integrated with pagination**: All filters work seamlessly with existing pagination system, automatically resetting to first page when filters change
 - **Responsive filter panel**: Collapsible filter interface that works across mobile and desktop devices with optimized layout
+
+### Enhanced Category-Based Reporting System (August 17, 2025)
+- **Comprehensive category dropdown**: Reports now include all predefined categories (Types, Colors, Designs, Group Types, Style Groups) with organized sections
+- **Advanced category filtering**: Enhanced report generation with proper category-based sales filtering that takes priority over other filters
+- **Specific category performance**: When a specific category is selected, reports focus exclusively on items within that category showing individual item performance
+- **Dual reporting modes**: Reports handle both all-categories overview (showing performance across all category types) and specific category deep-dive analysis
+- **Improved category performance display**: Visual indicators showing selected category type with sorted results by revenue performance
+- **Enhanced CSV exports**: Category reports export with proper structure for both general category analysis and specific category item breakdowns
+- **Category type detection**: Automatic detection of category type (Type/Color/Design/Group/Style) for proper filtering and display organization
+- **No data handling**: Graceful handling of empty results when no sales exist for selected categories in date ranges
+- **Revenue-based sorting**: All category performance reports automatically sort by revenue to highlight top performers within categories
