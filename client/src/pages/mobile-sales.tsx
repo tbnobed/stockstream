@@ -355,6 +355,15 @@ export default function MobileSales() {
             >
               Inventory
             </Button>
+            <Button
+              variant="ghost"  
+              size="sm"
+              onClick={() => window.location.href = '/sales'}
+              className="text-xs h-6 px-2"
+              data-testid="button-sales"
+            >
+              Sales
+            </Button>
           </div>
         </div>
         <Button 
