@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NewSaleModal from "@/components/modals/new-sale-modal";
 import SaleDetailsModal from "@/components/modals/sale-details-modal";
 import ReceiptModal from "@/components/receipt/receipt-modal";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, Download } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -19,6 +20,8 @@ export default function Sales() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
 
@@ -31,6 +34,25 @@ export default function Sales() {
     sale.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sale.salesAssociate?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination logic
+  const totalItems = filteredSales.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSales = filteredSales.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  // Reset to first page when items per page changes
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(parseInt(value));
+    setCurrentPage(1);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -149,7 +171,7 @@ export default function Sales() {
                 <Input
                   placeholder="Search by order ID, item, or associate..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                   data-testid="input-search-sales"
                 />
@@ -174,11 +196,26 @@ export default function Sales() {
         {/* Sales Transactions */}
         <Card className="border-border">
           <div className="px-4 md:px-6 py-4 border-b border-border">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-secondary">Sales Transactions</h3>
-              <p className="text-sm text-muted-foreground">
-                {filteredSales?.length || 0} transactions
-              </p>
+            <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
+              <div>
+                <h3 className="text-lg font-semibold text-secondary">Sales Transactions</h3>
+                <p className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} transactions
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                  <SelectTrigger className="w-20" data-testid="select-items-per-page">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <div className="p-4 md:p-6">
@@ -192,7 +229,7 @@ export default function Sales() {
               <>
                 {/* Mobile Card Layout */}
                 <div className="block md:hidden space-y-4">
-                  {filteredSales.map((sale: any) => (
+                  {paginatedSales.map((sale: any) => (
                     <Card key={sale.id} className="p-4 border-border">
                       <div className="flex justify-between items-start mb-3">
                         <div>
@@ -269,7 +306,7 @@ export default function Sales() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSales.map((sale: any) => (
+                    {paginatedSales.map((sale: any) => (
                       <tr key={sale.id} className="border-b border-border/50">
                         <td className="py-3">
                           <span className="font-mono text-sm text-secondary" data-testid={`sale-order-${sale.id}`}>
@@ -339,6 +376,64 @@ export default function Sales() {
                   </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-border space-y-4 md:space-y-0">
+                    <div className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        data-testid="button-prev-page"
+                      >
+                        <ChevronLeft size={16} />
+                        Previous
+                      </Button>
+                      <div className="flex items-center space-x-1">
+                        {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                          let pageNumber;
+                          if (totalPages <= 5) {
+                            pageNumber = index + 1;
+                          } else if (currentPage <= 3) {
+                            pageNumber = index + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNumber = totalPages - 4 + index;
+                          } else {
+                            pageNumber = currentPage - 2 + index;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNumber}
+                              variant={currentPage === pageNumber ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNumber)}
+                              className="w-8 h-8 p-0"
+                              data-testid={`button-page-${pageNumber}`}
+                            >
+                              {pageNumber}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        data-testid="button-next-page"
+                      >
+                        Next
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

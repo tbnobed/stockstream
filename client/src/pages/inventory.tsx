@@ -12,7 +12,7 @@ import AdjustInventoryModal from "@/components/modals/adjust-inventory-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
 import PrintLabelModal from "@/components/modals/print-label-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore, Filter, X } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,8 @@ export default function Inventory() {
   const [selectedGroupType, setSelectedGroupType] = useState<string>("all-groups");
   const [selectedStyleGroup, setSelectedStyleGroup] = useState<string>("all-styles");
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -95,6 +97,7 @@ export default function Inventory() {
     setSelectedGroupType("all-groups");
     setSelectedStyleGroup("all-styles");
     setSearchTerm("");
+    setCurrentPage(1);
   };
 
   const filteredItems = (inventoryItems as any[] || []).filter((item: any) => {
@@ -116,6 +119,29 @@ export default function Inventory() {
     return matchesSearch && matchesType && matchesColor && matchesSize && 
            matchesDesign && matchesGroupType && matchesStyleGroup;
   });
+
+  // Pagination logic
+  const totalItems = filteredItems.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredItems.slice(startIndex, endIndex);
+
+  // Reset to first page when search or filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(parseInt(value));
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (filterSetter: (value: string) => void, value: string) => {
+    filterSetter(value);
+    setCurrentPage(1);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -185,7 +211,7 @@ export default function Inventory() {
               <Input
                 placeholder="Search by name, SKU, type, description, design, group type, or style..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
                 data-testid="input-search-inventory"
               />
@@ -252,7 +278,7 @@ export default function Inventory() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Type</label>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
+                  <Select value={selectedType} onValueChange={(value) => handleFilterChange(setSelectedType, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-type">
                       <SelectValue placeholder="All types" />
                     </SelectTrigger>
@@ -267,7 +293,7 @@ export default function Inventory() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Color</label>
-                  <Select value={selectedColor} onValueChange={setSelectedColor}>
+                  <Select value={selectedColor} onValueChange={(value) => handleFilterChange(setSelectedColor, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-color">
                       <SelectValue placeholder="All colors" />
                     </SelectTrigger>
@@ -282,7 +308,7 @@ export default function Inventory() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Size</label>
-                  <Select value={selectedSize} onValueChange={setSelectedSize}>
+                  <Select value={selectedSize} onValueChange={(value) => handleFilterChange(setSelectedSize, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-size">
                       <SelectValue placeholder="All sizes" />
                     </SelectTrigger>
@@ -297,7 +323,7 @@ export default function Inventory() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Design</label>
-                  <Select value={selectedDesign} onValueChange={setSelectedDesign}>
+                  <Select value={selectedDesign} onValueChange={(value) => handleFilterChange(setSelectedDesign, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-design">
                       <SelectValue placeholder="All designs" />
                     </SelectTrigger>
@@ -312,7 +338,7 @@ export default function Inventory() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Group Type</label>
-                  <Select value={selectedGroupType} onValueChange={setSelectedGroupType}>
+                  <Select value={selectedGroupType} onValueChange={(value) => handleFilterChange(setSelectedGroupType, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-group-type">
                       <SelectValue placeholder="All groups" />
                     </SelectTrigger>
@@ -327,7 +353,7 @@ export default function Inventory() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Style Group</label>
-                  <Select value={selectedStyleGroup} onValueChange={setSelectedStyleGroup}>
+                  <Select value={selectedStyleGroup} onValueChange={(value) => handleFilterChange(setSelectedStyleGroup, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-style-group">
                       <SelectValue placeholder="All styles" />
                     </SelectTrigger>
@@ -421,7 +447,27 @@ export default function Inventory() {
         {/* Inventory Items */}
         <Card className="border-border">
           <div className="px-4 md:px-6 py-4 border-b border-border">
-            <h3 className="text-lg font-semibold text-secondary">Inventory Items</h3>
+            <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
+              <div>
+                <h3 className="text-lg font-semibold text-secondary">Inventory Items</h3>
+                <p className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} items
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                  <SelectTrigger className="w-20" data-testid="select-items-per-page">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
           <div className="p-4 md:p-6">
             {isLoading ? (
@@ -434,7 +480,7 @@ export default function Inventory() {
               <>
                 {/* Mobile Card Layout */}
                 <div className="block md:hidden space-y-4">
-                  {filteredItems.map((item: any) => {
+                  {paginatedItems.map((item: any) => {
                     const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
                     
                     return (
@@ -596,7 +642,7 @@ export default function Inventory() {
                       </tr>
                     </thead>
                   <tbody>
-                    {filteredItems.map((item: any) => {
+                    {paginatedItems.map((item: any) => {
                       const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
                       
                       return (
@@ -742,6 +788,64 @@ export default function Inventory() {
                   </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-border space-y-4 md:space-y-0">
+                    <div className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        data-testid="button-prev-page"
+                      >
+                        <ChevronLeft size={16} />
+                        Previous
+                      </Button>
+                      <div className="flex items-center space-x-1">
+                        {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                          let pageNumber;
+                          if (totalPages <= 5) {
+                            pageNumber = index + 1;
+                          } else if (currentPage <= 3) {
+                            pageNumber = index + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNumber = totalPages - 4 + index;
+                          } else {
+                            pageNumber = currentPage - 2 + index;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNumber}
+                              variant={currentPage === pageNumber ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNumber)}
+                              className="w-8 h-8 p-0"
+                              data-testid={`button-page-${pageNumber}`}
+                            >
+                              {pageNumber}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        data-testid="button-next-page"
+                      >
+                        Next
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
