@@ -150,3 +150,14 @@ The application uses Docker for containerization, with multi-stage builds for op
 - **Category type detection**: Automatic detection of category type (Type/Color/Design/Group/Style) for proper filtering and display organization
 - **No data handling**: Graceful handling of empty results when no sales exist for selected categories in date ranges
 - **Revenue-based sorting**: All category performance reports automatically sort by revenue to highlight top performers within categories
+
+### Contextual Report System Implementation (August 17, 2025)
+- **Contextual report buttons**: Report types now contextually filter based on which main report button was clicked (Sales/Inventory/Revenue)
+- **Sales reports category**: Shows only sales-related reports including Sales Summary, Sales by Associate, Top Selling Items, Payment Methods, and Seasonal Trends
+- **Inventory reports category**: Shows only inventory-related reports including Inventory Status, Low Stock Report, Inventory Adjustments, and Category Performance
+- **Revenue reports category**: Shows only revenue-related reports including Cost Analysis, Profit Margins, Category Performance, and Seasonal Trends
+- **Dynamic modal headers**: Report modal title updates to reflect the selected category (Sales Reports, Inventory Reports, Revenue Reports)
+- **Automatic report type reset**: When switching between report categories, the selected report type automatically resets to the appropriate default for that category
+- **Category-specific defaults**: Each category has its own default report type (Sales Summary for sales, Inventory Status for inventory, Cost Analysis for revenue)
+- **Admin permission handling**: Sales by Associate report only appears for admin users within the sales reports category
+- **Improved user experience**: Users now see only relevant report types based on their selection, reducing confusion and improving workflow efficiency

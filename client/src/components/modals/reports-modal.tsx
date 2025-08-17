@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,12 +26,54 @@ import {
 interface ReportsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  reportCategory: "sales" | "inventory" | "revenue";
 }
 
 type ReportType = "sales-summary" | "sales-by-associate" | "inventory-status" | "low-stock" | "inventory-adjustments" | "top-selling" | "category-performance" | "cost-analysis" | "profit-margins" | "seasonal-trends" | "payment-methods";
 
-export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) {
-  const [reportType, setReportType] = useState<ReportType>("sales-summary");
+export default function ReportsModal({ open, onOpenChange, reportCategory }: ReportsModalProps) {
+  // Define report types for each category
+  const salesReportTypes: ReportType[] = ["sales-summary", "sales-by-associate", "top-selling", "payment-methods", "seasonal-trends"];
+  const inventoryReportTypes: ReportType[] = ["inventory-status", "low-stock", "inventory-adjustments", "category-performance"];
+  const revenueReportTypes: ReportType[] = ["cost-analysis", "profit-margins", "category-performance", "seasonal-trends"];
+  
+  // Get available report types based on category
+  const getAvailableReportTypes = () => {
+    switch (reportCategory) {
+      case "sales":
+        return salesReportTypes;
+      case "inventory":
+        return inventoryReportTypes;
+      case "revenue":
+        return revenueReportTypes;
+      default:
+        return salesReportTypes;
+    }
+  };
+  
+  const availableReportTypes = getAvailableReportTypes();
+  
+  // Set default report type based on category
+  const getDefaultReportType = (): ReportType => {
+    switch (reportCategory) {
+      case "sales":
+        return "sales-summary";
+      case "inventory":
+        return "inventory-status";
+      case "revenue":
+        return "cost-analysis";
+      default:
+        return "sales-summary";
+    }
+  };
+  
+  const [reportType, setReportType] = useState<ReportType>(getDefaultReportType());
+  
+  // Reset report type when category changes
+  useEffect(() => {
+    const defaultType = getDefaultReportType();
+    setReportType(defaultType);
+  }, [reportCategory]);
   const [dateRange, setDateRange] = useState<string>("30days");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
@@ -1125,7 +1167,11 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <FileText className="text-primary" size={20} />
-            <span>Generate Reports</span>
+            <span>
+              {reportCategory === "sales" && "Sales Reports"}
+              {reportCategory === "inventory" && "Inventory Reports"}
+              {reportCategory === "revenue" && "Revenue Reports"}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -1139,17 +1185,30 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sales-summary">Sales Summary</SelectItem>
-                  {isAdmin && <SelectItem value="sales-by-associate">Sales by Associate</SelectItem>}
-                  <SelectItem value="inventory-status">Inventory Status</SelectItem>
-                  <SelectItem value="low-stock">Low Stock Report</SelectItem>
-                  <SelectItem value="top-selling">Top Selling Items</SelectItem>
-                  <SelectItem value="inventory-adjustments">Inventory Adjustments</SelectItem>
-                  <SelectItem value="category-performance">Category Performance</SelectItem>
-                  <SelectItem value="cost-analysis">Cost Analysis</SelectItem>
-                  <SelectItem value="profit-margins">Profit Margins</SelectItem>
-                  <SelectItem value="seasonal-trends">Seasonal Trends</SelectItem>
-                  <SelectItem value="payment-methods">Payment Methods</SelectItem>
+                  {availableReportTypes.map((type) => {
+                    // Only show admin reports if user is admin
+                    if (type === "sales-by-associate" && !isAdmin) return null;
+                    
+                    const reportLabels: Record<ReportType, string> = {
+                      "sales-summary": "Sales Summary",
+                      "sales-by-associate": "Sales by Associate",
+                      "inventory-status": "Inventory Status",
+                      "low-stock": "Low Stock Report",
+                      "top-selling": "Top Selling Items",
+                      "inventory-adjustments": "Inventory Adjustments",
+                      "category-performance": "Category Performance",
+                      "cost-analysis": "Cost Analysis",
+                      "profit-margins": "Profit Margins",
+                      "seasonal-trends": "Seasonal Trends",
+                      "payment-methods": "Payment Methods"
+                    };
+                    
+                    return (
+                      <SelectItem key={type} value={type}>
+                        {reportLabels[type]}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

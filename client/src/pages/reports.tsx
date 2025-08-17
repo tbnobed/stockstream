@@ -23,6 +23,7 @@ const COLORS = ['hsl(207, 81%, 35%)', 'hsl(122, 39%, 49%)', 'hsl(37, 100%, 56%)'
 
 export default function Reports() {
   const [showReportsModal, setShowReportsModal] = useState(false);
+  const [reportCategory, setReportCategory] = useState<"sales" | "inventory" | "revenue">("sales");
 
   const { data: sales = [] } = useQuery<any[]>({
     queryKey: ["/api/sales"],
@@ -194,7 +195,10 @@ export default function Reports() {
                 variant="outline" 
                 className="h-auto p-4 flex flex-col items-start" 
                 data-testid="generate-sales-report"
-                onClick={() => setShowReportsModal(true)}
+                onClick={() => {
+                  setReportCategory("sales");
+                  setShowReportsModal(true);
+                }}
               >
                 <div className="flex items-center mb-2">
                   <FileBarChart className="mr-2" size={16} />
@@ -209,7 +213,10 @@ export default function Reports() {
                 variant="outline" 
                 className="h-auto p-4 flex flex-col items-start" 
                 data-testid="generate-inventory-report"
-                onClick={() => setShowReportsModal(true)}
+                onClick={() => {
+                  setReportCategory("inventory");
+                  setShowReportsModal(true);
+                }}
               >
                 <div className="flex items-center mb-2">
                   <Package className="mr-2" size={16} />
@@ -224,7 +231,10 @@ export default function Reports() {
                 variant="outline" 
                 className="h-auto p-4 flex flex-col items-start" 
                 data-testid="generate-revenue-report"
-                onClick={() => setShowReportsModal(true)}
+                onClick={() => {
+                  setReportCategory("revenue");
+                  setShowReportsModal(true);
+                }}
               >
                 <div className="flex items-center mb-2">
                   <DollarSign className="mr-2" size={16} />
@@ -241,7 +251,8 @@ export default function Reports() {
 
       <ReportsModal 
         open={showReportsModal} 
-        onOpenChange={setShowReportsModal} 
+        onOpenChange={setShowReportsModal}
+        reportCategory={reportCategory}
       />
     </>
   );
