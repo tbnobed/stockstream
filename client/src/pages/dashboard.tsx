@@ -172,74 +172,122 @@ export default function Dashboard() {
           {/* Recent Sales */}
           <div className="lg:col-span-2">
             <Card className="border-border">
-              <div className="px-6 py-4 border-b border-border">
+              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-secondary">Recent Sales</h3>
-                  <Button variant="ghost" size="sm" className="text-primary">
+                  <h3 className="text-base md:text-lg font-semibold text-secondary">Recent Sales</h3>
+                  <Button variant="ghost" size="sm" className="text-primary text-xs md:text-sm h-8">
                     View all
                   </Button>
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-4 md:p-6">
                 {salesLoading ? (
                   <div className="text-center py-8 text-muted-foreground">Loading sales...</div>
                 ) : !recentSales?.length ? (
                   <div className="text-center py-8 text-muted-foreground">No sales found</div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-sm font-medium text-muted-foreground">
-                          <th className="pb-3">Order ID</th>
-                          <th className="pb-3">Item</th>
-                          <th className="pb-3">Associate</th>
-                          <th className="pb-3">Amount</th>
-                          <th className="pb-3">Payment</th>
-                          <th className="pb-3">Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentSales.slice(0, 5).map((sale: any) => (
-                          <tr key={sale.id} className="border-b border-border/50">
-                            <td className="py-3">
-                              <span className="font-mono text-sm text-secondary" data-testid={`sale-id-${sale.id}`}>
+                  <>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="text-left text-sm font-medium text-muted-foreground">
+                            <th className="pb-3">Order ID</th>
+                            <th className="pb-3">Item</th>
+                            <th className="pb-3">Associate</th>
+                            <th className="pb-3">Amount</th>
+                            <th className="pb-3">Payment</th>
+                            <th className="pb-3">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentSales.slice(0, 5).map((sale: any) => (
+                            <tr key={sale.id} className="border-b border-border/50">
+                              <td className="py-3">
+                                <span className="font-mono text-sm text-secondary" data-testid={`sale-id-${sale.id}`}>
+                                  #{sale.orderNumber}
+                                </span>
+                              </td>
+                              <td className="py-3">
+                                <div>
+                                  <p className="text-sm font-medium text-secondary">{sale.item.name}</p>
+                                  <p className="text-xs text-muted-foreground">SKU: {sale.item.sku}</p>
+                                </div>
+                              </td>
+                              <td className="py-3">
+                                <span className="text-sm text-secondary">{sale.salesAssociate.name}</span>
+                              </td>
+                              <td className="py-3">
+                                <span className="text-sm font-medium text-secondary">
+                                  {formatCurrency(Number(sale.totalAmount))}
+                                </span>
+                              </td>
+                              <td className="py-3">
+                                <span className={cn(
+                                  "px-2 py-1 text-xs rounded-full",
+                                  sale.paymentMethod === "cash"
+                                    ? "bg-accent/10 text-accent"
+                                    : "bg-primary/10 text-primary"
+                                )}>
+                                  {sale.paymentMethod === "cash" ? "Cash" : "Venmo"}
+                                </span>
+                              </td>
+                              <td className="py-3">
+                                <span className="text-sm text-muted-foreground">
+                                  {formatTime(sale.saleDate)}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3">
+                      {recentSales.slice(0, 5).map((sale: any) => (
+                        <div key={sale.id} className="bg-muted/20 rounded-lg p-3 border border-border/50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-secondary text-sm" data-testid={`sale-id-${sale.id}`}>
+                                {sale.item.name}
+                              </h4>
+                              <p className="text-xs text-muted-foreground font-mono">
                                 #{sale.orderNumber}
-                              </span>
-                            </td>
-                            <td className="py-3">
-                              <div>
-                                <p className="text-sm font-medium text-secondary">{sale.item.name}</p>
-                                <p className="text-xs text-muted-foreground">SKU: {sale.item.sku}</p>
-                              </div>
-                            </td>
-                            <td className="py-3">
-                              <span className="text-sm text-secondary">{sale.salesAssociate.name}</span>
-                            </td>
-                            <td className="py-3">
-                              <span className="text-sm font-medium text-secondary">
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-sm text-secondary">
                                 {formatCurrency(Number(sale.totalAmount))}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatTime(sale.saleDate)}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center space-x-3">
+                              <span className="text-xs text-muted-foreground">
+                                {sale.salesAssociate.name}
                               </span>
-                            </td>
-                            <td className="py-3">
                               <span className={cn(
-                                "px-2 py-1 text-xs rounded-full",
+                                "px-2 py-1 text-xs rounded-full font-medium",
                                 sale.paymentMethod === "cash"
-                                  ? "bg-accent/10 text-accent"
-                                  : "bg-primary/10 text-primary"
+                                  ? "bg-accent/20 text-accent"
+                                  : "bg-primary/20 text-primary"
                               )}>
                                 {sale.paymentMethod === "cash" ? "Cash" : "Venmo"}
                               </span>
-                            </td>
-                            <td className="py-3">
-                              <span className="text-sm text-muted-foreground">
-                                {formatTime(sale.saleDate)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {sale.item.sku}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </Card>
@@ -371,6 +419,7 @@ export default function Dashboard() {
       <ReportsModal
         open={showReportsModal}
         onOpenChange={setShowReportsModal}
+        reportCategory="sales"
       />
     </>
   );
