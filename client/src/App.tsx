@@ -35,12 +35,12 @@ function MobileRedirect({ userRole }: { userRole: string }) {
   const [location, navigate] = useLocation();
   
   useEffect(() => {
-    if (isMobileDevice() && location !== '/mobile-sales') {
-      // For associates, always redirect to mobile sales unless already there
-      if (userRole === 'associate') {
+    if (isMobileDevice()) {
+      // For associates, redirect to mobile sales from root or login page
+      if (userRole === 'associate' && (location === '/' || location === '/login')) {
         navigate('/mobile-sales');
       }
-      // For admins, only redirect from root page
+      // For admins, only redirect from root page to mobile sales
       else if (userRole === 'admin' && location === '/') {
         navigate('/mobile-sales');
       }
