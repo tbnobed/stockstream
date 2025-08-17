@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { ITEM_TYPES, ITEM_COLORS, ITEM_DESIGNS, GROUP_TYPES, STYLE_GROUPS } from "@shared/categories";
 import { 
   TrendingUp, 
   Package, 
@@ -27,13 +28,16 @@ interface ReportsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type ReportType = "sales-summary" | "sales-by-associate" | "inventory-status" | "low-stock" | "inventory-adjustments" | "top-selling";
+type ReportType = "sales-summary" | "sales-by-associate" | "inventory-status" | "low-stock" | "inventory-adjustments" | "top-selling" | "category-performance" | "cost-analysis" | "profit-margins" | "seasonal-trends" | "payment-methods";
 
 export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) {
   const [reportType, setReportType] = useState<ReportType>("sales-summary");
   const [dateRange, setDateRange] = useState<string>("30days");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all-categories");
+  const [selectedAssociate, setSelectedAssociate] = useState<string>("all-associates");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("all-methods");
   const [generatedReport, setGeneratedReport] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -100,6 +104,21 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
       }
     });
     
+    // Apply additional filters
+    filteredSales = filteredSales.filter((sale: any) => {
+      // Associate filtering (only if category filter is not active)
+      if (selectedAssociate !== "all-associates" && selectedCategory === "all-categories") {
+        if (sale.salesAssociateId !== selectedAssociate) return false;
+      }
+      
+      // Payment method filtering
+      if (selectedPaymentMethod !== "all-methods") {
+        if (sale.paymentMethod !== selectedPaymentMethod) return false;
+      }
+      
+      return true;
+    });
+
     // If no sales found in date range, use all sales for demonstration
     if (filteredSales.length === 0 && sales.length > 0) {
       filteredSales = sales;
@@ -122,6 +141,21 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
         break;
       case "inventory-adjustments":
         report = generateInventoryAdjustments(filteredSales);
+        break;
+      case "category-performance":
+        report = generateCategoryPerformance(filteredSales);
+        break;
+      case "cost-analysis":
+        report = generateCostAnalysis();
+        break;
+      case "profit-margins":
+        report = generateProfitMargins(filteredSales);
+        break;
+      case "seasonal-trends":
+        report = generateSeasonalTrends(filteredSales);
+        break;
+      case "payment-methods":
+        report = generatePaymentMethodsReport(filteredSales);
         break;
       case "top-selling":
         report = generateTopSellingReport(filteredSales);
@@ -289,6 +323,159 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
     return { topItems };
   };
 
+  const generateCategoryPerformance = (filteredSales: any[]) => {
+    const categoryStats = filteredSales.reduce((acc: any, sale: any) => {
+      const item = sale.item;
+      if (!item) return acc;
+      
+      const categories = {
+        type: item.type || 'Unknown',
+        color: item.color || 'Unknown', 
+        design: item.design || 'Unknown',
+        groupType: item.groupType || 'Unknown',
+        styleGroup: item.styleGroup || 'Unknown'
+      };
+      
+      Object.entries(categories).forEach(([categoryType, categoryValue]) => {
+        if (!acc[categoryType]) acc[categoryType] = {};
+        if (!acc[categoryType][categoryValue]) {
+          acc[categoryType][categoryValue] = {
+            name: categoryValue,
+            totalSales: 0,
+            totalRevenue: 0,
+            totalUnits: 0,
+            avgPrice: 0
+          };
+        }
+        
+        const stat = acc[categoryType][categoryValue];
+        stat.totalSales += 1;
+        stat.totalRevenue += parseFloat(sale.totalAmount || 0);
+        stat.totalUnits += parseInt(sale.quantity || 1);
+        stat.avgPrice = stat.totalRevenue / stat.totalUnits;
+      });
+      
+      return acc;
+    }, {});
+    
+    return { categoryStats };
+  };
+
+  const generateCostAnalysis = () => {
+    const analysis = inventory.reduce((acc: any, item: any) => {
+      const cost = parseFloat(item.cost || 0);
+      const price = parseFloat(item.price || 0);
+      const quantity = parseInt(item.quantity || 0);
+      const margin = price - cost;
+      const marginPercent = cost > 0 ? (margin / cost) * 100 : 0;
+      
+      acc.totalCost += cost * quantity;
+      acc.totalValue += price * quantity;
+      acc.totalMargin += margin * quantity;
+      acc.items.push({
+        name: item.name,
+        sku: item.sku,
+        cost,
+        price,
+        margin,
+        marginPercent,
+        quantity,
+        totalCost: cost * quantity,
+        totalValue: price * quantity
+      });
+      
+      return acc;
+    }, {
+      totalCost: 0,
+      totalValue: 0,
+      totalMargin: 0,
+      items: []
+    });
+    
+    analysis.overallMarginPercent = analysis.totalCost > 0 ? 
+      (analysis.totalMargin / analysis.totalCost) * 100 : 0;
+    
+    return analysis;
+  };
+
+  const generateProfitMargins = (filteredSales: any[]) => {
+    const profitData = filteredSales.map((sale: any) => {
+      const item = sale.item;
+      const salePrice = parseFloat(sale.unitPrice || sale.totalAmount || 0);
+      const cost = parseFloat(item?.cost || 0);
+      const quantity = parseInt(sale.quantity || 1);
+      const profit = (salePrice - cost) * quantity;
+      const profitMargin = cost > 0 ? ((salePrice - cost) / cost) * 100 : 0;
+      
+      return {
+        orderNumber: sale.orderNumber,
+        itemName: item?.name || 'Unknown',
+        salePrice,
+        cost,
+        quantity,
+        profit,
+        profitMargin,
+        date: sale.saleDate
+      };
+    });
+    
+    const totalProfit = profitData.reduce((sum, sale) => sum + sale.profit, 0);
+    const avgMargin = profitData.length > 0 ? 
+      profitData.reduce((sum, sale) => sum + sale.profitMargin, 0) / profitData.length : 0;
+    
+    return {
+      profitData,
+      totalProfit,
+      avgMargin,
+      highestMargin: Math.max(...profitData.map(p => p.profitMargin)),
+      lowestMargin: Math.min(...profitData.map(p => p.profitMargin))
+    };
+  };
+
+  const generateSeasonalTrends = (filteredSales: any[]) => {
+    const monthlyData = filteredSales.reduce((acc: any, sale: any) => {
+      try {
+        const date = new Date(sale.saleDate || sale.createdAt);
+        const month = format(date, 'yyyy-MM');
+        const revenue = parseFloat(sale.totalAmount || 0);
+        
+        if (!acc[month]) {
+          acc[month] = { month, revenue: 0, transactions: 0 };
+        }
+        acc[month].revenue += revenue;
+        acc[month].transactions += 1;
+      } catch (error) {
+        console.warn("Date parsing error:", error);
+      }
+      return acc;
+    }, {});
+    
+    const trends = Object.values(monthlyData).sort((a: any, b: any) => 
+      a.month.localeCompare(b.month)
+    );
+    
+    return { trends };
+  };
+
+  const generatePaymentMethodsReport = (filteredSales: any[]) => {
+    const paymentStats = filteredSales.reduce((acc: any, sale: any) => {
+      const method = sale.paymentMethod || 'Unknown';
+      const amount = parseFloat(sale.totalAmount || 0);
+      
+      if (!acc[method]) {
+        acc[method] = { method, totalRevenue: 0, transactions: 0, avgTransaction: 0 };
+      }
+      
+      acc[method].totalRevenue += amount;
+      acc[method].transactions += 1;
+      acc[method].avgTransaction = acc[method].totalRevenue / acc[method].transactions;
+      
+      return acc;
+    }, {});
+    
+    return { paymentStats: Object.values(paymentStats) };
+  };
+
   const exportReport = () => {
     if (!generatedReport) return;
 
@@ -384,6 +571,61 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
           csvContent += `${date},${movement.type},"${movement.item?.name || 'Unknown'}",${movement.quantity},"${movement.reason}","${movement.associate || 'N/A'}"\n`;
         });
         break;
+
+      case "category-performance":
+        csvContent += "Category Performance Analysis\n\n";
+        Object.entries(generatedReport.categoryStats || {}).forEach(([categoryType, stats]: [string, any]) => {
+          csvContent += `${categoryType.toUpperCase()} Performance\n`;
+          csvContent += "Value,Sales Count,Revenue,Units Sold,Avg Price\n";
+          Object.values(stats).forEach((stat: any) => {
+            csvContent += `"${stat.name}",${stat.totalSales},${stat.totalRevenue.toFixed(2)},${stat.totalUnits},${stat.avgPrice.toFixed(2)}\n`;
+          });
+          csvContent += "\n";
+        });
+        break;
+
+      case "cost-analysis":
+        csvContent += "Cost Analysis Summary\n";
+        csvContent += `Total Cost,${generatedReport.totalCost.toFixed(2)}\n`;
+        csvContent += `Total Value,${generatedReport.totalValue.toFixed(2)}\n`;
+        csvContent += `Total Margin,${generatedReport.totalMargin.toFixed(2)}\n`;
+        csvContent += `Overall Margin %,${generatedReport.overallMarginPercent.toFixed(2)}\n\n`;
+        
+        csvContent += "Item Details\n";
+        csvContent += "Name,SKU,Cost,Price,Margin,Margin %,Quantity,Total Cost,Total Value\n";
+        generatedReport.items.forEach((item: any) => {
+          csvContent += `"${item.name}",${item.sku},${item.cost.toFixed(2)},${item.price.toFixed(2)},${item.margin.toFixed(2)},${item.marginPercent.toFixed(2)},${item.quantity},${item.totalCost.toFixed(2)},${item.totalValue.toFixed(2)}\n`;
+        });
+        break;
+
+      case "profit-margins":
+        csvContent += "Profit Margins Summary\n";
+        csvContent += `Total Profit,${generatedReport.totalProfit.toFixed(2)}\n`;
+        csvContent += `Average Margin,${generatedReport.avgMargin.toFixed(2)}%\n`;
+        csvContent += `Highest Margin,${generatedReport.highestMargin.toFixed(2)}%\n`;
+        csvContent += `Lowest Margin,${generatedReport.lowestMargin.toFixed(2)}%\n\n`;
+        
+        csvContent += "Transaction Details\n";
+        csvContent += "Order Number,Item,Sale Price,Cost,Quantity,Profit,Profit Margin %,Date\n";
+        generatedReport.profitData.forEach((profit: any) => {
+          csvContent += `${profit.orderNumber},"${profit.itemName}",${profit.salePrice.toFixed(2)},${profit.cost.toFixed(2)},${profit.quantity},${profit.profit.toFixed(2)},${profit.profitMargin.toFixed(2)},${profit.date}\n`;
+        });
+        break;
+
+      case "seasonal-trends":
+        csvContent += "Month,Revenue,Transactions,Avg per Transaction\n";
+        generatedReport.trends.forEach((trend: any) => {
+          const avgPerTransaction = trend.transactions > 0 ? (trend.revenue / trend.transactions).toFixed(2) : '0.00';
+          csvContent += `${trend.month},${trend.revenue.toFixed(2)},${trend.transactions},${avgPerTransaction}\n`;
+        });
+        break;
+
+      case "payment-methods":
+        csvContent += "Payment Method,Total Revenue,Transactions,Average Transaction\n";
+        generatedReport.paymentStats.forEach((stat: any) => {
+          csvContent += `${stat.method},${stat.totalRevenue.toFixed(2)},${stat.transactions},${stat.avgTransaction.toFixed(2)}\n`;
+        });
+        break;
     }
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -403,6 +645,11 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
       case "low-stock": return "Low Stock Report";
       case "inventory-adjustments": return "Inventory Adjustments Report";
       case "top-selling": return "Top Selling Items Report";
+      case "category-performance": return "Category Performance Report";
+      case "cost-analysis": return "Cost Analysis Report";
+      case "profit-margins": return "Profit Margins Report";
+      case "seasonal-trends": return "Seasonal Trends Report";
+      case "payment-methods": return "Payment Methods Report";
       default: return "Report";
     }
   };
@@ -583,6 +830,149 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
           </div>
         );
 
+      case "category-performance":
+        return (
+          <div className="space-y-6">
+            {Object.entries(generatedReport.categoryStats || {}).map(([categoryType, stats]: [string, any]) => (
+              <div key={categoryType}>
+                <h4 className="font-medium mb-4 capitalize">{categoryType} Performance</h4>
+                <div className="space-y-2">
+                  {Object.values(stats).map((stat: any) => (
+                    <div key={stat.name} className="flex justify-between items-center p-3 border rounded">
+                      <div>
+                        <p className="font-medium">{stat.name}</p>
+                        <p className="text-sm text-muted-foreground">{stat.totalSales} sales • {stat.totalUnits} units</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(stat.totalRevenue)}</p>
+                        <p className="text-sm text-muted-foreground">Avg: {formatCurrency(stat.avgPrice)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "cost-analysis":
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Total Cost</p>
+                <p className="text-2xl font-bold">{formatCurrency(generatedReport.totalCost)}</p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Total Value</p>
+                <p className="text-2xl font-bold">{formatCurrency(generatedReport.totalValue)}</p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Total Margin</p>
+                <p className="text-2xl font-bold">{formatCurrency(generatedReport.totalMargin)}</p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Margin %</p>
+                <p className="text-2xl font-bold">{generatedReport.overallMarginPercent.toFixed(1)}%</p>
+              </Card>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium">Top Margin Items</h4>
+              {generatedReport.items.slice(0, 5).map((item: any) => (
+                <div key={item.sku} className="flex justify-between items-center p-3 border rounded">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">{item.sku} • Qty: {item.quantity}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{item.marginPercent.toFixed(1)}%</p>
+                    <p className="text-sm text-muted-foreground">{formatCurrency(item.margin)} margin</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "profit-margins":
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Total Profit</p>
+                <p className="text-2xl font-bold">{formatCurrency(generatedReport.totalProfit)}</p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Avg Margin</p>
+                <p className="text-2xl font-bold">{generatedReport.avgMargin.toFixed(1)}%</p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Highest</p>
+                <p className="text-2xl font-bold text-green-600">{generatedReport.highestMargin.toFixed(1)}%</p>
+              </Card>
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground">Lowest</p>
+                <p className="text-2xl font-bold text-red-600">{generatedReport.lowestMargin.toFixed(1)}%</p>
+              </Card>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium">Recent Transactions</h4>
+              {generatedReport.profitData.slice(0, 5).map((profit: any) => (
+                <div key={profit.orderNumber} className="flex justify-between items-center p-3 border rounded">
+                  <div>
+                    <p className="font-medium">{profit.itemName}</p>
+                    <p className="text-sm text-muted-foreground">Order: {profit.orderNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatCurrency(profit.profit)}</p>
+                    <p className="text-sm text-muted-foreground">{profit.profitMargin.toFixed(1)}% margin</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "seasonal-trends":
+        return (
+          <div className="space-y-2">
+            {generatedReport.trends.map((trend: any) => (
+              <div key={trend.month} className="flex justify-between items-center p-3 border rounded">
+                <div>
+                  <p className="font-medium">{trend.month}</p>
+                  <p className="text-sm text-muted-foreground">{trend.transactions} transactions</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{formatCurrency(trend.revenue)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Avg: {formatCurrency(trend.transactions > 0 ? trend.revenue / trend.transactions : 0)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "payment-methods":
+        return (
+          <div className="space-y-2">
+            {generatedReport.paymentStats.map((stat: any) => (
+              <div key={stat.method} className="flex justify-between items-center p-3 border rounded">
+                <div>
+                  <p className="font-medium">{stat.method}</p>
+                  <p className="text-sm text-muted-foreground">{stat.transactions} transactions</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{formatCurrency(stat.totalRevenue)}</p>
+                  <p className="text-sm text-muted-foreground">Avg: {formatCurrency(stat.avgTransaction)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
       default:
         return <p>Report type not implemented yet.</p>;
     }
@@ -614,6 +1004,11 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                   <SelectItem value="low-stock">Low Stock Report</SelectItem>
                   <SelectItem value="top-selling">Top Selling Items</SelectItem>
                   <SelectItem value="inventory-adjustments">Inventory Adjustments</SelectItem>
+                  <SelectItem value="category-performance">Category Performance</SelectItem>
+                  <SelectItem value="cost-analysis">Cost Analysis</SelectItem>
+                  <SelectItem value="profit-margins">Profit Margins</SelectItem>
+                  <SelectItem value="seasonal-trends">Seasonal Trends</SelectItem>
+                  <SelectItem value="payment-methods">Payment Methods</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -633,6 +1028,64 @@ export default function ReportsModal({ open, onOpenChange }: ReportsModalProps) 
                   <SelectItem value="custom">Custom Range</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Advanced Filtering */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-muted-foreground">Advanced Filters</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Category Filter</Label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger data-testid="select-category-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-categories">All Categories</SelectItem>
+                    <SelectItem value="type">Filter by Type</SelectItem>
+                    <SelectItem value="color">Filter by Color</SelectItem>
+                    <SelectItem value="design">Filter by Design</SelectItem>
+                    <SelectItem value="group-type">Filter by Group</SelectItem>
+                    <SelectItem value="style-group">Filter by Style</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isAdmin && (
+                <div className="space-y-2">
+                  <Label>Sales Associate</Label>
+                  <Select value={selectedAssociate} onValueChange={setSelectedAssociate}>
+                    <SelectTrigger data-testid="select-associate-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-associates">All Associates</SelectItem>
+                      {associates.map((associate: any) => (
+                        <SelectItem key={associate.id} value={associate.id}>
+                          {associate.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Payment Method</Label>
+                <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                  <SelectTrigger data-testid="select-payment-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-methods">All Methods</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="check">Check</SelectItem>
+                    <SelectItem value="digital">Digital</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

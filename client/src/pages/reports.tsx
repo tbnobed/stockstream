@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import Header from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,30 +16,33 @@ import {
   Pie,
   Cell
 } from "recharts";
-import { Download, Calendar, TrendingUp } from "lucide-react";
+import { Download, Calendar, TrendingUp, FileBarChart, Package, DollarSign } from "lucide-react";
+import ReportsModal from "@/components/modals/reports-modal";
 
 const COLORS = ['hsl(207, 81%, 35%)', 'hsl(122, 39%, 49%)', 'hsl(37, 100%, 56%)', 'hsl(4, 77%, 57%)'];
 
 export default function Reports() {
-  const { data: sales } = useQuery({
+  const [showReportsModal, setShowReportsModal] = useState(false);
+
+  const { data: sales = [] } = useQuery<any[]>({
     queryKey: ["/api/sales"],
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats = {} } = useQuery<any>({
     queryKey: ["/api/dashboard/stats"],
   });
 
-  const { data: inventory } = useQuery({
+  const { data: inventory = [] } = useQuery<any[]>({
     queryKey: ["/api/inventory"],
   });
 
-  const { data: associates } = useQuery({
+  const { data: associates = [] } = useQuery<any[]>({
     queryKey: ["/api/associates"],
   });
 
   // Process data for charts
-  const salesByAssociate = associates?.map((associate: any) => {
-    const associateSales = sales?.filter((sale: any) => sale.salesAssociateId === associate.id) || [];
+  const salesByAssociate = associates.map((associate: any) => {
+    const associateSales = sales.filter((sale: any) => sale.salesAssociateId === associate.id) || [];
     const totalSales = associateSales.reduce((sum: number, sale: any) => sum + Number(sale.totalAmount), 0);
     
     return {
@@ -46,19 +50,19 @@ export default function Reports() {
       sales: associateSales.length,
       revenue: totalSales,
     };
-  }) || [];
+  });
 
-  const inventoryByType = inventory?.reduce((acc: any, item: any) => {
-    const type = item.type;
+  const inventoryByType = inventory.reduce((acc: any, item: any) => {
+    const type = item.type || 'Unknown';
     if (!acc[type]) {
       acc[type] = { type, count: 0, value: 0 };
     }
-    acc[type].count += item.quantity;
-    acc[type].value += item.quantity * Number(item.price);
+    acc[type].count += item.quantity || 0;
+    acc[type].value += (item.quantity || 0) * Number(item.price || 0);
     return acc;
   }, {});
 
-  const inventoryData = Object.values(inventoryByType || {});
+  const inventoryData = Object.values(inventoryByType);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -82,7 +86,7 @@ export default function Reports() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
                 <p className="text-2xl font-bold text-secondary mt-1">
-                  {formatCurrency(stats?.totalRevenue || 0)}
+                  {formatCurrency(stats.totalRevenue || 0)}
                 </p>
               </div>
               <TrendingUp className="text-accent" size={24} />
@@ -94,10 +98,10 @@ export default function Reports() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Transactions</p>
                 <p className="text-2xl font-bold text-secondary mt-1">
-                  {sales?.length || 0}
+                  {sales.length || 0}
                 </p>
               </div>
-              <BarChart className="text-primary" size={24} />
+              <FileBarChart className="text-primary" size={24} />
             </div>
           </Card>
 
@@ -106,7 +110,7 @@ export default function Reports() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Avg. Sale Value</p>
                 <p className="text-2xl font-bold text-secondary mt-1">
-                  {sales?.length ? formatCurrency((stats?.totalRevenue || 0) / sales.length) : "$0.00"}
+                  {sales.length ? formatCurrency((stats.totalRevenue || 0) / sales.length) : "$0.00"}
                 </p>
               </div>
               <Calendar className="text-warning" size={24} />
@@ -186,30 +190,59 @@ export default function Reports() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-auto p-4 flex flex-col items-start" data-testid="generate-sales-report">
-                <h4 className="font-medium mb-2">Sales Report</h4>
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex flex-col items-start" 
+                data-testid="generate-sales-report"
+                onClick={() => setShowReportsModal(true)}
+              >
+                <div className="flex items-center mb-2">
+                  <FileBarChart className="mr-2" size={16} />
+                  <h4 className="font-medium">Sales Report</h4>
+                </div>
                 <p className="text-sm text-muted-foreground text-left">
-                  Comprehensive sales data with filters by date, associate, and payment method
+                  Comprehensive sales data with filters by date, associate, payment method, and categories
                 </p>
               </Button>
               
-              <Button variant="outline" className="h-auto p-4 flex flex-col items-start" data-testid="generate-inventory-report">
-                <h4 className="font-medium mb-2">Inventory Report</h4>
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex flex-col items-start" 
+                data-testid="generate-inventory-report"
+                onClick={() => setShowReportsModal(true)}
+              >
+                <div className="flex items-center mb-2">
+                  <Package className="mr-2" size={16} />
+                  <h4 className="font-medium">Inventory Report</h4>
+                </div>
                 <p className="text-sm text-muted-foreground text-left">
-                  Stock levels, low stock alerts, and inventory valuation
+                  Stock levels, category analysis, low stock alerts, cost analysis, and inventory valuation
                 </p>
               </Button>
               
-              <Button variant="outline" className="h-auto p-4 flex flex-col items-start" data-testid="generate-revenue-report">
-                <h4 className="font-medium mb-2">Revenue Report</h4>
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex flex-col items-start" 
+                data-testid="generate-revenue-report"
+                onClick={() => setShowReportsModal(true)}
+              >
+                <div className="flex items-center mb-2">
+                  <DollarSign className="mr-2" size={16} />
+                  <h4 className="font-medium">Revenue Report</h4>
+                </div>
                 <p className="text-sm text-muted-foreground text-left">
-                  Revenue trends, profit margins, and performance metrics
+                  Revenue trends, profit margins, category performance, and cost analysis
                 </p>
               </Button>
             </div>
           </div>
         </Card>
       </main>
+
+      <ReportsModal 
+        open={showReportsModal} 
+        onOpenChange={setShowReportsModal} 
+      />
     </>
   );
 }
