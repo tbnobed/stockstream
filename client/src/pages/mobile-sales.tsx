@@ -53,39 +53,6 @@ export default function MobileSales() {
     queryKey: ["/api/inventory"],
   });
 
-  // Process sale mutation
-  const processSaleMutation = useMutation({
-    mutationFn: async (saleData: any) => {
-      return apiRequest("POST", "/api/sales", saleData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Sale processed",
-        description: "Transaction completed successfully!",
-      });
-      setCart([]);
-      setSkuInput("");
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Session expired", 
-          description: "Please log in again",
-          variant: "destructive",
-        });
-        setTimeout(() => logout(), 1000);
-      } else {
-        toast({
-          title: "Sale failed",
-          description: error instanceof Error ? error.message : "Failed to process sale",
-          variant: "destructive",
-        });
-      }
-    }
-  });
-
   // Add item to cart by SKU
   const addItemBySku = () => {
     console.log("Looking for SKU:", skuInput);
@@ -203,16 +170,45 @@ export default function MobileSales() {
     setIsProcessing(true);
     
     try {
-      const saleItems = cart.map(item => ({
-        inventoryItemId: item.id,
-        quantity: item.cartQuantity,
-        unitPrice: parseFloat(item.price)
-      }));
-
-      await processSaleMutation.mutateAsync({
-        items: saleItems,
-        paymentMethod,
-        associateId: (user as any)?.id
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+      
+      console.log("Processing mobile sale with order:", orderNumber);
+      
+      // Process each item in the cart as individual sale records with same order number
+      const salesPromises = cart.map(item => {
+        const saleData = {
+          itemId: item.id,
+          salesAssociateId: (user as any)?.id,
+          quantity: item.cartQuantity,
+          unitPrice: item.price.toString(),
+          totalAmount: (item.cartQuantity * parseFloat(item.price)).toString(),
+          paymentMethod: paymentMethod,
+          orderNumber: orderNumber,
+        };
+        
+        console.log("Creating individual sale:", saleData);
+        return apiRequest("POST", "/api/sales", saleData);
+      });
+      
+      await Promise.all(salesPromises);
+      
+      toast({
+        title: "Sale processed",
+        description: "Transaction completed successfully!",
+      });
+      
+      // Reset on success
+      setCart([]);
+      setSkuInput("");
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+    } catch (error: any) {
+      console.error("Sales creation error:", error);
+      toast({
+        title: "Sale failed",
+        description: error instanceof Error ? error.message : "Failed to process sale",
+        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
