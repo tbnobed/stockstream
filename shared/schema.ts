@@ -111,6 +111,32 @@ export const mediaFiles = pgTable("media_files", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const labelTemplates = pgTable("label_templates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  name: text("name").notNull().default("Default Template"),
+  isDefault: boolean("is_default").default(false),
+  // Label Data
+  selectedInventoryId: uuid("selected_inventory_id"),
+  productName: text("product_name").default("Product Name"),
+  productCode: text("product_code").default("PRD-001"),
+  price: text("price").default("25.00"),
+  qrContent: text("qr_content").default("PRD-001"),
+  customMessage: text("custom_message").default("Thank you for your purchase"),
+  sizeIndicator: text("size_indicator").default("M"),
+  logoUrl: text("logo_url").default(""),
+  // Layout Options
+  showQR: boolean("show_qr").default(true),
+  showLogo: boolean("show_logo").default(false),
+  showPrice: boolean("show_price").default(true),
+  showMessage: boolean("show_message").default(true),
+  showSize: boolean("show_size").default(true),
+  // Layout Positions (JSON)
+  layoutPositions: text("layout_positions"), // JSON string of layout positions
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const salesAssociatesRelations = relations(salesAssociates, ({ many }) => ({
   sales: many(sales),
@@ -158,6 +184,17 @@ export const mediaFilesRelations = relations(mediaFiles, ({ one }) => ({
   }),
 }));
 
+export const labelTemplatesRelations = relations(labelTemplates, ({ one }) => ({
+  user: one(users, {
+    fields: [labelTemplates.userId],
+    references: [users.id],
+  }),
+  selectedInventory: one(inventoryItems, {
+    fields: [labelTemplates.selectedInventoryId],
+    references: [inventoryItems.id],
+  }),
+}));
+
 // Insert schemas
 export const insertSalesAssociateSchema = createInsertSchema(salesAssociates).omit({
   id: true,
@@ -196,6 +233,12 @@ export const insertMediaFileSchema = createInsertSchema(mediaFiles).omit({
   createdAt: true,
 });
 
+export const insertLabelTemplateSchema = createInsertSchema(labelTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // User insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -231,6 +274,9 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export type MediaFile = typeof mediaFiles.$inferSelect;
 export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
+
+export type LabelTemplate = typeof labelTemplates.$inferSelect;
+export type InsertLabelTemplate = z.infer<typeof insertLabelTemplateSchema>;
 
 // Extended types with relations
 export type InventoryItemWithSupplier = InventoryItem & {

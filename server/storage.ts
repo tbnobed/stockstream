@@ -7,6 +7,7 @@ import {
   sales,
   categories,
   mediaFiles,
+  labelTemplates,
   type User,
   type InsertUser,
   type SalesAssociate,
@@ -25,6 +26,8 @@ import {
   type InsertCategory,
   type MediaFile,
   type InsertMediaFile,
+  type LabelTemplate,
+  type InsertLabelTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, lt, and, like, or, ilike } from "drizzle-orm";
@@ -94,6 +97,14 @@ export interface IStorage {
   getMediaFile(id: string): Promise<MediaFile | undefined>;
   createMediaFile(mediaFile: InsertMediaFile): Promise<MediaFile>;
   deleteMediaFile(id: string): Promise<boolean>;
+  
+  // Label Templates
+  getLabelTemplates(userId: string): Promise<LabelTemplate[]>;
+  getLabelTemplate(id: string, userId: string): Promise<LabelTemplate | undefined>;
+  getDefaultLabelTemplate(userId: string): Promise<LabelTemplate | undefined>;
+  createLabelTemplate(templateData: InsertLabelTemplate): Promise<LabelTemplate>;
+  updateLabelTemplate(id: string, userId: string, updates: Partial<LabelTemplate>): Promise<LabelTemplate | undefined>;
+  deleteLabelTemplate(id: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -680,6 +691,61 @@ export class DatabaseStorage implements IStorage {
       .where(eq(mediaFiles.id, id));
     
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Label Templates
+  async getLabelTemplates(userId: string): Promise<LabelTemplate[]> {
+    const templates = await db
+      .select()
+      .from(labelTemplates)
+      .where(eq(labelTemplates.userId, userId))
+      .orderBy(desc(labelTemplates.isDefault), desc(labelTemplates.updatedAt));
+    return templates;
+  }
+
+  async getLabelTemplate(id: string, userId: string): Promise<LabelTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(labelTemplates)
+      .where(and(eq(labelTemplates.id, id), eq(labelTemplates.userId, userId)));
+    return template || undefined;
+  }
+
+  async getDefaultLabelTemplate(userId: string): Promise<LabelTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(labelTemplates)
+      .where(and(eq(labelTemplates.userId, userId), eq(labelTemplates.isDefault, true)));
+    return template || undefined;
+  }
+
+  async createLabelTemplate(templateData: InsertLabelTemplate): Promise<LabelTemplate> {
+    const [template] = await db
+      .insert(labelTemplates)
+      .values(templateData)
+      .returning();
+    return template;
+  }
+
+  async updateLabelTemplate(id: string, userId: string, updates: Partial<LabelTemplate>): Promise<LabelTemplate | undefined> {
+    const [updatedTemplate] = await db
+      .update(labelTemplates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(labelTemplates.id, id), eq(labelTemplates.userId, userId)))
+      .returning();
+    return updatedTemplate || undefined;
+  }
+
+  async deleteLabelTemplate(id: string, userId: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(labelTemplates)
+        .where(and(eq(labelTemplates.id, id), eq(labelTemplates.userId, userId)));
+      return true;
+    } catch (error) {
+      console.error('Error deleting label template:', error);
+      return false;
+    }
   }
 }
 

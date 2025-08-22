@@ -65,16 +65,7 @@ const defaultLabelData: LabelData = {
 };
 
 export default function LabelDesigner() {
-  // Load saved data from localStorage or use defaults with error handling
-  const [labelData, setLabelData] = useState<LabelData>(() => {
-    try {
-      const saved = localStorage.getItem('labelDesignerData');
-      return saved ? { ...defaultLabelData, ...JSON.parse(saved) } : defaultLabelData;
-    } catch (error) {
-      console.warn('Failed to load saved label data:', error);
-      return defaultLabelData;
-    }
-  });
+  const [labelData, setLabelData] = useState<LabelData>(defaultLabelData);
   
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -92,6 +83,34 @@ export default function LabelDesigner() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Query to get default label template
+  const { data: defaultTemplate } = useQuery({
+    queryKey: ['/api/label-templates/default'],
+    retry: false,
+  });
+
+  // Auto-save mutation
+  const autoSaveMutation = useMutation({
+    mutationFn: async (templateData: LabelData) => {
+      if (defaultTemplate) {
+        // Update existing default template
+        return apiRequest(`/api/label-templates/${defaultTemplate.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(templateData),
+        });
+      } else {
+        // Create new default template
+        return apiRequest('/api/label-templates', {
+          method: 'POST',
+          body: JSON.stringify({ ...templateData, isDefault: true }),
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('Error auto-saving label template:', error);
+    },
+  });
 
   // Load saved layout or use defaults with error handling
   const [layout, setLayout] = useState<LabelLayout>(() => {
@@ -182,14 +201,38 @@ export default function LabelDesigner() {
     }
   }, [labelData.qrContent, labelData.showQR]);
 
-  // Save label data to localStorage whenever it changes
+  // Auto-save label data to server whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem('labelDesignerData', JSON.stringify(labelData));
-    } catch (error) {
-      console.warn('Failed to save label data:', error);
-    }
+    const timeoutId = setTimeout(() => {
+      autoSaveMutation.mutate(labelData);
+    }, 2000); // 2 second delay for auto-save
+
+    return () => clearTimeout(timeoutId);
   }, [labelData]);
+
+  // Load default template data when available
+  useEffect(() => {
+    if (defaultTemplate) {
+      console.log('Loading saved label data:', defaultTemplate);
+      const templateData: LabelData = {
+        selectedInventoryId: defaultTemplate.selectedInventoryId || "",
+        productName: defaultTemplate.productName || "Product Name",
+        productCode: defaultTemplate.productCode || "PRD-001",
+        price: defaultTemplate.price || "25.00",
+        qrContent: defaultTemplate.qrContent || "PRD-001",
+        customMessage: defaultTemplate.customMessage || "Thank you for your purchase",
+        sizeIndicator: defaultTemplate.sizeIndicator || "M",
+        logoUrl: defaultTemplate.logoUrl || "",
+        showQR: defaultTemplate.showQR !== undefined ? defaultTemplate.showQR : true,
+        showLogo: defaultTemplate.showLogo !== undefined ? defaultTemplate.showLogo : false,
+        showPrice: defaultTemplate.showPrice !== undefined ? defaultTemplate.showPrice : true,
+        showMessage: defaultTemplate.showMessage !== undefined ? defaultTemplate.showMessage : true,
+        showSize: defaultTemplate.showSize !== undefined ? defaultTemplate.showSize : true,
+      };
+      console.log('Merged label data:', templateData);
+      setLabelData(templateData);
+    }
+  }, [defaultTemplate]);
 
   // Save layout to localStorage whenever it changes
   useEffect(() => {

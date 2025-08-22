@@ -874,6 +874,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Label Template endpoints
+  app.get("/api/label-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const templates = await storage.getLabelTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching label templates:", error);
+      res.status(500).json({ message: "Failed to fetch label templates" });
+    }
+  });
+
+  app.get("/api/label-templates/default", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const template = await storage.getDefaultLabelTemplate(userId);
+      res.json(template || null);
+    } catch (error) {
+      console.error("Error fetching default label template:", error);
+      res.status(500).json({ message: "Failed to fetch default label template" });
+    }
+  });
+
+  app.post("/api/label-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const templateData = { ...req.body, userId };
+      const template = await storage.createLabelTemplate(templateData);
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating label template:", error);
+      res.status(500).json({ message: "Failed to create label template" });
+    }
+  });
+
+  app.put("/api/label-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updates = req.body;
+      const template = await storage.updateLabelTemplate(id, userId, updates);
+      if (!template) {
+        return res.status(404).json({ message: "Label template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating label template:", error);
+      res.status(500).json({ message: "Failed to update label template" });
+    }
+  });
+
+  app.delete("/api/label-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const success = await storage.deleteLabelTemplate(id, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Label template not found" });
+      }
+      res.json({ message: "Label template deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting label template:", error);
+      res.status(500).json({ message: "Failed to delete label template" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
