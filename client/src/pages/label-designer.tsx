@@ -470,7 +470,7 @@ export default function LabelDesigner() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="product-code">Product Code</Label>
+                  <Label htmlFor="product-code">Product SKU</Label>
                   <Input
                     id="product-code"
                     value={labelData.productCode}
