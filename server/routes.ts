@@ -539,16 +539,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Create worksheet data
         const worksheetData = [
-          ['Value', 'Display Order', 'Is Active', 'Created At', 'Updated At'] // Headers
+          ['Value', 'Display Order', 'Is Active'] // Headers
         ];
         
         categoriesOfType.forEach(cat => {
           worksheetData.push([
             cat.value,
             cat.displayOrder ?? 0,
-            cat.isActive ? 'Yes' : 'No',
-            cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : '',
-            cat.updatedAt ? new Date(cat.updatedAt).toLocaleDateString() : ''
+            cat.isActive ? 'Yes' : 'No'
           ]);
         });
         
