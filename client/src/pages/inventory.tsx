@@ -295,7 +295,7 @@ export default function Inventory() {
                     <SelectContent>
                       <SelectItem value="all-types">All types</SelectItem>
                       {(types as any[] || []).map((type: any) => (
-                        <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
+                        <SelectItem key={type.id} value={type.value}>{type.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -310,7 +310,7 @@ export default function Inventory() {
                     <SelectContent>
                       <SelectItem value="all-colors">All colors</SelectItem>
                       {(colors as any[] || []).map((color: any) => (
-                        <SelectItem key={color.id} value={color.name}>{color.name}</SelectItem>
+                        <SelectItem key={color.id} value={color.value}>{color.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -325,7 +325,7 @@ export default function Inventory() {
                     <SelectContent>
                       <SelectItem value="all-sizes">All sizes</SelectItem>
                       {(sizes as any[] || []).map((size: any) => (
-                        <SelectItem key={size.id} value={size.name}>{size.name}</SelectItem>
+                        <SelectItem key={size.id} value={size.value}>{size.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -340,7 +340,7 @@ export default function Inventory() {
                     <SelectContent>
                       <SelectItem value="all-designs">All designs</SelectItem>
                       {(designs as any[] || []).map((design: any) => (
-                        <SelectItem key={design.id} value={design.name}>{design.name}</SelectItem>
+                        <SelectItem key={design.id} value={design.value}>{design.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -355,7 +355,7 @@ export default function Inventory() {
                     <SelectContent>
                       <SelectItem value="all-groups">All groups</SelectItem>
                       {(groupTypes as any[] || []).map((type: any) => (
-                        <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
+                        <SelectItem key={type.id} value={type.value}>{type.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -370,7 +370,7 @@ export default function Inventory() {
                     <SelectContent>
                       <SelectItem value="all-styles">All styles</SelectItem>
                       {(styleGroups as any[] || []).map((style: any) => (
-                        <SelectItem key={style.id} value={style.name}>{style.name}</SelectItem>
+                        <SelectItem key={style.id} value={style.value}>{style.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
