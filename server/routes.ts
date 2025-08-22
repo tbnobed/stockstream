@@ -834,6 +834,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const localFileName = `${fileId}.${fileExtension}`;
       
       res.json({ 
+        method: "PUT",
+        url: `/api/media/local-upload/${localFileName}`,
         uploadURL: `/api/media/local-upload/${localFileName}`,
         localFileName,
         useObjectStorage: false 

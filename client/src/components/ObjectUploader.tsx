@@ -8,9 +8,11 @@ interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
   onGetUploadParameters: () => Promise<{
-    uploadURL: string;
+    method: "PUT";
+    url: string;
+    uploadURL?: string;
     localFileName?: string;
-    useObjectStorage: boolean;
+    useObjectStorage?: boolean;
   }>;
   onComplete?: (result: { successful: Array<{ uploadURL: string; name: string; size: number; type: string }> }) => void;
   buttonClassName?: string;
@@ -81,7 +83,7 @@ export function ObjectUploader({
         headers["Authorization"] = `Bearer ${token}`;
       }
       
-      const uploadResponse = await fetch(uploadParams.uploadURL, {
+      const uploadResponse = await fetch(uploadParams.url, {
         method: 'PUT',
         body: formData,
         headers,
@@ -98,7 +100,7 @@ export function ObjectUploader({
       // Call onComplete with the result, using localPath as uploadURL
       onComplete?.({
         successful: [{
-          uploadURL: uploadResult.localPath || uploadParams.uploadURL,
+          uploadURL: uploadResult.localPath || uploadParams.url,
           name: file.name,
           size: file.size,
           type: file.type

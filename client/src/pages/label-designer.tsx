@@ -296,7 +296,7 @@ export default function LabelDesigner() {
       
       return {
         method: "PUT" as const,
-        url: data.uploadURL,
+        url: data.url || data.uploadURL,
       };
     } catch (error) {
       console.error("Error getting upload parameters:", error);
