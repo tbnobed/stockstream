@@ -218,18 +218,44 @@ export default function CategoryManagement() {
     });
   };
 
-  const handleExportCsv = () => {
-    const link = document.createElement('a');
-    link.href = '/api/categories/export/csv';
-    link.download = 'categories.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Export Started",
-      description: "CSV download should begin shortly",
-    });
+  const handleExportCsv = async () => {
+    try {
+      const response = await fetch('/api/categories/export/csv', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'text/csv',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export CSV');
+      }
+
+      const csvData = await response.text();
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'categories.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export Complete",
+        description: "Categories exported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export categories to CSV",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleImportCsv = (event: React.ChangeEvent<HTMLInputElement>) => {
