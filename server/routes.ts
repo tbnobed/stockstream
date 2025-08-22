@@ -589,6 +589,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
           const categoryTypes = ['Type', 'Color', 'Size', 'Design', 'GroupType', 'StyleGroup'];
           
+          // Map sheet names to database category types
+          const sheetTypeMapping: Record<string, string> = {
+            'Type': 'type',
+            'Color': 'color', 
+            'Size': 'size',
+            'Design': 'design',
+            'GroupType': 'groupType',
+            'StyleGroup': 'styleGroup'
+          };
+
           categoryTypes.forEach(sheetName => {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
@@ -603,7 +613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 })
                 .map((row: any) => ({
                   ...row,
-                  type: sheetName.toLowerCase(),
+                  type: sheetTypeMapping[sheetName] || sheetName.toLowerCase(),
                   value: (row['Value'] || row.value || '').toString().trim(),
                   displayOrder: parseInt(row['Display Order'] || row.displayOrder || '0') || 0,
                   isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
