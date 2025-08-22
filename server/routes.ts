@@ -671,8 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
 
               if (exists) {
-                errors.push(`Duplicate: "${validatedData.value}" already exists in ${validatedData.type} categories`);
-                errorCount++;
+                // Skip duplicates silently - don't count as errors
                 continue;
               }
 
