@@ -238,7 +238,6 @@ export default function LabelDesigner() {
             .label {
               width: 4in;
               height: 2in;
-              border: 1px dashed #ccc;
               position: relative;
               padding: 0.1in;
               box-sizing: border-box;
