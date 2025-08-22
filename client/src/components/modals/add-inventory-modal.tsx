@@ -28,6 +28,16 @@ import {
   generateSKU as generateCategorySKU
 } from "@shared/categories";
 
+interface Category {
+  id: string;
+  type: string;
+  value: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AddInventoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,14 +55,49 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     queryKey: ["/api/suppliers"],
   });
 
-  // Use hardcoded constants for now while we resolve API issues
-  // TODO: Re-enable dynamic category fetching once API issues are resolved
+  // Fetch categories dynamically from API
+  const { data: colors = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "color"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/color");
+      return await response.json();
+    },
+  });
+
+  const { data: sizes = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "size"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/size");
+      return await response.json();
+    },
+  });
+
+  const { data: designs = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "design"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/design");
+      return await response.json();
+    },
+  });
+
+  const { data: groupTypes = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "groupType"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/groupType");
+      return await response.json();
+    },
+  });
+
+  const { data: styleGroups = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "styleGroup"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/styleGroup");
+      return await response.json();
+    },
+  });
+
+  // Use hardcoded types for now (these don't change often)
   const types = ITEM_TYPES.map(value => ({ value }));
-  const colors = ITEM_COLORS.map(value => ({ value }));
-  const sizes = ITEM_SIZES.map(value => ({ value }));
-  const designs = ITEM_DESIGNS.map(value => ({ value }));
-  const groupTypes = GROUP_TYPES.map(value => ({ value }));
-  const styleGroups = STYLE_GROUPS.map(value => ({ value }));
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
@@ -434,7 +479,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </FormControl>
                         <SelectContent>
                           {colors.map((colorItem) => (
-                            <SelectItem key={colorItem.value} value={colorItem.value}>
+                            <SelectItem key={colorItem.id} value={colorItem.value}>
                               {colorItem.value}
                             </SelectItem>
                           ))}
@@ -466,7 +511,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </FormControl>
                       <SelectContent>
                         {designs.map((designItem) => (
-                          <SelectItem key={designItem.value} value={designItem.value}>
+                          <SelectItem key={designItem.id} value={designItem.value}>
                             {designItem.value}
                           </SelectItem>
                         ))}
@@ -494,7 +539,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </FormControl>
                       <SelectContent>
                         {groupTypes.map((groupTypeItem) => (
-                          <SelectItem key={groupTypeItem.value} value={groupTypeItem.value}>
+                          <SelectItem key={groupTypeItem.id} value={groupTypeItem.value}>
                             {groupTypeItem.value}
                           </SelectItem>
                         ))}
@@ -524,7 +569,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </FormControl>
                       <SelectContent>
                         {styleGroups.map((styleGroupItem) => (
-                          <SelectItem key={styleGroupItem.value} value={styleGroupItem.value}>
+                          <SelectItem key={styleGroupItem.id} value={styleGroupItem.value}>
                             {styleGroupItem.value}
                           </SelectItem>
                         ))}
@@ -546,7 +591,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         <div className="text-sm text-muted-foreground">Select multiple sizes:</div>
                         <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto">
                           {sizes.map((sizeItem) => (
-                            <div key={sizeItem.value} className="flex items-center space-x-2">
+                            <div key={sizeItem.id} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`size-${sizeItem.value}`}
                                 checked={selectedSizes.includes(sizeItem.value)}
@@ -591,7 +636,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </FormControl>
                         <SelectContent>
                           {sizes.map((sizeItem) => (
-                            <SelectItem key={sizeItem.value} value={sizeItem.value}>
+                            <SelectItem key={sizeItem.id} value={sizeItem.value}>
                               {sizeItem.value}
                             </SelectItem>
                           ))}
