@@ -500,10 +500,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/categories/:id", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       console.log(`🗑️ DELETE request for category ID: ${req.params.id}`);
       const { id } = req.params;
+      
+      // First check if category exists
+      const existingCategory = await storage.getCategories();
+      const category = existingCategory.find(c => c.id === id);
+      console.log(`🔍 Category exists before delete:`, category ? `Yes (${category.value})` : 'No');
+      
       const deleted = await storage.deleteCategory(id);
       if (deleted) {
         console.log(`✅ Category ${id} deleted successfully`);
