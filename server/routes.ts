@@ -596,13 +596,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'Size': 'size',
             'Design': 'design',
             'GroupType': 'groupType',
-            'StyleGroup': 'styleGroup'
+            'StyleGroup': 'styleGroup',
+            'Grouptype': 'groupType',
+            'Stylegroup': 'styleGroup'
           };
 
+          console.log("Available sheet names:", workbook.SheetNames);
+          
           categoryTypes.forEach(sheetName => {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
+              console.log(`Processing sheet ${sheetName}:`, sheetData.length, "rows");
               
               // Add type information to each row based on sheet name
               const typedData = sheetData
@@ -619,7 +624,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
                 }));
               
+              console.log(`Sheet ${sheetName} processed to type:`, sheetTypeMapping[sheetName] || sheetName.toLowerCase());
               allRows.push(...typedData);
+            } else {
+              console.log(`Sheet ${sheetName} not found in workbook`);
             }
           });
         } catch (error) {
