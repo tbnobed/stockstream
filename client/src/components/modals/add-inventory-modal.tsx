@@ -46,33 +46,58 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   });
 
   // Fetch categories dynamically - only when modal is open
+  const fetchCategories = async (type: string) => {
+    const token = localStorage.getItem("auth_token");
+    const headers: Record<string, string> = {};
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`/api/categories/${type}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch categories: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
   const { data: types = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories/type"],
+    queryKey: ["categories", "type"],
+    queryFn: () => fetchCategories("type"),
     enabled: open,
   });
 
   const { data: colors = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories/color"],
+    queryKey: ["categories", "color"],
+    queryFn: () => fetchCategories("color"),
     enabled: open,
   });
 
   const { data: sizes = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories/size"],
+    queryKey: ["categories", "size"],
+    queryFn: () => fetchCategories("size"),
     enabled: open,
   });
 
   const { data: designs = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories/design"],
+    queryKey: ["categories", "design"],
+    queryFn: () => fetchCategories("design"),
     enabled: open,
   });
 
   const { data: groupTypes = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories/groupType"],
+    queryKey: ["categories", "groupType"],
+    queryFn: () => fetchCategories("groupType"),
     enabled: open,
   });
 
   const { data: styleGroups = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories/styleGroup"],
+    queryKey: ["categories", "styleGroup"],
+    queryFn: () => fetchCategories("styleGroup"),
     enabled: open,
   });
 
