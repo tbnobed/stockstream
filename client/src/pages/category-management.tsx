@@ -107,12 +107,21 @@ export default function CategoryManagement() {
         duration: 3000,
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      const message = error?.message || "Failed to delete category";
+      const isAlreadyDeleted = error?.status === 409;
+      
       toast({
-        title: "Error",
-        description: "Failed to delete category",
-        variant: "destructive",
+        title: isAlreadyDeleted ? "Already Deleted" : "Error",
+        description: isAlreadyDeleted ? "This category was already deleted" : message,
+        variant: isAlreadyDeleted ? "default" : "destructive",
+        duration: 3000,
       });
+      
+      // Refresh the category list to sync UI with database
+      if (isAlreadyDeleted) {
+        queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      }
     },
   });
 

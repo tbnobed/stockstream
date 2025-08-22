@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, requireAdmin, generateAssociateCode } from "./replitAuth";
+import { db } from "./db";
+import { categories } from "../shared/schema";
+import { eq } from "drizzle-orm";
 import { 
   insertSalesAssociateSchema,
   insertSupplierSchema,
@@ -16,7 +19,6 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  console.log("🚀 Registering routes...");
   // Configure multer for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -502,24 +504,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/categories/:id", isAuthenticated, requireAdmin, async (req, res) => {
     try {
-      console.log(`🗑️ DELETE request for category ID: ${req.params.id}`);
       const { id } = req.params;
       
-      // First check if category exists
-      const existingCategory = await storage.getCategories();
-      const category = existingCategory.find(c => c.id === id);
-      console.log(`🔍 Category exists before delete:`, category ? `Yes (${category.value})` : 'No');
+      // Check if category exists and is active
+      const [category] = await db.select().from(categories).where(eq(categories.id, id));
+      
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      if (!category.isActive) {
+        return res.status(409).json({ message: "Category already deleted" });
+      }
       
       const deleted = await storage.deleteCategory(id);
       if (deleted) {
-        console.log(`✅ Category ${id} deleted successfully`);
         res.json({ message: "Category deleted successfully" });
       } else {
-        console.log(`❌ Category ${id} not found in database`);
-        res.status(404).json({ message: "Category not found" });
+        res.status(500).json({ message: "Failed to delete category" });
       }
     } catch (error) {
-      console.error(`💥 Error deleting category ${req.params.id}:`, error);
+      console.error(`Error deleting category ${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to delete category" });
     }
   });
@@ -766,6 +771,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-  console.log("✅ All routes registered successfully");
   return httpServer;
 }

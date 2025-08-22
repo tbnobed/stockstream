@@ -72,15 +72,12 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 };
 
 export const requireAdmin: RequestHandler = async (req, res, next) => {
-  console.log(`🔐 requireAdmin middleware called for ${req.method} ${req.path}`);
   const user = (req as any).user;
   
   if (!user || user.role !== "admin") {
-    console.log(`❌ Admin access denied for user:`, user?.role || "no user");
     return res.status(403).json({ message: "Admin access required" });
   }
   
-  console.log(`✅ Admin access granted for user: ${user.role}`);
   next();
 };
 

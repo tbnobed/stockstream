@@ -1,0 +1,81 @@
+nventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/1932629f-909d-4651-8c82-834460771e78
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 1932629f-909d-4651-8c82-834460771e78
+inventorypro-app  | 🔍 Category exists before delete: Yes (Shoes)
+inventorypro-app  | ❌ Category 1932629f-909d-4651-8c82-834460771e78 not found in database
+inventorypro-app  | 8:47:15 AM [express] DELETE /api/categories/1932629f-909d-4651-8c82-834460771e78 404 in 9ms :: {"mes…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/10a1cd43-488a-46aa-a34e-94ab39babeea
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 10a1cd43-488a-46aa-a34e-94ab39babeea
+inventorypro-app  | 🔍 Category exists before delete: Yes (Jacket)
+inventorypro-app  | ❌ Category 10a1cd43-488a-46aa-a34e-94ab39babeea not found in database
+inventorypro-app  | 8:47:15 AM [express] DELETE /api/categories/10a1cd43-488a-46aa-a34e-94ab39babeea 404 in 11ms :: {"me…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/7cdb6b19-c291-4de9-94d4-b8814efbce8b
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 7cdb6b19-c291-4de9-94d4-b8814efbce8b
+inventorypro-app  | 🔍 Category exists before delete: Yes (Accessory)
+inventorypro-app  | ❌ Category 7cdb6b19-c291-4de9-94d4-b8814efbce8b not found in database
+inventorypro-app  | 8:47:16 AM [express] DELETE /api/categories/7cdb6b19-c291-4de9-94d4-b8814efbce8b 404 in 8ms :: {"mes…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/cd68b8ab-ed30-46f0-8cff-b9e63c9b5a12
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: cd68b8ab-ed30-46f0-8cff-b9e63c9b5a12
+inventorypro-app  | 🔍 Category exists before delete: Yes (Bag)
+inventorypro-app  | ❌ Category cd68b8ab-ed30-46f0-8cff-b9e63c9b5a12 not found in database
+inventorypro-app  | 8:47:16 AM [express] DELETE /api/categories/cd68b8ab-ed30-46f0-8cff-b9e63c9b5a12 404 in 10ms :: {"me…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/b17947b6-d181-4125-aaa6-3be784c52a57
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: b17947b6-d181-4125-aaa6-3be784c52a57
+inventorypro-app  | 🔍 Category exists before delete: Yes (Other)
+inventorypro-app  | ❌ Category b17947b6-d181-4125-aaa6-3be784c52a57 not found in database
+inventorypro-app  | 8:47:17 AM [express] DELETE /api/categories/b17947b6-d181-4125-aaa6-3be784c52a57 404 in 8ms :: {"mes…
+inventorypro-app  | 8:47:18 AM [express] GET /api/auth/user 304 in 5ms :: {"id":"215b5036-ab58-4ce8-b607-3fa812768bef","…
+inventorypro-app  | 8:47:18 AM [express] GET /api/categories/color 304 in 6ms :: []
+inventorypro-app  | 8:47:19 AM [express] GET /api/categories/size 200 in 5ms :: [{"id":"fa9c7fbf-7993-46df-acb6-d6145e64…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/fa9c7fbf-7993-46df-acb6-d6145e644438
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: fa9c7fbf-7993-46df-acb6-d6145e644438
+inventorypro-app  | 🔍 Category exists before delete: Yes (9)
+inventorypro-app  | ❌ Category fa9c7fbf-7993-46df-acb6-d6145e644438 not found in database
+inventorypro-app  | 8:47:21 AM [express] DELETE /api/categories/fa9c7fbf-7993-46df-acb6-d6145e644438 404 in 9ms :: {"mes…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/39bbda93-a832-438f-86b8-02e7da98f499
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 39bbda93-a832-438f-86b8-02e7da98f499
+inventorypro-app  | 🔍 Category exists before delete: Yes (10)
+inventorypro-app  | ❌ Category 39bbda93-a832-438f-86b8-02e7da98f499 not found in database
+inventorypro-app  | 8:47:21 AM [express] DELETE /api/categories/39bbda93-a832-438f-86b8-02e7da98f499 404 in 11ms :: {"me…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/92a1366e-fba3-4965-8e93-bd8abc5054d0
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 92a1366e-fba3-4965-8e93-bd8abc5054d0
+inventorypro-app  | 🔍 Category exists before delete: Yes (11)
+inventorypro-app  | ❌ Category 92a1366e-fba3-4965-8e93-bd8abc5054d0 not found in database
+inventorypro-app  | 8:47:22 AM [express] DELETE /api/categories/92a1366e-fba3-4965-8e93-bd8abc5054d0 404 in 9ms :: {"mes…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/cc3c9a3b-42d4-4743-a9cf-e8dbb02e129a
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: cc3c9a3b-42d4-4743-a9cf-e8dbb02e129a
+inventorypro-app  | 🔍 Category exists before delete: Yes (12)
+inventorypro-app  | ❌ Category cc3c9a3b-42d4-4743-a9cf-e8dbb02e129a not found in database
+inventorypro-app  | 8:47:22 AM [express] DELETE /api/categories/cc3c9a3b-42d4-4743-a9cf-e8dbb02e129a 404 in 10ms :: {"me…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/a810b094-af27-4c45-a151-a7b6929445db
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: a810b094-af27-4c45-a151-a7b6929445db
+inventorypro-app  | 🔍 Category exists before delete: Yes (13)
+inventorypro-app  | ❌ Category a810b094-af27-4c45-a151-a7b6929445db not found in database
+inventorypro-app  | 8:47:23 AM [express] DELETE /api/categories/a810b094-af27-4c45-a151-a7b6929445db 404 in 8ms :: {"mes…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/a52f96ab-0824-44a1-a4f3-9a692f60c642
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: a52f96ab-0824-44a1-a4f3-9a692f60c642
+inventorypro-app  | 🔍 Category exists before delete: Yes (14)
+inventorypro-app  | ❌ Category a52f96ab-0824-44a1-a4f3-9a692f60c642 not found in database
+inventorypro-app  | 8:47:24 AM [express] DELETE /api/categories/a52f96ab-0824-44a1-a4f3-9a692f60c642 404 in 8ms :: {"mes…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/910bd2f5-7c21-4a00-a8af-422a934df533
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 910bd2f5-7c21-4a00-a8af-422a934df533
+inventorypro-app  | 🔍 Category exists before delete: Yes (One Size)
+inventorypro-app  | ❌ Category 910bd2f5-7c21-4a00-a8af-422a934df533 not found in database
+inventorypro-app  | 8:47:25 AM [express] DELETE /api/categories/910bd2f5-7c21-4a00-a8af-422a934df533 404 in 10ms :: {"me…
+inventorypro-app  | 🔐 requireAdmin middleware called for DELETE /api/categories/84374157-3d77-44e4-8bf2-726f7bbc195b
+inventorypro-app  | ✅ Admin access granted for user: admin
+inventorypro-app  | 🗑️ DELETE request for category ID: 84374157-3d77-44e4-8bf2-726f7bbc195b
+inventorypro-app  | 🔍 Category exists before delete: Yes (N/A)
+inventorypro-app  | ❌ Category 84374157-3d77-44e4-8bf2-726f7bbc195b not found in database
+inventorypro-app  | 8:47:25 AM [express] DELETE /api/categories/84374157-3d77-44e4-8bf2-726f7bbc195b 404 in 8ms :: {"mes…
