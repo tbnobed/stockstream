@@ -526,7 +526,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategoriesByType(type: string): Promise<Category[]> {
-    return db.select().from(categories).where(and(eq(categories.type, type), eq(categories.isActive, true))).orderBy(categories.displayOrder, categories.value);
+    return db.select().from(categories).where(eq(categories.type, type)).orderBy(categories.displayOrder, categories.value);
   }
 
   async getCategory(id: string): Promise<Category | undefined> {
@@ -539,7 +539,7 @@ export class DatabaseStorage implements IStorage {
     const maxOrderResult = await db
       .select({ maxOrder: sql<number>`max(${categories.displayOrder})` })
       .from(categories)
-      .where(and(eq(categories.type, category.type), eq(categories.isActive, true)));
+      .where(eq(categories.type, category.type));
     
     const nextDisplayOrder = (maxOrderResult[0]?.maxOrder ?? -1) + 1;
     
