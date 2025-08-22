@@ -220,12 +220,18 @@ export default function CategoryManagement() {
 
   const handleExportCsv = async () => {
     try {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Accept': 'text/csv',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/categories/export/csv', {
         method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'text/csv',
-        },
+        headers,
       });
 
       if (!response.ok) {
