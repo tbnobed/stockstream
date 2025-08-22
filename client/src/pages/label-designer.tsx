@@ -919,6 +919,7 @@ export default function LabelDesigner() {
                   <Popover open={showInventoryDropdown} onOpenChange={setShowInventoryDropdown}>
                     <PopoverTrigger asChild>
                       <Button
+                        id="inventory-select"
                         variant="outline"
                         role="combobox"
                         aria-expanded={showInventoryDropdown}
@@ -1006,7 +1007,7 @@ export default function LabelDesigner() {
                     value={labelData.sizeIndicator} 
                     onValueChange={(value) => updateLabelData('sizeIndicator', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="size-indicator">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
