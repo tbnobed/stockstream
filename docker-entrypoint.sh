@@ -51,6 +51,50 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     );
     " >/dev/null 2>&1 && echo "✅ Categories table verified" || echo "⚠️  Categories table creation warning"
     
+    # Ensure media_files table exists (for logo library)
+    echo "🖼️  Ensuring media_files table exists..."
+    psql "$DATABASE_URL" -c "
+    CREATE TABLE IF NOT EXISTS media_files (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        file_name TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        file_type TEXT NOT NULL,
+        file_size INTEGER NOT NULL,
+        object_path TEXT NOT NULL,
+        category TEXT DEFAULT 'logo',
+        uploaded_by UUID REFERENCES users(id),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    " >/dev/null 2>&1 && echo "✅ Media files table verified" || echo "⚠️  Media files table creation warning"
+    
+    # Ensure label_templates table exists (for label template persistence)
+    echo "🏷️  Ensuring label_templates table exists..."
+    psql "$DATABASE_URL" -c "
+    CREATE TABLE IF NOT EXISTS label_templates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id),
+        name TEXT NOT NULL DEFAULT 'Default Template',
+        is_default BOOLEAN DEFAULT false,
+        selected_inventory_id UUID REFERENCES inventory_items(id),
+        product_name TEXT DEFAULT 'Product Name',
+        product_code TEXT DEFAULT 'PRD-001',
+        price TEXT DEFAULT '25.00',
+        qr_content TEXT DEFAULT 'PRD-001',
+        custom_message TEXT DEFAULT 'Thank you for your purchase',
+        size_indicator TEXT DEFAULT 'M',
+        logo_url TEXT DEFAULT '',
+        show_qr BOOLEAN DEFAULT true,
+        show_logo BOOLEAN DEFAULT false,
+        show_price BOOLEAN DEFAULT true,
+        show_message BOOLEAN DEFAULT true,
+        show_size BOOLEAN DEFAULT true,
+        layout_positions TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+    );
+    " >/dev/null 2>&1 && echo "✅ Label templates table verified" || echo "⚠️  Label templates table creation warning"
+    
     # Verify multi-item transaction schema
     echo "🛒 Verifying multi-item transaction schema..."
     UNIQUE_CONSTRAINT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_name = 'sales' AND constraint_type = 'UNIQUE' AND constraint_name LIKE '%order_number%';" 2>/dev/null | tr -d ' \n' || echo "0")
@@ -118,6 +162,58 @@ BEGIN
             updated_at TIMESTAMP DEFAULT NOW()
         );
         RAISE NOTICE 'Created missing categories table';
+    END IF;
+    
+    -- 0a. Ensure media_files table exists (for logo library functionality)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'media_files' 
+        AND table_schema = 'public'
+    ) THEN
+        CREATE TABLE media_files (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            file_name TEXT NOT NULL,
+            original_name TEXT NOT NULL,
+            file_type TEXT NOT NULL,
+            file_size INTEGER NOT NULL,
+            object_path TEXT NOT NULL,
+            category TEXT DEFAULT 'logo',
+            uploaded_by UUID REFERENCES users(id),
+            is_active BOOLEAN DEFAULT true,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        RAISE NOTICE 'Created missing media_files table';
+    END IF;
+    
+    -- 0b. Ensure label_templates table exists (for label template persistence)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'label_templates' 
+        AND table_schema = 'public'
+    ) THEN
+        CREATE TABLE label_templates (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(id),
+            name TEXT NOT NULL DEFAULT 'Default Template',
+            is_default BOOLEAN DEFAULT false,
+            selected_inventory_id UUID REFERENCES inventory_items(id),
+            product_name TEXT DEFAULT 'Product Name',
+            product_code TEXT DEFAULT 'PRD-001',
+            price TEXT DEFAULT '25.00',
+            qr_content TEXT DEFAULT 'PRD-001',
+            custom_message TEXT DEFAULT 'Thank you for your purchase',
+            size_indicator TEXT DEFAULT 'M',
+            logo_url TEXT DEFAULT '',
+            show_qr BOOLEAN DEFAULT true,
+            show_logo BOOLEAN DEFAULT false,
+            show_price BOOLEAN DEFAULT true,
+            show_message BOOLEAN DEFAULT true,
+            show_size BOOLEAN DEFAULT true,
+            layout_positions TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        RAISE NOTICE 'Created missing label_templates table';
     END IF;
     
     -- 1. Ensure all users have corresponding sales_associate records

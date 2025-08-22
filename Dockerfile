@@ -1,5 +1,6 @@
 # InventoryPro Production Dockerfile
 # Clean build with PostgreSQL driver replacement for containerized deployment
+# Includes logo library, label template persistence, and object storage support
 
 # Build stage - prepare application with correct database driver
 FROM node:18-alpine AS builder
@@ -30,7 +31,8 @@ RUN npm run build && \
     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && \
     sed -i 's|import\.meta\.dirname|"/app/server"|g' dist/index.js && \
     mkdir -p server/public && \
-    cp -r dist/public/* server/public/
+    cp -r dist/public/* server/public/ && \
+    echo "Build completed with logo library and label template support"
 
 # Production stage
 FROM node:18-alpine AS production
