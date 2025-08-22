@@ -561,12 +561,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate Excel buffer
       const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
       
-      console.log(`📤 EXPORT: Generated Excel with sheets: ${workbook.SheetNames?.join(', ')}`);
-      workbook.SheetNames?.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(sheet);
-        console.log(`   Sheet "${sheetName}": ${data.length} rows`);
-      });
       
       // Set headers for Excel download
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -586,19 +580,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      console.log(`🚀 STARTING IMPORT: File "${req.file.originalname}", Size: ${req.file.size} bytes, Type: ${req.file.mimetype}`);
-
       let allRows: any[] = [];
       const isExcel = req.file.originalname.endsWith('.xlsx') || 
                      req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      
-      console.log(`📁 File type detection: isExcel = ${isExcel}`);
 
       if (isExcel) {
         // Handle Excel file with multiple worksheets
         try {
           const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-          console.log('🔍 Available sheet names in Excel file:', workbook.SheetNames);
           
           // Map sheet names to actual category types
           const sheetToTypeMap = {
@@ -614,7 +603,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
-              console.log(`✅ Processing sheet "${sheetName}" with ${sheetData.length} rows for type "${categoryType}"`);
               
               // Add type information to each row based on sheet name
               const typedData = sheetData.map((row: any) => ({
@@ -626,16 +614,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
               
               allRows.push(...typedData);
-            } else {
-              console.log(`❌ Sheet "${sheetName}" not found in workbook`);
             }
           });
-          
-          console.log(`📊 Total rows collected for import: ${allRows.length}`);
-          if (allRows.length > 0) {
-            allRows.slice(0, 5).forEach(row => console.log(`   - Type: ${row.type}, Value: ${row.value}`));
-            if (allRows.length > 5) console.log(`   ... and ${allRows.length - 5} more rows`);
-          }
         } catch (error) {
           return res.status(400).json({ message: "Failed to parse Excel file" });
         }
@@ -679,17 +659,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               // Parse and validate data
               const categoryData = {
-                type: row.type.toString().trim().toLowerCase(),
+                type: row.type.toString().trim(), // Keep original camelCase (don't lowercase!)
                 value: row.value.toString().trim(),
                 displayOrder: parseInt(row.displayOrder) || parseInt(row['Display Order']) || 0,
                 isActive: row.isActive === 'Yes' || row.isActive === true || row.isActive === 'true' ||
                          row['Is Active'] === 'Yes' || row['Is Active'] === true || row['Is Active'] === 'true',
               };
 
-              console.log(`🔧 Processing row:`, { 
-                originalRow: row, 
-                parsedData: categoryData 
-              });
 
               // Validate category schema
               const validatedData = insertCategorySchema.parse(categoryData);
@@ -715,8 +691,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          console.log(`🔥 IMPORT SUMMARY: ${successCount} success, ${errorCount} errors`);
-          console.log('🔥 First 10 errors:', errors.slice(0, 10));
           
           res.json({
             message: "Import completed",
