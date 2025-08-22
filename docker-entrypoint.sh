@@ -208,38 +208,6 @@ BEGIN
     WHERE categories.id = ordered_categories.id;
     RAISE NOTICE 'Fixed category display orders to be sequential';
     
-    -- 6. Seed default categories for new deployments
-    INSERT INTO categories (type, value, display_order, is_active) VALUES
-        -- Default Types
-        ('type', 'Shirt', 0, true),
-        ('type', 'Pants', 1, true),
-        ('type', 'Shoes', 2, true),
-        ('type', 'Hat', 3, true),
-        ('type', 'Jacket', 4, true),
-        ('type', 'Accessory', 5, true),
-        ('type', 'Bag', 6, true),
-        ('type', 'Other', 7, true),
-        -- Default Colors
-        ('color', 'Black', 0, true),
-        ('color', 'White', 1, true),
-        ('color', 'Red', 2, true),
-        ('color', 'Blue', 3, true),
-        ('color', 'Green', 4, true),
-        ('color', 'Gray', 5, true),
-        ('color', 'Navy', 6, true),
-        ('color', 'Multi-Color', 7, true),
-        -- Default Sizes
-        ('size', 'XS', 0, true),
-        ('size', 'S', 1, true),
-        ('size', 'M', 2, true),
-        ('size', 'L', 3, true),
-        ('size', 'XL', 4, true),
-        ('size', 'XXL', 5, true),
-        ('size', 'One Size', 6, true),
-        ('size', 'N/A', 7, true)
-    ON CONFLICT (type, value) DO NOTHING;
-    RAISE NOTICE 'Seeded default categories for new deployments';
-    
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
 " && echo "✅ Production constraints and schema configured for multi-item transactions and category fields" || echo "⚠️  Constraint and schema configuration completed with warnings"
