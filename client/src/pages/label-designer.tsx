@@ -203,13 +203,19 @@ export default function LabelDesigner() {
   useEffect(() => {
     if (defaultTemplate && !templateLoaded) {
       console.log('Loading saved label data:', defaultTemplate);
+      console.log('customMessage field specifically:', defaultTemplate.customMessage);
+      console.log('customMessage is empty?', defaultTemplate.customMessage === '');
+      console.log('customMessage is null/undefined?', defaultTemplate.customMessage == null);
+      
       const templateData: LabelData = {
         selectedInventoryId: defaultTemplate.selectedInventoryId || "",
         productName: defaultTemplate.productName || "Product Name",
         productCode: defaultTemplate.productCode || "PRD-001",
         price: defaultTemplate.price || "25.00",
         qrContent: defaultTemplate.qrContent || "PRD-001",
-        customMessage: defaultTemplate.customMessage || "Thank you for your purchase",
+        customMessage: defaultTemplate.customMessage && defaultTemplate.customMessage.trim() !== '' 
+          ? defaultTemplate.customMessage 
+          : "Thank you for your purchase",
         sizeIndicator: defaultTemplate.sizeIndicator || "M",
         logoUrl: defaultTemplate.logoUrl || "",
         showQR: defaultTemplate.showQR !== undefined ? defaultTemplate.showQR : true,
