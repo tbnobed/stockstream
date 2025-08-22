@@ -280,7 +280,7 @@ export default function CategoryManagement() {
               No categories found. Add your first category to get started.
             </div>
           ) : (
-            <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
+            <div className="h-[calc(100vh-32rem)] overflow-y-auto space-y-2 pr-2">
               {categories.map((category, index) => (
                 <div
                   key={category.id}
