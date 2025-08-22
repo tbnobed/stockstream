@@ -651,9 +651,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMediaFile(id: string): Promise<boolean> {
+    // Get the media file details first to delete from cloud storage
+    const [mediaFile] = await db
+      .select()
+      .from(mediaFiles)
+      .where(and(eq(mediaFiles.id, id), eq(mediaFiles.isActive, true)));
+    
+    if (!mediaFile) {
+      return false;
+    }
+
+    // Delete from cloud storage
+    try {
+      if (mediaFile.objectPath) {
+        const { ObjectStorageService } = await import("./objectStorage");
+        const objectStorageService = new ObjectStorageService();
+        const file = await objectStorageService.getMediaFile(mediaFile.objectPath);
+        await file.delete();
+      }
+    } catch (error) {
+      console.warn("Failed to delete file from cloud storage:", error);
+      // Continue with database deletion even if cloud storage deletion fails
+    }
+
+    // Hard delete from database
     const result = await db
-      .update(mediaFiles)
-      .set({ isActive: false })
+      .delete(mediaFiles)
       .where(eq(mediaFiles.id, id));
     
     return result.rowCount !== null && result.rowCount > 0;
