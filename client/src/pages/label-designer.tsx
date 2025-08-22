@@ -31,6 +31,19 @@ interface LabelData {
   showSize: boolean;
 }
 
+interface ElementPosition {
+  x: number;
+  y: number;
+}
+
+interface LabelLayout {
+  productInfo: ElementPosition;
+  qrCode: ElementPosition;
+  logo: ElementPosition;
+  sizeIndicator: ElementPosition;
+  message: ElementPosition;
+}
+
 const defaultLabelData: LabelData = {
   selectedInventoryId: "",
   productName: "Product Name",
@@ -53,8 +66,19 @@ export default function LabelDesigner() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [labelCount, setLabelCount] = useState(10); // Standard Avery 94207 sheet
   const [showInventoryDropdown, setShowInventoryDropdown] = useState(false);
+  const [isDragging, setIsDragging] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Default layout positions (as percentages of container)
+  const [layout, setLayout] = useState<LabelLayout>({
+    productInfo: { x: 5, y: 10 },
+    qrCode: { x: 70, y: 5 },
+    logo: { x: 5, y: 55 },
+    sizeIndicator: { x: 75, y: 55 },
+    message: { x: 10, y: 80 }
+  });
 
   // Fetch inventory items
   const { data: inventoryItems } = useQuery({
@@ -278,6 +302,39 @@ export default function LabelDesigner() {
     });
   };
 
+  const handleMouseDown = (elementId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(elementId);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const container = e.currentTarget as HTMLElement;
+    const rect = container.getBoundingClientRect();
+    const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
+    const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+    
+    // Constrain to container bounds
+    const constrainedX = Math.max(0, Math.min(85, x));
+    const constrainedY = Math.max(0, Math.min(85, y));
+    
+    setLayout(prev => ({
+      ...prev,
+      [isDragging]: { x: constrainedX, y: constrainedY }
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
@@ -302,61 +359,107 @@ export default function LabelDesigner() {
           <CardContent>
             <div className="flex justify-center mb-4">
               <div 
-                className="border-2 border-dashed border-gray-300 bg-white p-2"
+                className="border-2 border-dashed border-gray-300 bg-white p-2 cursor-pointer select-none"
                 style={{
-                  width: '288px', // 4 inches at 72 DPI
-                  height: '144px', // 2 inches at 72 DPI
+                  width: '480px', // Larger: 6.67 inches at 72 DPI
+                  height: '240px', // Larger: 3.33 inches at 72 DPI (maintaining 2:1 ratio)
                   position: 'relative'
                 }}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
               >
+                {/* Product Info */}
                 <div 
-                  className="w-full h-full grid gap-1"
+                  className={`absolute flex flex-col justify-start cursor-move p-2 rounded border-2 transition-all ${
+                    isDragging === 'productInfo' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
+                  }`}
                   style={{
-                    gridTemplateAreas: `
-                      "product-info qr-code"
-                      "logo size"
-                      "message message"
-                    `,
-                    gridTemplateColumns: '1fr 86px',
-                    gridTemplateRows: '1fr auto 28px'
+                    left: `${layout.productInfo.x}%`,
+                    top: `${layout.productInfo.y}%`,
+                    maxWidth: '45%'
                   }}
+                  onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
-                  {/* Product Info */}
-                  <div style={{ gridArea: 'product-info' }} className="flex flex-col justify-start">
-                    <div className="text-sm font-bold leading-tight mb-1">{labelData.productName}</div>
-                    <div className="text-xs text-gray-600 mb-1">{labelData.productCode}</div>
-                    {labelData.showPrice && (
-                      <div className="text-lg font-bold">${labelData.price}</div>
-                    )}
+                  <div className="text-lg font-bold leading-tight mb-1">{labelData.productName}</div>
+                  <div className="text-sm text-gray-600 mb-1">{labelData.productCode}</div>
+                  {labelData.showPrice && (
+                    <div className="text-2xl font-bold">${labelData.price}</div>
+                  )}
+                </div>
+
+                {/* QR Code */}
+                {labelData.showQR && qrCodeUrl && (
+                  <div 
+                    className={`absolute cursor-move p-1 rounded border-2 transition-all ${
+                      isDragging === 'qrCode' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
+                    }`}
+                    style={{
+                      left: `${layout.qrCode.x}%`,
+                      top: `${layout.qrCode.y}%`
+                    }}
+                    onMouseDown={(e) => handleMouseDown('qrCode', e)}
+                  >
+                    <img src={qrCodeUrl} className="w-20 h-20" />
                   </div>
+                )}
 
-                  {/* QR Code */}
-                  {labelData.showQR && qrCodeUrl && (
-                    <div style={{ gridArea: 'qr-code' }} className="flex items-start justify-center">
-                      <img src={qrCodeUrl} className="w-16 h-16" />
-                    </div>
-                  )}
+                {/* Logo */}
+                {labelData.showLogo && labelData.logoUrl && (
+                  <div 
+                    className={`absolute cursor-move p-1 rounded border-2 transition-all flex items-center justify-center ${
+                      isDragging === 'logo' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
+                    }`}
+                    style={{
+                      left: `${layout.logo.x}%`,
+                      top: `${layout.logo.y}%`,
+                      width: '60px',
+                      height: '50px'
+                    }}
+                    onMouseDown={(e) => handleMouseDown('logo', e)}
+                  >
+                    <img src={labelData.logoUrl} className="max-w-full max-h-full object-contain" />
+                  </div>
+                )}
 
-                  {/* Logo */}
-                  {labelData.showLogo && labelData.logoUrl && (
-                    <div style={{ gridArea: 'logo' }} className="flex items-center justify-center">
-                      <img src={labelData.logoUrl} className="max-w-12 max-h-10 object-contain" />
-                    </div>
-                  )}
+                {/* Size Indicator */}
+                {labelData.showSize && (
+                  <div 
+                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center text-3xl font-bold ${
+                      isDragging === 'sizeIndicator' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
+                    }`}
+                    style={{
+                      left: `${layout.sizeIndicator.x}%`,
+                      top: `${layout.sizeIndicator.y}%`,
+                      minWidth: '50px',
+                      minHeight: '50px'
+                    }}
+                    onMouseDown={(e) => handleMouseDown('sizeIndicator', e)}
+                  >
+                    {labelData.sizeIndicator}
+                  </div>
+                )}
 
-                  {/* Size Indicator */}
-                  {labelData.showSize && (
-                    <div style={{ gridArea: 'size' }} className="flex items-center justify-center text-xl font-bold">
-                      {labelData.sizeIndicator}
-                    </div>
-                  )}
+                {/* Message */}
+                {labelData.showMessage && (
+                  <div 
+                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center text-sm text-center italic ${
+                      isDragging === 'message' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
+                    }`}
+                    style={{
+                      left: `${layout.message.x}%`,
+                      top: `${layout.message.y}%`,
+                      maxWidth: '80%'
+                    }}
+                    onMouseDown={(e) => handleMouseDown('message', e)}
+                  >
+                    {labelData.customMessage}
+                  </div>
+                )}
 
-                  {/* Message */}
-                  {labelData.showMessage && (
-                    <div style={{ gridArea: 'message' }} className="flex items-center justify-center text-xs text-center italic">
-                      {labelData.customMessage}
-                    </div>
-                  )}
+                {/* Helper text */}
+                <div className="absolute bottom-2 right-2 text-xs text-gray-400 pointer-events-none">
+                  Drag elements to reposition
                 </div>
               </div>
             </div>
