@@ -85,10 +85,14 @@ export default function LabelDesigner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Query to get default label template
+  // Query to get default label template (disable caching for fresh data)
   const { data: defaultTemplate } = useQuery({
     queryKey: ['/api/label-templates/default'],
     retry: false,
+    staleTime: 0,
+    gcTime: 0, // React Query v5 uses gcTime instead of cacheTime
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Auto-save mutation

@@ -987,11 +987,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Expires', '0');
       
       const template = await storage.getDefaultLabelTemplate(userId);
-      console.log('📋 Loading default template for user:', userId);
-      console.log('📋 Template found:', template ? 'YES' : 'NO');
-      if (template) {
-        console.log('📋 Custom message in template:', template.customMessage);
-      }
       res.json(template || null);
     } catch (error) {
       console.error("Error fetching default label template:", error);
