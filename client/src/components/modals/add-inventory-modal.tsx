@@ -46,58 +46,57 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   });
 
   // Fetch categories dynamically - only when modal is open
-  const fetchCategories = async (type: string) => {
-    const token = localStorage.getItem("auth_token");
-    const headers: Record<string, string> = {};
-    
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`/api/categories/${type}`, {
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch categories: ${response.statusText}`);
-    }
-
-    return response.json();
-  };
-
   const { data: types = [] } = useQuery<{ value: string }[]>({
     queryKey: ["categories", "type"],
-    queryFn: () => fetchCategories("type"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/type");
+      return await response.json();
+    },
     enabled: open,
   });
 
   const { data: colors = [] } = useQuery<{ value: string }[]>({
     queryKey: ["categories", "color"],
-    queryFn: () => fetchCategories("color"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/color");
+      return await response.json();
+    },
     enabled: open,
   });
 
   const { data: sizes = [] } = useQuery<{ value: string }[]>({
     queryKey: ["categories", "size"],
-    queryFn: () => fetchCategories("size"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/size");
+      return await response.json();
+    },
     enabled: open,
   });
 
   const { data: designs = [] } = useQuery<{ value: string }[]>({
     queryKey: ["categories", "design"],
-    queryFn: () => fetchCategories("design"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/design");
+      return await response.json();
+    },
     enabled: open,
   });
 
   const { data: groupTypes = [] } = useQuery<{ value: string }[]>({
     queryKey: ["categories", "groupType"],
-    queryFn: () => fetchCategories("groupType"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/groupType");
+      return await response.json();
+    },
     enabled: open,
   });
 
   const { data: styleGroups = [] } = useQuery<{ value: string }[]>({
     queryKey: ["categories", "styleGroup"],
-    queryFn: () => fetchCategories("styleGroup"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/styleGroup");
+      return await response.json();
+    },
     enabled: open,
   });
 
