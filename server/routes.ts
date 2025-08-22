@@ -16,6 +16,7 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("🚀 Registering routes...");
   // Configure multer for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -67,6 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup authentication routes
   await setupAuth(app);
+  
   // Dashboard Stats
   app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
     try {
@@ -498,16 +500,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", isAuthenticated, requireAdmin, async (req, res) => {
+  app.delete("/api/categories/:id", isAuthenticated, async (req, res) => {
     try {
+      console.log(`🗑️ DELETE request for category ID: ${req.params.id}`);
       const { id } = req.params;
       const deleted = await storage.deleteCategory(id);
       if (deleted) {
+        console.log(`✅ Category ${id} deleted successfully`);
         res.json({ message: "Category deleted successfully" });
       } else {
+        console.log(`❌ Category ${id} not found in database`);
         res.status(404).json({ message: "Category not found" });
       }
     } catch (error) {
+      console.error(`💥 Error deleting category ${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to delete category" });
     }
   });
@@ -754,5 +760,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  console.log("✅ All routes registered successfully");
   return httpServer;
 }
