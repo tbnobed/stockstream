@@ -314,6 +314,7 @@ export default function LabelDesigner() {
               justify-content: center;
               font-style: italic;
               max-width: 80%;
+              white-space: pre-wrap;
             }
           </style>
         </head>
@@ -515,7 +516,8 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.message.x}%`,
                       top: `${layout.message.y}%`,
-                      maxWidth: '80%'
+                      maxWidth: '80%',
+                      whiteSpace: 'pre-wrap'
                     }}
                     onMouseDown={(e) => handleMouseDown('message', e)}
                   >
