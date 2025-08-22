@@ -76,6 +76,7 @@ export function ObjectUploader({
       const uploadResponse = await fetch(uploadParams.uploadURL, {
         method: 'PUT',
         body: formData,
+        credentials: 'include', // Include session cookies for authentication
       });
 
       if (!uploadResponse.ok) {
