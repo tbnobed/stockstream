@@ -504,17 +504,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for debugging
+  app.get("/api/categories/test", isAuthenticated, async (req, res) => {
+    try {
+      console.log("=== TESTING CATEGORIES ===");
+      const categories = await storage.getCategories();
+      console.log(`Found ${categories.length} categories`);
+      console.log("First 3:", categories.slice(0, 3));
+      res.json({ count: categories.length, categories: categories.slice(0, 5) });
+    } catch (error) {
+      console.error("Test error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // CSV Export for all categories
   app.get("/api/categories/export", isAuthenticated, async (req, res) => {
     try {
-      console.log("Starting CSV export...");
+      console.log("=== CSV EXPORT START ===");
       const categories = await storage.getCategories();
-      console.log(`Found ${categories.length} categories for export:`, categories.slice(0, 3));
+      console.log(`Found ${categories.length} categories for export`);
+      
+      if (categories.length === 0) {
+        console.log("No categories found, sending empty CSV");
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="all_categories.csv"`);
+        res.send("Type,Value,Display Order\n");
+        return;
+      }
       
       // Create CSV content
-      const csvHeader = "Type,Value,Display Order,Active\n";
+      const csvHeader = "Type,Value,Display Order\n";
       const csvRows = categories.map(cat => 
-        `"${cat.type}","${cat.value}","${cat.displayOrder}","${cat.isActive}"`
+        `"${cat.type}","${cat.value}","${cat.displayOrder}"`
       ).join("\n");
       const csvContent = csvHeader + csvRows;
       
