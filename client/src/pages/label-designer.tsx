@@ -61,23 +61,34 @@ const defaultLabelData: LabelData = {
 };
 
 export default function LabelDesigner() {
-  const [labelData, setLabelData] = useState<LabelData>(defaultLabelData);
+  // Load saved data from localStorage or use defaults
+  const [labelData, setLabelData] = useState<LabelData>(() => {
+    const saved = localStorage.getItem('labelDesignerData');
+    return saved ? { ...defaultLabelData, ...JSON.parse(saved) } : defaultLabelData;
+  });
+  
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [labelCount, setLabelCount] = useState(10); // Standard Avery 94207 sheet
+  const [labelCount, setLabelCount] = useState(() => {
+    const saved = localStorage.getItem('labelDesignerCount');
+    return saved ? parseInt(saved) : 10;
+  });
   const [showInventoryDropdown, setShowInventoryDropdown] = useState(false);
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Default layout positions (as percentages of container)
-  const [layout, setLayout] = useState<LabelLayout>({
-    productInfo: { x: 5, y: 10 },
-    qrCode: { x: 70, y: 5 },
-    logo: { x: 5, y: 55 },
-    sizeIndicator: { x: 75, y: 55 },
-    message: { x: 10, y: 80 }
+  // Load saved layout or use defaults
+  const [layout, setLayout] = useState<LabelLayout>(() => {
+    const saved = localStorage.getItem('labelDesignerLayout');
+    return saved ? JSON.parse(saved) : {
+      productInfo: { x: 5, y: 10 },
+      qrCode: { x: 70, y: 5 },
+      logo: { x: 5, y: 55 },
+      sizeIndicator: { x: 75, y: 55 },
+      message: { x: 10, y: 80 }
+    };
   });
 
   // Fetch inventory items
@@ -91,6 +102,21 @@ export default function LabelDesigner() {
       generateQRCode();
     }
   }, [labelData.qrContent, labelData.showQR]);
+
+  // Save label data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('labelDesignerData', JSON.stringify(labelData));
+  }, [labelData]);
+
+  // Save layout to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('labelDesignerLayout', JSON.stringify(layout));
+  }, [layout]);
+
+  // Save label count to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('labelDesignerCount', labelCount.toString());
+  }, [labelCount]);
 
   const generateQRCode = async () => {
     try {
