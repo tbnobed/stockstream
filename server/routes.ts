@@ -13,6 +13,7 @@ import { z } from "zod";
 import multer from "multer";
 import csvParser from "csv-parser";
 import { Readable } from "stream";
+import * as XLSX from "xlsx";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
@@ -522,24 +523,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Export for Categories
-  app.get("/api/categories/export/csv", isAuthenticated, requireAdmin, async (req, res) => {
+  // Excel Export for Categories (with separate tabs)
+  app.get("/api/categories/export/excel", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const categories = await storage.getCategories();
       
-      // Set headers for CSV download
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="categories.csv"');
+      // Group categories by type
+      const categoryTypes = ['type', 'color', 'size', 'design', 'groupType', 'styleGroup'];
+      const workbook = XLSX.utils.book_new();
       
-      // Create CSV content
-      const csvHeader = 'type,value,displayOrder,isActive\n';
-      const csvRows = categories.map(cat => 
-        `"${cat.type}","${cat.value}",${cat.displayOrder},${cat.isActive}`
-      ).join('\n');
+      categoryTypes.forEach(categoryType => {
+        const categoriesOfType = categories.filter(cat => cat.type === categoryType);
+        
+        // Create worksheet data
+        const worksheetData = [
+          ['Value', 'Display Order', 'Is Active', 'Created At', 'Updated At'] // Headers
+        ];
+        
+        categoriesOfType.forEach(cat => {
+          worksheetData.push([
+            cat.value,
+            cat.displayOrder ?? 0,
+            cat.isActive ? 'Yes' : 'No',
+            cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : '',
+            cat.updatedAt ? new Date(cat.updatedAt).toLocaleDateString() : ''
+          ]);
+        });
+        
+        // Create worksheet
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        
+        // Add worksheet to workbook with tab name
+        const tabName = categoryType.charAt(0).toUpperCase() + categoryType.slice(1);
+        XLSX.utils.book_append_sheet(workbook, worksheet, tabName);
+      });
       
-      res.send(csvHeader + csvRows);
+      // Generate Excel buffer
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      // Set headers for Excel download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="categories.xlsx"');
+      
+      res.send(excelBuffer);
     } catch (error) {
-      console.error("CSV export error:", error);
+      console.error("Excel export error:", error);
       res.status(500).json({ message: "Failed to export categories" });
     }
   });

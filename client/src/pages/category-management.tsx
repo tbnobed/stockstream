@@ -218,33 +218,35 @@ export default function CategoryManagement() {
     });
   };
 
-  const handleExportCsv = async () => {
+  const handleExportExcel = async () => {
     try {
       const token = localStorage.getItem("auth_token");
       const headers: Record<string, string> = {
-        'Accept': 'text/csv',
+        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       };
       
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch('/api/categories/export/csv', {
+      const response = await fetch('/api/categories/export/excel', {
         method: 'GET',
         headers,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to export CSV');
+        throw new Error('Failed to export Excel');
       }
 
-      const csvData = await response.text();
-      const blob = new Blob([csvData], { type: 'text/csv' });
+      const excelData = await response.arrayBuffer();
+      const blob = new Blob([excelData], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
       const url = window.URL.createObjectURL(blob);
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'categories.csv';
+      link.download = 'categories.xlsx';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -253,12 +255,12 @@ export default function CategoryManagement() {
       
       toast({
         title: "Export Complete",
-        description: "Categories exported successfully",
+        description: "Categories exported to Excel with separate tabs for each type",
       });
     } catch (error) {
       toast({
         title: "Export Failed",
-        description: "Failed to export categories to CSV",
+        description: "Failed to export categories to Excel",
         variant: "destructive",
       });
     }
@@ -340,11 +342,11 @@ export default function CategoryManagement() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExportCsv}
-                title="Export all categories to CSV"
+                onClick={handleExportExcel}
+                title="Export all categories to Excel with separate tabs"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export CSV
+                Export Excel
               </Button>
               
               <Dialog open={isImporting} onOpenChange={setIsImporting}>
