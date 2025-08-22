@@ -30,10 +30,11 @@ A relational schema is used with four main entities: Sales Associates, Suppliers
 A RESTful API design is implemented with clear endpoint patterns for dashboard statistics, sales associate management, supplier management, inventory item management (including low stock alerts), and sales transaction processing. Endpoints feature error handling, Zod validation, and JSON responses.
 
 ### Feature Specifications
-- **Inventory Management**: SKU generation, stock level monitoring, supplier tracking, multi-item transaction support, QR code scanning for adding items to cart, inventory categorization, archive/disable functionality, pagination, and enhanced search.
+- **Inventory Management**: SKU generation, stock level monitoring, supplier tracking, multi-item transaction support, QR code scanning for adding items to cart, inventory categorization with dynamic category management system, archive/disable functionality, pagination, and enhanced search.
 - **Sales Processing**: Order number generation, payment method tracking, inventory updates, real-time stock validation during cart operations, multi-item transactions, sales associate management, and mobile terminal QR integration.
 - **Reporting**: Dashboard analytics including revenue, sales volume, and stock alerts. Includes comprehensive sales filtering (sales associate, payment method, date range), enhanced category-based reporting, and contextual report system based on sales/inventory/revenue.
 - **QR Code Generation**: Label printing system for inventory tracking.
+- **Category Management**: Dynamic category system with GUI for managing 6 category types (type, color, size, design, groupType, styleGroup), CRUD operations, search functionality, and bulk actions. Categories are database-driven replacing hardcoded constants.
 
 ### Deployment Architecture
 The application uses Docker for containerization, with multi-stage builds for optimized images. Docker Compose orchestrates services. Production deployment includes Nginx for reverse proxying with SSL/TLS, PostgreSQL with connection pooling, application monitoring, Systemd service management, and firewall configuration. Security implementations include environment variable management, database access controls, SSL certificate automation (Let's Encrypt), and Fail2ban protection. Automated database schema updates and data migrations are integrated into the Docker entrypoint.
