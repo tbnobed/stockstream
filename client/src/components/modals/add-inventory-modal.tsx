@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { X } from "lucide-react";
-import { insertInventoryItemSchema, type InsertInventoryItem, type Supplier } from "@shared/schema";
+import { insertInventoryItemSchema, type InsertInventoryItem } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,18 +41,58 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [isMultiVariant, setIsMultiVariant] = useState(!editingItem);
 
-  const { data: suppliers = [] } = useQuery<Supplier[]>({
+  const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
 
-  // Use hardcoded constants for now while we resolve API issues
-  // TODO: Re-enable dynamic category fetching once API issues are resolved
-  const types = ITEM_TYPES.map(value => ({ value }));
-  const colors = ITEM_COLORS.map(value => ({ value }));
-  const sizes = ITEM_SIZES.map(value => ({ value }));
-  const designs = ITEM_DESIGNS.map(value => ({ value }));
-  const groupTypes = GROUP_TYPES.map(value => ({ value }));
-  const styleGroups = STYLE_GROUPS.map(value => ({ value }));
+  // Fetch categories dynamically
+  const { data: types = [] } = useQuery({
+    queryKey: ["/api/categories", "type"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/type");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: colors = [] } = useQuery({
+    queryKey: ["/api/categories", "color"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/color");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: sizes = [] } = useQuery({
+    queryKey: ["/api/categories", "size"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/size");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: designs = [] } = useQuery({
+    queryKey: ["/api/categories", "design"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/design");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: groupTypes = [] } = useQuery({
+    queryKey: ["/api/categories", "groupType"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/groupType");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: styleGroups = [] } = useQuery({
+    queryKey: ["/api/categories", "styleGroup"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/styleGroup");
+      return response as { value: string }[];
+    },
+  });
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
@@ -746,7 +786,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {suppliers.map((supplier) => (
+                      {suppliers && Array.isArray(suppliers) && suppliers.map((supplier: any) => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </SelectItem>

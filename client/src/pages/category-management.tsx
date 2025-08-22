@@ -40,15 +40,15 @@ export default function CategoryManagement() {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["/api/categories", selectedType],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/categories/${selectedType}`);
-      return await response.json() as Category[];
+      const response = await apiRequest(`/api/categories/${selectedType}`);
+      return response as Category[];
     },
   });
 
   // Create category mutation
   const createCategoryMutation = useMutation({
     mutationFn: async (data: { type: string; value: string }) => {
-      return apiRequest("POST", "/api/categories", data);
+      return apiRequest("/api/categories", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -71,7 +71,7 @@ export default function CategoryManagement() {
   // Update category mutation
   const updateCategoryMutation = useMutation({
     mutationFn: async (data: { id: string; value: string }) => {
-      return apiRequest("PUT", `/api/categories/${data.id}`, { value: data.value });
+      return apiRequest(`/api/categories/${data.id}`, "PUT", { value: data.value });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -93,7 +93,7 @@ export default function CategoryManagement() {
   // Delete category mutation
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/categories/${id}`);
+      return apiRequest(`/api/categories/${id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -114,7 +114,7 @@ export default function CategoryManagement() {
   // Reorder categories mutation
   const reorderCategoriesMutation = useMutation({
     mutationFn: async (data: { type: string; categoryIds: string[] }) => {
-      return apiRequest("POST", "/api/categories/reorder", data);
+      return apiRequest("/api/categories/reorder", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
