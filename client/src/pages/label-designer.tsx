@@ -188,20 +188,14 @@ export default function LabelDesigner() {
             .label-content {
               width: 100%;
               height: 100%;
-              display: grid;
-              grid-template-areas:
-                "product-info qr-code"
-                "logo size"
-                "message message";
-              grid-template-columns: 1fr 1.2in;
-              grid-template-rows: 1fr auto 0.4in;
-              gap: 0.05in;
+              position: relative;
             }
             .product-info {
-              grid-area: product-info;
+              position: absolute;
               display: flex;
               flex-direction: column;
               justify-content: flex-start;
+              max-width: 45%;
             }
             .product-name {
               font-size: 14px;
@@ -220,9 +214,9 @@ export default function LabelDesigner() {
               margin: 0;
             }
             .qr-code {
-              grid-area: qr-code;
+              position: absolute;
               display: flex;
-              align-items: flex-start;
+              align-items: center;
               justify-content: center;
             }
             .qr-code img {
@@ -230,32 +224,37 @@ export default function LabelDesigner() {
               max-height: 1in;
             }
             .logo {
-              grid-area: logo;
+              position: absolute;
               display: flex;
               align-items: center;
               justify-content: center;
+              width: 0.8in;
+              height: 0.6in;
             }
             .logo img {
-              max-width: 0.8in;
-              max-height: 0.6in;
+              max-width: 100%;
+              max-height: 100%;
               object-fit: contain;
             }
             .size-indicator {
-              grid-area: size;
+              position: absolute;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 24px;
               font-weight: bold;
+              min-width: 0.6in;
+              min-height: 0.6in;
             }
             .message {
-              grid-area: message;
+              position: absolute;
               font-size: 8px;
               text-align: center;
               display: flex;
               align-items: center;
               justify-content: center;
               font-style: italic;
+              max-width: 80%;
             }
           </style>
         </head>
@@ -275,18 +274,26 @@ export default function LabelDesigner() {
   };
 
   const generateLabelHTML = () => {
+    // Convert percentages to inches (4in width, 2in height after padding)
+    const labelWidth = 3.8; // 4in - 0.2in padding
+    const labelHeight = 1.8; // 2in - 0.2in padding
+    
+    const convertPosition = (percentage: number, dimension: number) => {
+      return (percentage / 100) * dimension;
+    };
+    
     return `
       <div class="label">
         <div class="label-content">
-          <div class="product-info">
+          <div class="product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}in; top: ${convertPosition(layout.productInfo.y, labelHeight)}in;">
             <div class="product-name">${labelData.productName}</div>
             <div class="product-code">${labelData.productCode}</div>
             ${labelData.showPrice ? `<div class="price">$${labelData.price}</div>` : ''}
           </div>
-          ${labelData.showQR ? `<div class="qr-code"><img src="${qrCodeUrl}" /></div>` : ''}
-          ${labelData.showLogo && labelData.logoUrl ? `<div class="logo"><img src="${labelData.logoUrl}" /></div>` : ''}
-          ${labelData.showSize ? `<div class="size-indicator">${labelData.sizeIndicator}</div>` : ''}
-          ${labelData.showMessage ? `<div class="message">${labelData.customMessage}</div>` : ''}
+          ${labelData.showQR ? `<div class="qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}in; top: ${convertPosition(layout.qrCode.y, labelHeight)}in;"><img src="${qrCodeUrl}" /></div>` : ''}
+          ${labelData.showLogo && labelData.logoUrl ? `<div class="logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}in; top: ${convertPosition(layout.logo.y, labelHeight)}in;"><img src="${labelData.logoUrl}" /></div>` : ''}
+          ${labelData.showSize ? `<div class="size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}in; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}in;">${labelData.sizeIndicator}</div>` : ''}
+          ${labelData.showMessage ? `<div class="message" style="left: ${convertPosition(layout.message.x, labelWidth)}in; top: ${convertPosition(layout.message.y, labelHeight)}in;">${labelData.customMessage}</div>` : ''}
         </div>
       </div>
     `;
