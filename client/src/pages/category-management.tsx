@@ -99,7 +99,24 @@ export default function CategoryManagement() {
     mutationFn: async (id: string) => {
       return apiRequest("DELETE", `/api/categories/${id}`);
     },
+    onMutate: async (categoryId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/categories", selectedType] });
+      
+      // Snapshot the previous value
+      const previousCategories = queryClient.getQueryData(["/api/categories", selectedType]);
+      
+      // Optimistically update to remove the category immediately
+      queryClient.setQueryData(["/api/categories", selectedType], (old: Category[] | undefined) => {
+        return old?.filter(category => category.id !== categoryId) || [];
+      });
+      
+      // Return a context object with the snapshotted value
+      return { previousCategories };
+    },
     onSuccess: () => {
+      // Invalidate queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/categories", selectedType] });
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
         title: "Success",
@@ -107,7 +124,12 @@ export default function CategoryManagement() {
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: any, categoryId, context) => {
+      // Rollback on error
+      if (context?.previousCategories) {
+        queryClient.setQueryData(["/api/categories", selectedType], context.previousCategories);
+      }
+      
       const message = error?.message || "Failed to delete category";
       const isAlreadyDeleted = error?.status === 409;
       
@@ -120,7 +142,7 @@ export default function CategoryManagement() {
       
       // Refresh the category list to sync UI with database
       if (isAlreadyDeleted) {
-        queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/categories", selectedType] });
       }
     },
   });
@@ -553,8 +575,9 @@ export default function CategoryManagement() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteCategory(category.id)}
+                      disabled={deleteCategoryMutation.isPending}
                       title="Delete"
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
