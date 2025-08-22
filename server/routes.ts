@@ -507,7 +507,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CSV Export for all categories
   app.get("/api/categories/export", isAuthenticated, async (req, res) => {
     try {
+      console.log("Starting CSV export...");
       const categories = await storage.getCategories();
+      console.log(`Found ${categories.length} categories for export:`, categories.slice(0, 3));
       
       // Create CSV content
       const csvHeader = "Type,Value,Display Order,Active\n";
@@ -515,6 +517,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `"${cat.type}","${cat.value}","${cat.displayOrder}","${cat.isActive}"`
       ).join("\n");
       const csvContent = csvHeader + csvRows;
+      
+      console.log("CSV content preview:", csvContent.substring(0, 200));
       
       // Set headers for file download
       res.setHeader('Content-Type', 'text/csv');
