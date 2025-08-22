@@ -50,7 +50,24 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     queryKey: ["categories", type],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/categories/${type}`);
+        const token = localStorage.getItem("auth_token");
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json"
+        };
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`/api/categories/${type}`, {
+          method: "GET",
+          headers,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         return await response.json();
       } catch (error) {
         console.warn(`Failed to fetch ${type} categories, using fallback:`, error);
