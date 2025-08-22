@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Edit, Trash2, Move3D, Settings, Download, Upload, FileSpreadsheet } from "lucide-react";
+import { Plus, Edit, Trash2, Move3D, Settings } from "lucide-react";
 
 interface Category {
   id: string;
@@ -35,9 +35,6 @@ export default function CategoryManagement() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryValue, setNewCategoryValue] = useState("");
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvContent, setCsvContent] = useState("");
   const { toast } = useToast();
 
   // Fetch categories by type
@@ -136,33 +133,6 @@ export default function CategoryManagement() {
     },
   });
 
-  // CSV Import mutation
-  const importCategoriesMutation = useMutation({
-    mutationFn: async (data: { csvData: string }) => {
-      return apiRequest("POST", "/api/categories/import", data);
-    },
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      setIsImportDialogOpen(false);
-      setCsvFile(null);
-      setCsvContent("");
-      
-      response.json().then((data: any) => {
-        toast({
-          title: "Import Complete",
-          description: data.message,
-        });
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to import categories",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleAddCategory = () => {
     if (!newCategoryValue.trim()) return;
     
@@ -199,74 +169,6 @@ export default function CategoryManagement() {
     reorderCategoriesMutation.mutate({
       type: selectedType,
       categoryIds,
-    });
-  };
-
-  // CSV Export handler
-  const handleExportCSV = async () => {
-    try {
-      const response = await apiRequest("GET", `/api/categories/export-fresh`);
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `all_categories.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast({
-        title: "Success",
-        description: "All categories exported successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export categories",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // File input handler
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    if (!file.name.endsWith('.csv')) {
-      toast({
-        title: "Error",
-        description: "Please select a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setCsvFile(file);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setCsvContent(content);
-    };
-    reader.readAsText(file);
-  };
-
-  // CSV Import handler
-  const handleImportCSV = () => {
-    if (!csvContent) {
-      toast({
-        title: "Error",
-        description: "Please select a CSV file first",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    importCategoriesMutation.mutate({
-      csvData: csvContent,
     });
   };
 
@@ -324,98 +226,13 @@ export default function CategoryManagement() {
                 {currentTypeInfo?.description} ({categories.length} items)
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              {/* CSV Export Button */}
-              <Button 
-                variant="outline" 
-                onClick={handleExportCSV}
-                data-testid="button-export-csv"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export All Categories
-              </Button>
-              
-              {/* CSV Import Button */}
-              <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" data-testid="button-import-csv">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import All Categories
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Import All Categories</DialogTitle>
-                    <DialogDescription>
-                      Upload a CSV file to import categories across all types. Expected format: Type, Value, Display Order, Active
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="csvFile">CSV File</Label>
-                      <Input
-                        id="csvFile"
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileSelect}
-                        data-testid="input-csv-file"
-                      />
-                      {csvFile && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Selected: {csvFile.name}
-                        </p>
-                      )}
-                    </div>
-                    
-                    {csvContent && (
-                      <div>
-                        <Label>Preview (first 3 lines):</Label>
-                        <pre className="text-xs bg-muted p-2 rounded mt-1 max-h-20 overflow-y-auto">
-                          {csvContent.split('\n').slice(0, 3).join('\n')}
-                        </pre>
-                      </div>
-                    )}
-                    
-                    <div className="bg-muted p-3 rounded text-sm">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <FileSpreadsheet className="h-4 w-4" />
-                        CSV Format Example:
-                      </h4>
-                      <pre className="text-xs">
-Type,Value,Display Order,Active{'\n'}color,Red,0,true{'\n'}type,Shirt,0,true{'\n'}size,Large,0,true
-                      </pre>
-                    </div>
-                    
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsImportDialogOpen(false);
-                          setCsvFile(null);
-                          setCsvContent("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleImportCSV}
-                        disabled={!csvContent || importCategoriesMutation.isPending}
-                        data-testid="button-confirm-import"
-                      >
-                        {importCategoriesMutation.isPending ? "Importing..." : "Import Categories"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
-                <DialogTrigger asChild>
-                  <Button data-testid="button-add-category">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Category
-                  </Button>
-                </DialogTrigger>
+            <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Category
+                </Button>
+              </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add New {currentTypeInfo?.label.slice(0, -1)}</DialogTitle>
@@ -454,7 +271,6 @@ Type,Value,Display Order,Active{'\n'}color,Red,0,true{'\n'}type,Shirt,0,true{'\n
                 </div>
               </DialogContent>
             </Dialog>
-            </div>
           </div>
         </CardHeader>
         <CardContent>

@@ -522,11 +522,11 @@ export class DatabaseStorage implements IStorage {
 
   // Categories
   async getCategories(): Promise<Category[]> {
-    return db.select().from(categories).orderBy(categories.type, categories.displayOrder, categories.value);
+    return db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.type, categories.displayOrder, categories.value);
   }
 
   async getCategoriesByType(type: string): Promise<Category[]> {
-    return db.select().from(categories).where(eq(categories.type, type)).orderBy(categories.displayOrder, categories.value);
+    return db.select().from(categories).where(and(eq(categories.type, type), eq(categories.isActive, true))).orderBy(categories.displayOrder, categories.value);
   }
 
   async getCategory(id: string): Promise<Category | undefined> {
@@ -539,7 +539,7 @@ export class DatabaseStorage implements IStorage {
     const maxOrderResult = await db
       .select({ maxOrder: sql<number>`max(${categories.displayOrder})` })
       .from(categories)
-      .where(eq(categories.type, category.type));
+      .where(and(eq(categories.type, category.type), eq(categories.isActive, true)));
     
     const nextDisplayOrder = (maxOrderResult[0]?.maxOrder ?? -1) + 1;
     
@@ -576,9 +576,10 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
     
-    // Actually delete the category from the database
+    // Mark the category as inactive
     const result = await db
-      .delete(categories)
+      .update(categories)
+      .set({ isActive: false, updatedAt: sql`NOW()` })
       .where(eq(categories.id, id));
     
     if (result.rowCount !== null && result.rowCount > 0) {
@@ -586,7 +587,7 @@ export class DatabaseStorage implements IStorage {
       const remainingCategories = await db
         .select()
         .from(categories)
-        .where(eq(categories.type, categoryToDelete.type))
+        .where(and(eq(categories.type, categoryToDelete.type), eq(categories.isActive, true)))
         .orderBy(categories.displayOrder);
       
       // Update display orders to be sequential
