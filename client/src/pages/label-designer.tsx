@@ -512,27 +512,143 @@ export default function LabelDesigner() {
 
   const downloadLabelImage = async () => {
     try {
-      // Find the label preview container with the specific styling
-      const labelElement = document.querySelector('div[style*="width: 480px"][style*="height: 240px"]') as HTMLElement;
-      if (!labelElement) {
-        toast({
-          title: "Error",
-          description: "Label preview not found",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
-
-      // Capture the label as canvas
-      const canvas = await html2canvas(labelElement, {
+      // Create a temporary container with the exact same HTML and CSS as the print version
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.width = '4in';
+      tempContainer.style.height = '2in';
+      tempContainer.style.fontFamily = 'Arial, sans-serif';
+      
+      // Add print CSS styles
+      const style = document.createElement('style');
+      style.textContent = `
+        .temp-label {
+          width: 4in;
+          height: 2in;
+          position: relative;
+          padding: 0.1in;
+          box-sizing: border-box;
+          background: white;
+        }
+        .temp-label-content {
+          width: 100%;
+          height: 100%;
+          position: relative;
+        }
+        .temp-product-info {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          max-width: 45%;
+        }
+        .temp-product-name {
+          font-size: 14px;
+          font-weight: bold;
+          margin: 0 0 2px 0;
+          line-height: 1.1;
+        }
+        .temp-product-code {
+          font-size: 10px;
+          margin: 0 0 4px 0;
+          color: #666;
+        }
+        .temp-price {
+          font-size: 18px;
+          font-weight: bold;
+          margin: 0;
+        }
+        .temp-qr-code {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .temp-qr-code img {
+          max-width: 1in;
+          max-height: 1in;
+        }
+        .temp-logo {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 0.8in;
+          height: 0.6in;
+        }
+        .temp-logo img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        .temp-size-indicator {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          font-weight: bold;
+          min-width: 0.6in;
+          min-height: 0.6in;
+        }
+        .temp-message {
+          position: absolute;
+          font-size: 8px;
+          text-align: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-style: italic;
+          max-width: 80%;
+          white-space: pre-wrap;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Generate the same HTML structure as print
+      const labelWidth = 3.8; // 4in - 0.2in padding
+      const labelHeight = 1.8; // 2in - 0.2in padding
+      
+      const convertPosition = (percentage: number, dimension: number) => {
+        return (percentage / 100) * dimension;
+      };
+      
+      tempContainer.innerHTML = `
+        <div class="temp-label">
+          <div class="temp-label-content">
+            <div class="temp-product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}in; top: ${convertPosition(layout.productInfo.y, labelHeight)}in;">
+              <div class="temp-product-name">${labelData.productName}</div>
+              <div class="temp-product-code">${labelData.productCode}</div>
+              ${labelData.showPrice ? `<div class="temp-price">$${labelData.price}</div>` : ''}
+            </div>
+            ${labelData.showQR ? `<div class="temp-qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}in; top: ${convertPosition(layout.qrCode.y, labelHeight)}in;"><img src="${qrCodeUrl}" /></div>` : ''}
+            ${labelData.showLogo && labelData.logoUrl ? `<div class="temp-logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}in; top: ${convertPosition(layout.logo.y, labelHeight)}in;"><img src="${labelData.logoUrl}" /></div>` : ''}
+            ${labelData.showSize ? `<div class="temp-size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}in; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}in;">${labelData.sizeIndicator}</div>` : ''}
+            ${labelData.showMessage ? `<div class="temp-message" style="left: ${convertPosition(layout.message.x, labelWidth)}in; top: ${convertPosition(layout.message.y, labelHeight)}in;">${labelData.customMessage}</div>` : ''}
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(tempContainer);
+      
+      // Wait for images to load
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capture the label as canvas with print dimensions
+      const canvas = await html2canvas(tempContainer.firstElementChild as HTMLElement, {
         backgroundColor: 'white',
-        scale: 3, // High resolution for better print quality
+        scale: 4, // Higher resolution for print quality
         useCORS: true,
         allowTaint: true,
-        width: labelElement.offsetWidth,
-        height: labelElement.offsetHeight,
+        width: 288, // 4 inches at 72 DPI
+        height: 144, // 2 inches at 72 DPI
       });
+
+      // Clean up
+      document.body.removeChild(tempContainer);
+      document.head.removeChild(style);
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
@@ -549,7 +665,7 @@ export default function LabelDesigner() {
 
         toast({
           title: "Label Downloaded",
-          description: "Label image saved to your downloads",
+          description: "Label image saved to your downloads (print-ready format)",
           duration: 2000,
         });
       }, 'image/png');
