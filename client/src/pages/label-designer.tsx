@@ -86,7 +86,7 @@ export default function LabelDesigner() {
   const { toast } = useToast();
 
   // Query to get default label template (disable caching for fresh data)
-  const { data: defaultTemplate } = useQuery({
+  const { data: defaultTemplate, error: templateError, isLoading: templateLoading } = useQuery({
     queryKey: ['/api/label-templates/default'],
     retry: false,
     staleTime: 0,
@@ -95,19 +95,42 @@ export default function LabelDesigner() {
     refetchOnWindowFocus: true,
   });
 
+  // Debug template loading
+  useEffect(() => {
+    if (templateError) {
+      console.error('❌ Template loading failed:', templateError);
+    }
+    if (templateLoading) {
+      console.log('🔄 Loading template...');
+    }
+    if (defaultTemplate) {
+      console.log('✅ Template loaded successfully:', defaultTemplate);
+    } else if (!templateLoading && !templateError) {
+      console.warn('⚠️ No template found, using defaults');
+    }
+  }, [defaultTemplate, templateError, templateLoading]);
+
   // Auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async (templateData: LabelData) => {
+      console.log('🔄 Auto-save triggered with data:', templateData);
+      console.log('🎯 defaultTemplate available:', !!defaultTemplate);
+      
       if (defaultTemplate) {
         // Update existing default template
+        console.log('📝 Updating existing template:', defaultTemplate.id);
         return apiRequest('PUT', `/api/label-templates/${defaultTemplate.id}`, templateData);
       } else {
         // Create new default template
+        console.log('➕ Creating new template');
         return apiRequest('POST', '/api/label-templates', { ...templateData, isDefault: true });
       }
     },
+    onSuccess: (data) => {
+      console.log('✅ Auto-save successful:', data);
+    },
     onError: (error) => {
-      console.error('Error auto-saving label template:', error);
+      console.error('❌ Error auto-saving label template:', error);
     },
   });
 
