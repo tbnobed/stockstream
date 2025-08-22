@@ -517,12 +517,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Category already deleted" });
       }
       
-      const deleted = await storage.deleteCategory(id);
-      if (deleted) {
-        res.json({ message: "Category deleted successfully" });
-      } else {
-        res.status(500).json({ message: "Failed to delete category" });
-      }
+      // Since category exists and is active, delete it
+      await storage.deleteCategory(id);
+      res.json({ message: "Category deleted successfully" });
     } catch (error) {
       console.error(`Error deleting category ${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to delete category" });

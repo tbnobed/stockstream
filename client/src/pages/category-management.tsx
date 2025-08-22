@@ -31,7 +31,9 @@ const CATEGORY_TYPES = [
 ] as const;
 
 export default function CategoryManagement() {
-  const [selectedType, setSelectedType] = useState<string>("color");
+  const [selectedType, setSelectedType] = useState<string>(() => {
+    return localStorage.getItem("category-selected-type") || "type";
+  });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryValue, setNewCategoryValue] = useState("");
@@ -371,7 +373,10 @@ export default function CategoryManagement() {
                     ? "border-primary bg-primary/5" 
                     : "hover:bg-muted/50"
                 }`}
-                onClick={() => setSelectedType(type.value)}
+                onClick={() => {
+                  setSelectedType(type.value);
+                  localStorage.setItem("category-selected-type", type.value);
+                }}
               >
                 <CardContent className="p-4">
                   <h3 className="font-medium">{type.label}</h3>
