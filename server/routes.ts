@@ -536,6 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       categoryTypes.forEach(categoryType => {
         const categoriesOfType = categories.filter(cat => cat.type === categoryType);
+        console.log(`Export: Found ${categoriesOfType.length} categories for type ${categoryType}`);
         
         // Create worksheet data
         const worksheetData = [
@@ -555,6 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Add worksheet to workbook with tab name
         const tabName = categoryType.charAt(0).toUpperCase() + categoryType.slice(1);
+        console.log(`Export: Creating sheet "${tabName}" for categoryType "${categoryType}"`);
         XLSX.utils.book_append_sheet(workbook, worksheet, tabName);
       });
       
@@ -587,6 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Handle Excel file with multiple worksheets
         try {
           const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+          console.log('Available sheet names:', workbook.SheetNames);
           
           // Map sheet names to actual category types
           const sheetToTypeMap = {
@@ -602,6 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
+              console.log(`Processing sheet ${sheetName} with ${sheetData.length} rows for type ${categoryType}`);
               
               // Add type information to each row based on sheet name
               const typedData = sheetData.map((row: any) => ({
@@ -613,6 +617,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
               
               allRows.push(...typedData);
+            } else {
+              console.log(`Sheet ${sheetName} not found in workbook`);
             }
           });
         } catch (error) {
