@@ -10,8 +10,26 @@ import {
   insertCategorySchema
 } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import csvParser from "csv-parser";
+import { Readable } from "stream";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only CSV files are allowed'));
+      }
+    }
+  });
+
   // Health check endpoint (before auth middleware)
   app.get('/api/health', async (req, res) => {
     try {
@@ -501,6 +519,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Categories reordered successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to reorder categories" });
+    }
+  });
+
+  // CSV Export for Categories
+  app.get("/api/categories/export/csv", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="categories.csv"');
+      
+      // Create CSV content
+      const csvHeader = 'type,value,displayOrder,isActive\n';
+      const csvRows = categories.map(cat => 
+        `"${cat.type}","${cat.value}",${cat.displayOrder},${cat.isActive}`
+      ).join('\n');
+      
+      res.send(csvHeader + csvRows);
+    } catch (error) {
+      console.error("CSV export error:", error);
+      res.status(500).json({ message: "Failed to export categories" });
+    }
+  });
+
+  // CSV Import for Categories
+  app.post("/api/categories/import/csv", isAuthenticated, requireAdmin, upload.single('csvFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No CSV file uploaded" });
+      }
+
+      const csvData: any[] = [];
+      const stream = Readable.from(req.file.buffer.toString());
+      
+      stream
+        .pipe(csvParser())
+        .on('data', (data) => {
+          csvData.push(data);
+        })
+        .on('end', async () => {
+          try {
+            let successCount = 0;
+            let errorCount = 0;
+            const errors: string[] = [];
+
+            for (const row of csvData) {
+              try {
+                // Validate required fields
+                if (!row.type || !row.value) {
+                  errors.push(`Row missing required fields: ${JSON.stringify(row)}`);
+                  errorCount++;
+                  continue;
+                }
+
+                // Parse and validate data
+                const categoryData = {
+                  type: row.type.trim(),
+                  value: row.value.trim(),
+                  displayOrder: parseInt(row.displayOrder) || 0,
+                  isActive: row.isActive === 'true' || row.isActive === true,
+                };
+
+                // Validate category schema
+                const validatedData = insertCategorySchema.parse(categoryData);
+                
+                // Check if category already exists
+                const existingCategories = await storage.getCategoriesByType(validatedData.type);
+                const exists = existingCategories.find(cat => 
+                  cat.value.toLowerCase() === validatedData.value.toLowerCase()
+                );
+
+                if (exists) {
+                  errors.push(`Category "${validatedData.value}" of type "${validatedData.type}" already exists`);
+                  errorCount++;
+                  continue;
+                }
+
+                // Create the category
+                await storage.createCategory(validatedData);
+                successCount++;
+              } catch (error) {
+                errors.push(`Failed to import row ${JSON.stringify(row)}: ${error instanceof Error ? error.message : String(error)}`);
+                errorCount++;
+              }
+            }
+
+            res.json({
+              message: "CSV import completed",
+              successCount,
+              errorCount,
+              errors: errors.slice(0, 10), // Limit errors to first 10
+              totalErrors: errors.length
+            });
+          } catch (error) {
+            console.error("CSV processing error:", error);
+            res.status(500).json({ message: "Failed to process CSV data" });
+          }
+        })
+        .on('error', (error) => {
+          console.error("CSV parsing error:", error);
+          res.status(500).json({ message: "Failed to parse CSV file" });
+        });
+    } catch (error) {
+      console.error("CSV import error:", error);
+      res.status(500).json({ message: "Failed to import categories" });
     }
   });
 

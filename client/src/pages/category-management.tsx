@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Edit, Trash2, Move3D, Settings } from "lucide-react";
+import { Plus, Edit, Trash2, Move3D, Settings, Download, Upload } from "lucide-react";
 
 interface Category {
   id: string;
@@ -35,6 +35,7 @@ export default function CategoryManagement() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryValue, setNewCategoryValue] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
 
   // Fetch categories by type
@@ -133,6 +134,51 @@ export default function CategoryManagement() {
     },
   });
 
+  // CSV Import mutation
+  const importCsvMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('csvFile', file);
+      
+      const response = await fetch('/api/categories/import/csv', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to import CSV');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      setIsImporting(false);
+      
+      if (data.errorCount > 0) {
+        toast({
+          title: "Import completed with warnings",
+          description: `${data.successCount} categories imported, ${data.errorCount} errors occurred`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `${data.successCount} categories imported successfully`,
+        });
+      }
+    },
+    onError: () => {
+      setIsImporting(false);
+      toast({
+        title: "Error",
+        description: "Failed to import CSV file",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddCategory = () => {
     if (!newCategoryValue.trim()) return;
     
@@ -170,6 +216,37 @@ export default function CategoryManagement() {
       type: selectedType,
       categoryIds,
     });
+  };
+
+  const handleExportCsv = () => {
+    const link = document.createElement('a');
+    link.href = '/api/categories/export/csv';
+    link.download = 'categories.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Export Started",
+      description: "CSV download should begin shortly",
+    });
+  };
+
+  const handleImportCsv = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        importCsvMutation.mutate(file);
+      } else {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a CSV file",
+          variant: "destructive",
+        });
+      }
+    }
+    // Reset the input
+    event.target.value = '';
   };
 
   const currentTypeInfo = CATEGORY_TYPES.find(t => t.value === selectedType);
@@ -226,14 +303,80 @@ export default function CategoryManagement() {
                 {currentTypeInfo?.description} ({categories.length} items)
               </CardDescription>
             </div>
-            <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Category
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
+            <div className="flex items-center gap-2">
+              {/* CSV Export/Import Buttons */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCsv}
+                title="Export all categories to CSV"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              
+              <Dialog open={isImporting} onOpenChange={setIsImporting}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" title="Import categories from CSV">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import CSV
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Import Categories from CSV</DialogTitle>
+                    <DialogDescription>
+                      Upload a CSV file to import categories. File should have columns: type, value, displayOrder, isActive
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                      <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <div className="space-y-2">
+                        <Label htmlFor="csvFileInput" className="cursor-pointer">
+                          <span className="text-sm font-medium">Click to select CSV file</span>
+                        </Label>
+                        <Input
+                          id="csvFileInput"
+                          type="file"
+                          accept=".csv"
+                          onChange={handleImportCsv}
+                          disabled={importCsvMutation.isPending}
+                          className="hidden"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Supported format: CSV files with type, value, displayOrder, isActive columns
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {importCsvMutation.isPending && (
+                      <div className="text-center">
+                        <p className="text-sm">Processing CSV file...</p>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsImporting(false)}
+                        disabled={importCsvMutation.isPending}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Category
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add New {currentTypeInfo?.label.slice(0, -1)}</DialogTitle>
                   <DialogDescription>
@@ -270,7 +413,8 @@ export default function CategoryManagement() {
                   </div>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
