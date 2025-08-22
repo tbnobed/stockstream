@@ -824,12 +824,12 @@ export default function LabelDesigner() {
                   </div>
 
                   {/* Logo Gallery */}
-                  <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto">
                     {(mediaFiles || []).map((mediaFile) => (
                       <div
                         key={mediaFile.id}
                         className={cn(
-                          "relative border rounded-lg p-2 cursor-pointer transition-all hover:border-primary/50",
+                          "relative border rounded-lg p-3 cursor-pointer transition-all hover:border-primary/50 min-h-[120px]",
                           labelData.logoUrl === `/media/${mediaFile.objectPath.replace('/media/', '')}` 
                             ? "border-primary bg-primary/5" 
                             : "border-border"
@@ -837,7 +837,7 @@ export default function LabelDesigner() {
                         onClick={() => handleLogoSelect(mediaFile)}
                         data-testid={`logo-${mediaFile.id}`}
                       >
-                        <div className="aspect-video flex items-center justify-center bg-muted rounded">
+                        <div className="aspect-square flex items-center justify-center bg-muted rounded h-20 w-full mb-2">
                           <img 
                             src={`/media/${mediaFile.objectPath.replace('/media/', '')}`}
                             alt={mediaFile.originalName}
@@ -848,7 +848,7 @@ export default function LabelDesigner() {
                             }}
                           />
                         </div>
-                        <p className="text-xs mt-1 text-center truncate" title={mediaFile.originalName}>
+                        <p className="text-xs text-center truncate" title={mediaFile.originalName}>
                           {mediaFile.originalName}
                         </p>
                         
@@ -856,7 +856,7 @@ export default function LabelDesigner() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                          className="absolute top-1 right-1 h-6 w-6 rounded-full p-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleLogoDelete(mediaFile.id);
