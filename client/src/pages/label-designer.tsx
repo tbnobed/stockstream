@@ -240,6 +240,13 @@ export default function LabelDesigner() {
   // Load default template data when available
   useEffect(() => {
     if (defaultTemplate && !templateLoaded) {
+      // Show toast to confirm template loading in production
+      toast({
+        title: "📁 Loading Template",
+        description: `Loading: ${defaultTemplate.customMessage?.substring(0, 30)}...`,
+        duration: 2000,
+      });
+      
       console.log('Loading saved label data:', defaultTemplate);
       const templateData: LabelData = {
         selectedInventoryId: defaultTemplate.selectedInventoryId || "",
@@ -259,8 +266,23 @@ export default function LabelDesigner() {
       console.log('Merged label data:', templateData);
       setLabelData(templateData);
       setTemplateLoaded(true);
+      
+      // Confirm template loaded
+      toast({
+        title: "✅ Template Loaded",
+        description: "Ready for auto-save",
+        duration: 2000,
+      });
+    } else if (!defaultTemplate && !templateLoading && !templateError) {
+      // Show toast if no template found
+      toast({
+        title: "⚠️ No Template Found",
+        description: "Using default values",
+        duration: 3000,
+        variant: "destructive",
+      });
     }
-  }, [defaultTemplate, templateLoaded]);
+  }, [defaultTemplate, templateLoaded, templateLoading, templateError]);
 
   // Auto-save label data to server whenever it changes (but only after template is loaded)
   useEffect(() => {
