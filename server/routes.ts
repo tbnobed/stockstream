@@ -617,22 +617,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else {
         // Handle CSV file
-        return new Promise((resolve) => {
-          const csvData: any[] = [];
-          const stream = Readable.from(req.file!.buffer.toString());
-          
+        const csvData: any[] = [];
+        const stream = Readable.from(req.file.buffer.toString());
+        
+        await new Promise<void>((resolve, reject) => {
           stream
             .pipe(csvParser())
             .on('data', (data) => {
               csvData.push(data);
             })
-            .on('end', async () => {
+            .on('end', () => {
               allRows = csvData;
-              processImportData();
+              resolve();
             })
             .on('error', (error) => {
               console.error("CSV parsing error:", error);
-              res.status(500).json({ message: "Failed to parse CSV file" });
+              reject(error);
             });
         });
       }
@@ -698,9 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      if (isExcel) {
-        await processImportData();
-      }
+      await processImportData();
     } catch (error) {
       console.error("Import error:", error);
       res.status(500).json({ message: "Failed to import categories" });
