@@ -33,6 +33,24 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     echo "📋 Creating database schema..."
     echo "yes" | npx drizzle-kit push --force --config=/app/drizzle.config.ts
     
+    # Debug: List created tables
+    echo "🔍 Verifying created tables..."
+    psql "$DATABASE_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;" 2>/dev/null | head -20
+    
+    # Ensure categories table exists
+    echo "📂 Ensuring categories table exists..."
+    psql "$DATABASE_URL" -c "
+    CREATE TABLE IF NOT EXISTS categories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        type VARCHAR NOT NULL,
+        value VARCHAR NOT NULL,
+        display_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+    );
+    " >/dev/null 2>&1 && echo "✅ Categories table verified" || echo "⚠️  Categories table creation warning"
+    
     # Verify multi-item transaction schema
     echo "🛒 Verifying multi-item transaction schema..."
     UNIQUE_CONSTRAINT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_name = 'sales' AND constraint_type = 'UNIQUE' AND constraint_name LIKE '%order_number%';" 2>/dev/null | tr -d ' \n' || echo "0")
@@ -192,21 +210,29 @@ BEGIN
         RAISE NOTICE 'Ensured all inventory items have is_active set';
     END IF;
     
-    -- 5. Fix category display orders to be sequential
-    WITH ordered_categories AS (
-        SELECT 
-            id,
-            type,
-            ROW_NUMBER() OVER (PARTITION BY type ORDER BY display_order, value) - 1 AS new_display_order
-        FROM categories 
-        WHERE is_active = true
-    )
-    UPDATE categories 
-    SET display_order = ordered_categories.new_display_order,
-        updated_at = NOW()
-    FROM ordered_categories 
-    WHERE categories.id = ordered_categories.id;
-    RAISE NOTICE 'Fixed category display orders to be sequential';
+    -- 5. Fix category display orders to be sequential (only if categories table exists)
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'categories' 
+        AND table_schema = 'public'
+    ) THEN
+        WITH ordered_categories AS (
+            SELECT 
+                id,
+                type,
+                ROW_NUMBER() OVER (PARTITION BY type ORDER BY display_order, value) - 1 AS new_display_order
+            FROM categories 
+            WHERE is_active = true
+        )
+        UPDATE categories 
+        SET display_order = ordered_categories.new_display_order,
+            updated_at = NOW()
+        FROM ordered_categories 
+        WHERE categories.id = ordered_categories.id;
+        RAISE NOTICE 'Fixed category display orders to be sequential';
+    ELSE
+        RAISE NOTICE 'Categories table does not exist yet, skipping display order fix';
+    END IF;
     
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
