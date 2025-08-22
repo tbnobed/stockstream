@@ -273,14 +273,14 @@ export default function LabelDesigner() {
         description: "Ready for auto-save",
         duration: 2000,
       });
-    } else if (!defaultTemplate && !templateLoading && !templateError) {
-      // Show toast if no template found
+    } else if (!defaultTemplate && !templateLoading && !templateError && !templateLoaded) {
+      // No template found - enable auto-save for new template creation
       toast({
-        title: "⚠️ No Template Found",
-        description: "Using default values",
+        title: "📝 Creating New Template",
+        description: "No saved template found. Ready to create one!",
         duration: 3000,
-        variant: "destructive",
       });
+      setTemplateLoaded(true); // Enable auto-save even without existing template
     }
   }, [defaultTemplate, templateLoaded, templateLoading, templateError]);
 
