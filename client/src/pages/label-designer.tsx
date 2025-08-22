@@ -16,7 +16,7 @@ import { Printer, Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown, 
 import { cn } from "@/lib/utils";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest } from "@/lib/queryClient";
-import type { UploadResult } from "@uppy/core";
+// Removed Uppy dependency
 import type { MediaFile } from "@shared/schema";
 
 interface LabelData {
@@ -264,21 +264,19 @@ export default function LabelDesigner() {
     }
   };
 
-  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleUploadComplete = (result: { successful: Array<{ uploadURL: string; name: string; size: number; type: string }> }) => {
     console.log("Upload complete result:", result);
     
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
-      const file = uploadedFile.data as any;
       console.log("Uploaded file details:", uploadedFile);
-      console.log("File data:", file);
       
       const mediaData = {
-        fileName: file?.name || uploadedFile.name || "logo.png",
-        originalName: uploadedFile.name || "logo.png",
-        fileType: file?.type || "image/png",
-        fileSize: file?.size || uploadedFile.size || 0,
-        uploadURL: (uploadedFile as any).uploadURL || "",
+        fileName: uploadedFile.name,
+        originalName: uploadedFile.name,
+        fileType: uploadedFile.type,
+        fileSize: uploadedFile.size,
+        uploadURL: uploadedFile.uploadURL,
       };
       
       console.log("Saving media file metadata:", mediaData);
