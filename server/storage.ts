@@ -522,7 +522,7 @@ export class DatabaseStorage implements IStorage {
 
   // Categories
   async getCategories(): Promise<Category[]> {
-    return db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.type, categories.displayOrder, categories.value);
+    return db.select().from(categories).orderBy(categories.type, categories.displayOrder, categories.value);
   }
 
   async getCategoriesByType(type: string): Promise<Category[]> {
