@@ -126,8 +126,7 @@ export default function LabelDesigner() {
   const { data: mediaFiles } = useQuery<MediaFile[]>({
     queryKey: ["/api/media"],
     queryFn: async () => {
-      const response = await fetch("/api/media?category=logo");
-      if (!response.ok) throw new Error("Failed to fetch media files");
+      const response = await apiRequest("GET", "/api/media?category=logo");
       return response.json();
     },
   });
@@ -135,12 +134,7 @@ export default function LabelDesigner() {
   // Upload media file mutation
   const uploadMediaMutation = useMutation({
     mutationFn: async (data: { fileName: string; originalName: string; fileType: string; fileSize: number; uploadURL: string }) => {
-      const response = await fetch("/api/media", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to upload media file");
+      const response = await apiRequest("POST", "/api/media", data);
       return response.json();
     },
     onSuccess: () => {
@@ -162,8 +156,7 @@ export default function LabelDesigner() {
   // Delete media file mutation
   const deleteMediaMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/media/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to delete media file");
+      const response = await apiRequest("DELETE", `/api/media/${id}`);
       return response.json();
     },
     onSuccess: () => {
@@ -250,15 +243,10 @@ export default function LabelDesigner() {
 
   const handleGetUploadParameters = async () => {
     const fileName = `logo-${Date.now()}.png`;
-    const response = await fetch("/api/media/upload", {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileName,
-        fileType: "image/png",
-      }),
+    const response = await apiRequest("POST", "/api/media/upload", {
+      fileName,
+      fileType: "image/png",
     });
-    if (!response.ok) throw new Error("Failed to get upload URL");
     const data = await response.json();
     return {
       method: "PUT" as const,
