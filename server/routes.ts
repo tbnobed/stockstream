@@ -595,13 +595,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
               
               // Add type information to each row based on sheet name
-              const typedData = sheetData.map((row: any) => ({
-                ...row,
-                type: sheetName.toLowerCase(),
-                value: row['Value'] || row.value,
-                displayOrder: row['Display Order'] || row.displayOrder || 0,
-                isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
-              }));
+              const typedData = sheetData
+                .filter((row: any) => {
+                  // Filter out empty rows
+                  const value = row['Value'] || row.value;
+                  return value && value.toString().trim() !== '';
+                })
+                .map((row: any) => ({
+                  ...row,
+                  type: sheetName.toLowerCase(),
+                  value: (row['Value'] || row.value || '').toString().trim(),
+                  displayOrder: parseInt(row['Display Order'] || row.displayOrder || '0') || 0,
+                  isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
+                }));
               
               allRows.push(...typedData);
             }
@@ -641,8 +647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const row of allRows) {
             try {
               // Validate required fields
-              if (!row.type || !row.value) {
-                errors.push(`Row missing required fields: ${JSON.stringify(row)}`);
+              if (!row.type || !row.value || row.value.trim() === '') {
+                errors.push(`Row missing required fields (type: ${row.type}, value: "${row.value}")`);
                 errorCount++;
                 continue;
               }
@@ -665,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
 
               if (exists) {
-                errors.push(`Category "${validatedData.value}" of type "${validatedData.type}" already exists`);
+                errors.push(`Duplicate: "${validatedData.value}" already exists in ${validatedData.type} categories`);
                 errorCount++;
                 continue;
               }
