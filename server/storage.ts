@@ -535,9 +535,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(category: InsertCategory): Promise<Category> {
+    // Get the highest display order for this category type
+    const maxOrderResult = await db
+      .select({ maxOrder: sql<number>`max(${categories.displayOrder})` })
+      .from(categories)
+      .where(and(eq(categories.type, category.type), eq(categories.isActive, true)));
+    
+    const nextDisplayOrder = (maxOrderResult[0]?.maxOrder ?? -1) + 1;
+    
     const [newCategory] = await db
       .insert(categories)
-      .values(category)
+      .values({
+        ...category,
+        displayOrder: nextDisplayOrder
+      })
       .returning();
     return newCategory;
   }
@@ -555,11 +566,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCategory(id: string): Promise<boolean> {
+    // Get the category being deleted to know its type
+    const [categoryToDelete] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+    
+    if (!categoryToDelete) {
+      return false;
+    }
+    
+    // Mark the category as inactive
     const result = await db
       .update(categories)
       .set({ isActive: false, updatedAt: sql`NOW()` })
       .where(eq(categories.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    
+    if (result.rowCount !== null && result.rowCount > 0) {
+      // Reorder remaining categories to fill the gap
+      const remainingCategories = await db
+        .select()
+        .from(categories)
+        .where(and(eq(categories.type, categoryToDelete.type), eq(categories.isActive, true)))
+        .orderBy(categories.displayOrder);
+      
+      // Update display orders to be sequential
+      for (let i = 0; i < remainingCategories.length; i++) {
+        await db
+          .update(categories)
+          .set({ displayOrder: i, updatedAt: sql`NOW()` })
+          .where(eq(categories.id, remainingCategories[i].id));
+      }
+      
+      return true;
+    }
+    
+    return false;
   }
 
   async reorderCategories(type: string, categoryIds: string[]): Promise<void> {
