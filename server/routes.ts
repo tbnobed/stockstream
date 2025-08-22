@@ -23,10 +23,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 5 * 1024 * 1024, // 5MB limit
     },
     fileFilter: (req, file, cb) => {
-      if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv') ||
+          file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+          file.originalname.endsWith('.xlsx')) {
         cb(null, true);
       } else {
-        cb(new Error('Only CSV files are allowed'));
+        cb(new Error('Only CSV and Excel files are allowed'));
       }
     }
   });
@@ -572,86 +574,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Import for Categories
-  app.post("/api/categories/import/csv", isAuthenticated, requireAdmin, upload.single('csvFile'), async (req, res) => {
+  // Excel/CSV Import for Categories
+  app.post("/api/categories/import/file", isAuthenticated, requireAdmin, upload.single('categoryFile'), async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: "No CSV file uploaded" });
+        return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const csvData: any[] = [];
-      const stream = Readable.from(req.file.buffer.toString());
-      
-      stream
-        .pipe(csvParser())
-        .on('data', (data) => {
-          csvData.push(data);
-        })
-        .on('end', async () => {
-          try {
-            let successCount = 0;
-            let errorCount = 0;
-            const errors: string[] = [];
+      let allRows: any[] = [];
+      const isExcel = req.file.originalname.endsWith('.xlsx') || 
+                     req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-            for (const row of csvData) {
-              try {
-                // Validate required fields
-                if (!row.type || !row.value) {
-                  errors.push(`Row missing required fields: ${JSON.stringify(row)}`);
-                  errorCount++;
-                  continue;
-                }
-
-                // Parse and validate data
-                const categoryData = {
-                  type: row.type.trim(),
-                  value: row.value.trim(),
-                  displayOrder: parseInt(row.displayOrder) || 0,
-                  isActive: row.isActive === 'true' || row.isActive === true,
-                };
-
-                // Validate category schema
-                const validatedData = insertCategorySchema.parse(categoryData);
-                
-                // Check if category already exists
-                const existingCategories = await storage.getCategoriesByType(validatedData.type);
-                const exists = existingCategories.find(cat => 
-                  cat.value.toLowerCase() === validatedData.value.toLowerCase()
-                );
-
-                if (exists) {
-                  errors.push(`Category "${validatedData.value}" of type "${validatedData.type}" already exists`);
-                  errorCount++;
-                  continue;
-                }
-
-                // Create the category
-                await storage.createCategory(validatedData);
-                successCount++;
-              } catch (error) {
-                errors.push(`Failed to import row ${JSON.stringify(row)}: ${error instanceof Error ? error.message : String(error)}`);
-                errorCount++;
-              }
+      if (isExcel) {
+        // Handle Excel file with multiple worksheets
+        try {
+          const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+          const categoryTypes = ['Type', 'Color', 'Size', 'Design', 'GroupType', 'StyleGroup'];
+          
+          categoryTypes.forEach(sheetName => {
+            if (workbook.SheetNames.includes(sheetName)) {
+              const worksheet = workbook.Sheets[sheetName];
+              const sheetData = XLSX.utils.sheet_to_json(worksheet);
+              
+              // Add type information to each row based on sheet name
+              const typedData = sheetData.map((row: any) => ({
+                ...row,
+                type: sheetName.toLowerCase(),
+                value: row['Value'] || row.value,
+                displayOrder: row['Display Order'] || row.displayOrder || 0,
+                isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
+              }));
+              
+              allRows.push(...typedData);
             }
-
-            res.json({
-              message: "CSV import completed",
-              successCount,
-              errorCount,
-              errors: errors.slice(0, 10), // Limit errors to first 10
-              totalErrors: errors.length
+          });
+        } catch (error) {
+          return res.status(400).json({ message: "Failed to parse Excel file" });
+        }
+      } else {
+        // Handle CSV file
+        return new Promise((resolve) => {
+          const csvData: any[] = [];
+          const stream = Readable.from(req.file!.buffer.toString());
+          
+          stream
+            .pipe(csvParser())
+            .on('data', (data) => {
+              csvData.push(data);
+            })
+            .on('end', async () => {
+              allRows = csvData;
+              processImportData();
+            })
+            .on('error', (error) => {
+              console.error("CSV parsing error:", error);
+              res.status(500).json({ message: "Failed to parse CSV file" });
             });
-          } catch (error) {
-            console.error("CSV processing error:", error);
-            res.status(500).json({ message: "Failed to process CSV data" });
-          }
-        })
-        .on('error', (error) => {
-          console.error("CSV parsing error:", error);
-          res.status(500).json({ message: "Failed to parse CSV file" });
         });
+      }
+
+      // Process the imported data
+      async function processImportData() {
+        try {
+          let successCount = 0;
+          let errorCount = 0;
+          const errors: string[] = [];
+
+          for (const row of allRows) {
+            try {
+              // Validate required fields
+              if (!row.type || !row.value) {
+                errors.push(`Row missing required fields: ${JSON.stringify(row)}`);
+                errorCount++;
+                continue;
+              }
+
+              // Parse and validate data
+              const categoryData = {
+                type: row.type.toString().trim().toLowerCase(),
+                value: row.value.toString().trim(),
+                displayOrder: parseInt(row.displayOrder) || 0,
+                isActive: row.isActive === 'Yes' || row.isActive === true || row.isActive === 'true',
+              };
+
+              // Validate category schema
+              const validatedData = insertCategorySchema.parse(categoryData);
+              
+              // Check if category already exists
+              const existingCategories = await storage.getCategoriesByType(validatedData.type);
+              const exists = existingCategories.find(cat => 
+                cat.value.toLowerCase() === validatedData.value.toLowerCase()
+              );
+
+              if (exists) {
+                errors.push(`Category "${validatedData.value}" of type "${validatedData.type}" already exists`);
+                errorCount++;
+                continue;
+              }
+
+              // Create the category
+              await storage.createCategory(validatedData);
+              successCount++;
+            } catch (error) {
+              errors.push(`Failed to import row ${JSON.stringify(row)}: ${error instanceof Error ? error.message : String(error)}`);
+              errorCount++;
+            }
+          }
+
+          res.json({
+            message: "Import completed",
+            successCount,
+            errorCount,
+            errors: errors.slice(0, 10), // Limit errors to first 10
+            totalErrors: errors.length
+          });
+        } catch (error) {
+          console.error("Import processing error:", error);
+          res.status(500).json({ message: "Failed to process import data" });
+        }
+      }
+
+      if (isExcel) {
+        await processImportData();
+      }
     } catch (error) {
-      console.error("CSV import error:", error);
+      console.error("Import error:", error);
       res.status(500).json({ message: "Failed to import categories" });
     }
   });

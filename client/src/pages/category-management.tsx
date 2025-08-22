@@ -134,20 +134,27 @@ export default function CategoryManagement() {
     },
   });
 
-  // CSV Import mutation
-  const importCsvMutation = useMutation({
+  // File Import mutation (Excel/CSV)
+  const importFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append('csvFile', file);
+      formData.append('categoryFile', file);
       
-      const response = await fetch('/api/categories/import/csv', {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {};
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/categories/import/file', {
         method: 'POST',
         body: formData,
-        credentials: 'include',
+        headers,
       });
       
       if (!response.ok) {
-        throw new Error('Failed to import CSV');
+        throw new Error('Failed to import file');
       }
       
       return response.json();
@@ -173,7 +180,7 @@ export default function CategoryManagement() {
       setIsImporting(false);
       toast({
         title: "Error",
-        description: "Failed to import CSV file",
+        description: "Failed to import file",
         variant: "destructive",
       });
     },
@@ -266,15 +273,20 @@ export default function CategoryManagement() {
     }
   };
 
-  const handleImportCsv = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        importCsvMutation.mutate(file);
+      const isValidFile = file.type === 'text/csv' || 
+                         file.name.endsWith('.csv') ||
+                         file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                         file.name.endsWith('.xlsx');
+      
+      if (isValidFile) {
+        importFileMutation.mutate(file);
       } else {
         toast({
           title: "Invalid file type",
-          description: "Please select a CSV file",
+          description: "Please select a CSV or Excel (.xlsx) file",
           variant: "destructive",
         });
       }
@@ -351,42 +363,43 @@ export default function CategoryManagement() {
               
               <Dialog open={isImporting} onOpenChange={setIsImporting}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" title="Import categories from CSV">
+                  <Button variant="outline" size="sm" title="Import categories from Excel or CSV">
                     <Upload className="h-4 w-4 mr-2" />
-                    Import CSV
+                    Import File
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Import Categories from CSV</DialogTitle>
+                    <DialogTitle>Import Categories</DialogTitle>
                     <DialogDescription>
-                      Upload a CSV file to import categories. File should have columns: type, value, displayOrder, isActive
+                      Upload an Excel file (with tabs for each category type) or CSV file to import categories
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                       <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <div className="space-y-2">
-                        <Label htmlFor="csvFileInput" className="cursor-pointer">
-                          <span className="text-sm font-medium">Click to select CSV file</span>
+                        <Label htmlFor="categoryFileInput" className="cursor-pointer">
+                          <span className="text-sm font-medium">Click to select Excel or CSV file</span>
                         </Label>
                         <Input
-                          id="csvFileInput"
+                          id="categoryFileInput"
                           type="file"
-                          accept=".csv"
-                          onChange={handleImportCsv}
-                          disabled={importCsvMutation.isPending}
+                          accept=".csv,.xlsx"
+                          onChange={handleImportFile}
+                          disabled={importFileMutation.isPending}
                           className="hidden"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Supported format: CSV files with type, value, displayOrder, isActive columns
-                        </p>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p><strong>Excel:</strong> Use exported file format with tabs for each category type</p>
+                          <p><strong>CSV:</strong> Include columns: type, value, displayOrder, isActive</p>
+                        </div>
                       </div>
                     </div>
                     
-                    {importCsvMutation.isPending && (
+                    {importFileMutation.isPending && (
                       <div className="text-center">
-                        <p className="text-sm">Processing CSV file...</p>
+                        <p className="text-sm">Processing file...</p>
                       </div>
                     )}
                     
@@ -394,7 +407,7 @@ export default function CategoryManagement() {
                       <Button
                         variant="outline"
                         onClick={() => setIsImporting(false)}
-                        disabled={importCsvMutation.isPending}
+                        disabled={importFileMutation.isPending}
                       >
                         Cancel
                       </Button>
