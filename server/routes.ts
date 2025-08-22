@@ -504,6 +504,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CSV Export for categories
+  app.get("/api/categories/export/:type", isAuthenticated, async (req, res) => {
+    try {
+      const { type } = req.params;
+      const categories = await storage.getCategoriesByType(type);
+      
+      // Create CSV content
+      const csvHeader = "Type,Value,Display Order,Active\n";
+      const csvRows = categories.map(cat => 
+        `"${cat.type}","${cat.value}","${cat.displayOrder}","${cat.isActive}"`
+      ).join("\n");
+      const csvContent = csvHeader + csvRows;
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${type}_categories.csv"`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error("CSV export error:", error);
+      res.status(500).json({ message: "Failed to export categories" });
+    }
+  });
+
+  // CSV Import for categories
+  app.post("/api/categories/import", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { csvData, type } = req.body;
+      
+      if (!csvData || !type) {
+        return res.status(400).json({ message: "CSV data and type are required" });
+      }
+
+      // Parse CSV data
+      const lines = csvData.trim().split('\n');
+      if (lines.length <= 1) {
+        return res.status(400).json({ message: "CSV must contain header and at least one data row" });
+      }
+
+      // Skip header line and parse data
+      const categories = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Simple CSV parsing (handles quoted fields)
+        const matches = line.match(/("([^"]*)"|[^,]*)(,("([^"]*)"|[^,]*))*/)
+        const parts = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            parts.push(current.trim().replace(/^"|"$/g, ''));
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        parts.push(current.trim().replace(/^"|"$/g, ''));
+        
+        if (parts.length >= 2) {
+          const categoryValue = parts[1];
+          if (categoryValue) {
+            categories.push({
+              type: type,
+              value: categoryValue,
+              displayOrder: parseInt(parts[2]) || 0,
+              isActive: parts[3] !== 'false'
+            });
+          }
+        }
+      }
+
+      if (categories.length === 0) {
+        return res.status(400).json({ message: "No valid categories found in CSV" });
+      }
+
+      // Create categories in database
+      const results = [];
+      for (const categoryData of categories) {
+        try {
+          const category = insertCategorySchema.parse(categoryData);
+          const newCategory = await storage.createCategory(category);
+          results.push({ success: true, category: newCategory });
+        } catch (error) {
+          console.warn(`Failed to create category ${categoryData.value}:`, error);
+          results.push({ 
+            success: false, 
+            value: categoryData.value, 
+            error: error instanceof Error ? error.message : "Unknown error" 
+          });
+        }
+      }
+
+      const successful = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+
+      res.json({
+        message: `Import completed: ${successful} successful, ${failed} failed`,
+        successful,
+        failed,
+        results
+      });
+    } catch (error) {
+      console.error("CSV import error:", error);
+      res.status(500).json({ message: "Failed to import categories" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
