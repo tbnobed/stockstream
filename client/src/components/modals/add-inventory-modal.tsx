@@ -45,60 +45,45 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     queryKey: ["/api/suppliers"],
   });
 
-  // Fetch categories dynamically - only when modal is open
-  const { data: types = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["categories", "type"],
+  // Fetch categories dynamically with fallback to hardcoded constants
+  const createCategoryQuery = (type: string, fallbackArray: readonly string[]) => ({
+    queryKey: ["categories", type],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/type");
-      return await response.json();
+      try {
+        const response = await apiRequest("GET", `/api/categories/${type}`);
+        return await response.json();
+      } catch (error) {
+        console.warn(`Failed to fetch ${type} categories, using fallback:`, error);
+        return fallbackArray.map(value => ({ value }));
+      }
     },
     enabled: open,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { data: colors = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["categories", "color"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/color");
-      return await response.json();
-    },
-    enabled: open,
-  });
+  const { data: types = [] } = useQuery<{ value: string }[]>(
+    createCategoryQuery("type", ITEM_TYPES)
+  );
 
-  const { data: sizes = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["categories", "size"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/size");
-      return await response.json();
-    },
-    enabled: open,
-  });
+  const { data: colors = [] } = useQuery<{ value: string }[]>(
+    createCategoryQuery("color", ITEM_COLORS)
+  );
 
-  const { data: designs = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["categories", "design"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/design");
-      return await response.json();
-    },
-    enabled: open,
-  });
+  const { data: sizes = [] } = useQuery<{ value: string }[]>(
+    createCategoryQuery("size", ITEM_SIZES)
+  );
 
-  const { data: groupTypes = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["categories", "groupType"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/groupType");
-      return await response.json();
-    },
-    enabled: open,
-  });
+  const { data: designs = [] } = useQuery<{ value: string }[]>(
+    createCategoryQuery("design", ITEM_DESIGNS)
+  );
 
-  const { data: styleGroups = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["categories", "styleGroup"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/styleGroup");
-      return await response.json();
-    },
-    enabled: open,
-  });
+  const { data: groupTypes = [] } = useQuery<{ value: string }[]>(
+    createCategoryQuery("groupType", GROUP_TYPES)
+  );
+
+  const { data: styleGroups = [] } = useQuery<{ value: string }[]>(
+    createCategoryQuery("styleGroup", STYLE_GROUPS)
+  );
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
