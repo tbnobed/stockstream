@@ -59,6 +59,7 @@ export default function CategoryManagement() {
       toast({
         title: "Success",
         description: "Category added successfully",
+        duration: 3000,
       });
     },
     onError: () => {
@@ -81,6 +82,7 @@ export default function CategoryManagement() {
       toast({
         title: "Success",
         description: "Category updated successfully",
+        duration: 3000,
       });
     },
     onError: () => {
@@ -102,6 +104,7 @@ export default function CategoryManagement() {
       toast({
         title: "Success",
         description: "Category deleted successfully",
+        duration: 3000,
       });
     },
     onError: () => {
@@ -175,11 +178,13 @@ export default function CategoryManagement() {
         toast({
           title: "Import completed",
           description: `${successCount} new categories imported, ${skippedCount} categories already existed`,
+          duration: 4000,
         });
       } else {
         toast({
           title: "Success", 
           description: `${successCount} categories imported successfully`,
+          duration: 4000,
         });
       }
     },
@@ -270,6 +275,7 @@ export default function CategoryManagement() {
       toast({
         title: "Export Complete",
         description: "Categories exported to Excel with separate tabs for each type",
+        duration: 4000,
       });
     } catch (error) {
       toast({
@@ -512,9 +518,9 @@ export default function CategoryManagement() {
                       <Move3D className="h-4 w-4 -rotate-90" />
                     </Button>
                     
-                    <Dialog>
+                    <Dialog open={editingCategory?.id === category.id} onOpenChange={(open) => !open && setEditingCategory(null)}>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" title="Edit">
+                        <Button variant="ghost" size="sm" title="Edit" onClick={() => setEditingCategory(category)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
