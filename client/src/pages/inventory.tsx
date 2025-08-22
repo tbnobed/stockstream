@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ITEM_TYPES, ITEM_COLORS, ITEM_SIZES, ITEM_DESIGNS, GROUP_TYPES, STYLE_GROUPS } from "../../../shared/categories";
 
 export default function Inventory() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -50,6 +49,14 @@ export default function Inventory() {
   const { data: inventoryItems, isLoading } = useQuery({
     queryKey: ["/api/inventory", showArchivedItems ? "?includeArchived=true" : ""],
   });
+
+  // Fetch dynamic categories
+  const { data: types } = useQuery({ queryKey: ["/api/categories/type"] });
+  const { data: colors } = useQuery({ queryKey: ["/api/categories/color"] });
+  const { data: sizes } = useQuery({ queryKey: ["/api/categories/size"] });
+  const { data: designs } = useQuery({ queryKey: ["/api/categories/design"] });
+  const { data: groupTypes } = useQuery({ queryKey: ["/api/categories/groupType"] });
+  const { data: styleGroups } = useQuery({ queryKey: ["/api/categories/styleGroup"] });
 
   // Archive item mutation
   const archiveMutation = useMutation({
@@ -287,8 +294,8 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-types">All types</SelectItem>
-                      {ITEM_TYPES.map((type: string) => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      {(types as any[] || []).map((type: any) => (
+                        <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -302,8 +309,8 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-colors">All colors</SelectItem>
-                      {ITEM_COLORS.map((color: string) => (
-                        <SelectItem key={color} value={color}>{color}</SelectItem>
+                      {(colors as any[] || []).map((color: any) => (
+                        <SelectItem key={color.id} value={color.name}>{color.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -317,8 +324,8 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-sizes">All sizes</SelectItem>
-                      {ITEM_SIZES.map((size: string) => (
-                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                      {(sizes as any[] || []).map((size: any) => (
+                        <SelectItem key={size.id} value={size.name}>{size.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -332,8 +339,8 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-designs">All designs</SelectItem>
-                      {ITEM_DESIGNS.map((design: string) => (
-                        <SelectItem key={design} value={design}>{design}</SelectItem>
+                      {(designs as any[] || []).map((design: any) => (
+                        <SelectItem key={design.id} value={design.name}>{design.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -347,8 +354,8 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-groups">All groups</SelectItem>
-                      {GROUP_TYPES.map((type: string) => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      {(groupTypes as any[] || []).map((type: any) => (
+                        <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -362,8 +369,8 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-styles">All styles</SelectItem>
-                      {STYLE_GROUPS.map((style: string) => (
-                        <SelectItem key={style} value={style}>{style}</SelectItem>
+                      {(styleGroups as any[] || []).map((style: any) => (
+                        <SelectItem key={style.id} value={style.name}>{style.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

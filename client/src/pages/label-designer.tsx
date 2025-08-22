@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,11 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
-import { Printer, Download, Upload, Eye, Settings, Copy } from "lucide-react";
+import { Printer, Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LabelData {
+  selectedInventoryId: string;
   productName: string;
   productCode: string;
   price: string;
@@ -27,6 +32,7 @@ interface LabelData {
 }
 
 const defaultLabelData: LabelData = {
+  selectedInventoryId: "",
   productName: "Product Name",
   productCode: "PRD-001",
   price: "25.00",
@@ -46,8 +52,14 @@ export default function LabelDesigner() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [labelCount, setLabelCount] = useState(10); // Standard Avery 94207 sheet
+  const [showInventoryDropdown, setShowInventoryDropdown] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Fetch inventory items
+  const { data: inventoryItems } = useQuery({
+    queryKey: ["/api/inventory"],
+  });
 
   // Generate QR code when content changes
   useEffect(() => {
@@ -90,6 +102,19 @@ export default function LabelDesigner() {
 
   const updateLabelData = (field: keyof LabelData, value: string | boolean) => {
     setLabelData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleInventorySelect = (inventoryItem: any) => {
+    setLabelData(prev => ({
+      ...prev,
+      selectedInventoryId: inventoryItem.id,
+      productName: inventoryItem.name,
+      productCode: inventoryItem.sku,
+      price: inventoryItem.price.toString(),
+      qrContent: inventoryItem.sku,
+      sizeIndicator: inventoryItem.size || "M"
+    }));
+    setShowInventoryDropdown(false);
   };
 
   const handlePrint = () => {
@@ -385,6 +410,56 @@ export default function LabelDesigner() {
 
               {/* Content Tab */}
               <TabsContent value="content" className="space-y-4">
+                <div>
+                  <Label htmlFor="inventory-select">Select Inventory Item</Label>
+                  <Popover open={showInventoryDropdown} onOpenChange={setShowInventoryDropdown}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={showInventoryDropdown}
+                        className="w-full justify-between"
+                        data-testid="button-select-inventory"
+                      >
+                        {labelData.selectedInventoryId
+                          ? (inventoryItems as any[] || []).find((item: any) => item.id === labelData.selectedInventoryId)?.name
+                          : "Select inventory item..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search inventory..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>No inventory items found.</CommandEmpty>
+                          <CommandGroup>
+                            {(inventoryItems as any[] || []).map((item: any) => (
+                              <CommandItem
+                                key={item.id}
+                                value={item.name}
+                                onSelect={() => handleInventorySelect(item)}
+                                data-testid={`inventory-item-${item.id}`}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{item.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.sku} - ${item.price}
+                                  </span>
+                                </div>
+                                <Check
+                                  className={cn(
+                                    "ml-auto h-4 w-4",
+                                    labelData.selectedInventoryId === item.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <div>
                   <Label htmlFor="product-name">Product Name</Label>
                   <Input
