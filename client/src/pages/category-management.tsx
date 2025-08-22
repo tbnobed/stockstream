@@ -163,16 +163,23 @@ export default function CategoryManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       setIsImporting(false);
       
-      if (data.errorCount > 0) {
+      const { successCount, skippedCount, errorCount } = data;
+      
+      if (errorCount > 0) {
         toast({
-          title: "Import completed with warnings",
-          description: `${data.successCount} categories imported, ${data.errorCount} errors occurred`,
+          title: "Import completed with errors",
+          description: `${successCount} new categories imported, ${skippedCount} already existed, ${errorCount} errors occurred`,
           variant: "destructive",
+        });
+      } else if (skippedCount > 0) {
+        toast({
+          title: "Import completed",
+          description: `${successCount} new categories imported, ${skippedCount} categories already existed`,
         });
       } else {
         toast({
-          title: "Success",
-          description: `${data.successCount} categories imported successfully`,
+          title: "Success", 
+          description: `${successCount} categories imported successfully`,
         });
       }
     },

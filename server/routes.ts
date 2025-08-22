@@ -645,6 +645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const processImportData = async () => {
         try {
           let successCount = 0;
+          let skippedCount = 0;
           let errorCount = 0;
           const errors: string[] = [];
 
@@ -666,7 +667,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                          row['Is Active'] === 'Yes' || row['Is Active'] === true || row['Is Active'] === 'true',
               };
 
-
               // Validate category schema
               const validatedData = insertCategorySchema.parse(categoryData);
               
@@ -677,8 +677,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
 
               if (exists) {
-                errors.push(`Category "${validatedData.value}" of type "${validatedData.type}" already exists`);
-                errorCount++;
+                // Skip existing categories without counting as errors
+                skippedCount++;
                 continue;
               }
 
@@ -691,10 +691,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          
           res.json({
             message: "Import completed",
             successCount,
+            skippedCount,
             errorCount,
             errors: errors.slice(0, 10), // Limit errors to first 10
             totalErrors: errors.length
