@@ -504,11 +504,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Export for categories
-  app.get("/api/categories/export/:type", isAuthenticated, async (req, res) => {
+  // CSV Export for all categories
+  app.get("/api/categories/export", isAuthenticated, async (req, res) => {
     try {
-      const { type } = req.params;
-      const categories = await storage.getCategoriesByType(type);
+      const categories = await storage.getCategories();
       
       // Create CSV content
       const csvHeader = "Type,Value,Display Order,Active\n";
@@ -519,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Set headers for file download
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="${type}_categories.csv"`);
+      res.setHeader('Content-Disposition', `attachment; filename="all_categories.csv"`);
       res.send(csvContent);
     } catch (error) {
       console.error("CSV export error:", error);
@@ -527,13 +526,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Import for categories
+  // CSV Import for all categories
   app.post("/api/categories/import", isAuthenticated, requireAdmin, async (req, res) => {
     try {
-      const { csvData, type } = req.body;
+      const { csvData } = req.body;
       
-      if (!csvData || !type) {
-        return res.status(400).json({ message: "CSV data and type are required" });
+      if (!csvData) {
+        return res.status(400).json({ message: "CSV data is required" });
       }
 
       // Parse CSV data
@@ -567,11 +566,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         parts.push(current.trim().replace(/^"|"$/g, ''));
         
-        if (parts.length >= 2) {
+        if (parts.length >= 4) {
+          const categoryType = parts[0];
           const categoryValue = parts[1];
-          if (categoryValue) {
+          if (categoryType && categoryValue) {
             categories.push({
-              type: type,
+              type: categoryType,
               value: categoryValue,
               displayOrder: parseInt(parts[2]) || 0,
               isActive: parts[3] !== 'false'
@@ -595,6 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.warn(`Failed to create category ${categoryData.value}:`, error);
           results.push({ 
             success: false, 
+            type: categoryData.type,
             value: categoryData.value, 
             error: error instanceof Error ? error.message : "Unknown error" 
           });

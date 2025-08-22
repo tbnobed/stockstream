@@ -138,7 +138,7 @@ export default function CategoryManagement() {
 
   // CSV Import mutation
   const importCategoriesMutation = useMutation({
-    mutationFn: async (data: { csvData: string; type: string }) => {
+    mutationFn: async (data: { csvData: string }) => {
       return apiRequest("POST", "/api/categories/import", data);
     },
     onSuccess: (response) => {
@@ -205,13 +205,13 @@ export default function CategoryManagement() {
   // CSV Export handler
   const handleExportCSV = async () => {
     try {
-      const response = await apiRequest("GET", `/api/categories/export/${selectedType}`);
+      const response = await apiRequest("GET", `/api/categories/export`);
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${selectedType}_categories.csv`;
+      a.download = `all_categories.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -219,7 +219,7 @@ export default function CategoryManagement() {
       
       toast({
         title: "Success",
-        description: "Categories exported successfully",
+        description: "All categories exported successfully",
       });
     } catch (error) {
       toast({
@@ -267,7 +267,6 @@ export default function CategoryManagement() {
     
     importCategoriesMutation.mutate({
       csvData: csvContent,
-      type: selectedType,
     });
   };
 
@@ -330,11 +329,10 @@ export default function CategoryManagement() {
               <Button 
                 variant="outline" 
                 onClick={handleExportCSV}
-                disabled={categories.length === 0}
                 data-testid="button-export-csv"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export CSV
+                Export All Categories
               </Button>
               
               {/* CSV Import Button */}
@@ -342,14 +340,14 @@ export default function CategoryManagement() {
                 <DialogTrigger asChild>
                   <Button variant="outline" data-testid="button-import-csv">
                     <Upload className="h-4 w-4 mr-2" />
-                    Import CSV
+                    Import All Categories
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader>
-                    <DialogTitle>Import {currentTypeInfo?.label}</DialogTitle>
+                    <DialogTitle>Import All Categories</DialogTitle>
                     <DialogDescription>
-                      Upload a CSV file to import categories. Expected format: Type, Value, Display Order, Active
+                      Upload a CSV file to import categories across all types. Expected format: Type, Value, Display Order, Active
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
@@ -384,7 +382,7 @@ export default function CategoryManagement() {
                         CSV Format Example:
                       </h4>
                       <pre className="text-xs">
-Type,Value,Display Order,Active{'\n'}color,Red,0,true{'\n'}color,Blue,1,true
+Type,Value,Display Order,Active{'\n'}color,Red,0,true{'\n'}type,Shirt,0,true{'\n'}size,Large,0,true
                       </pre>
                     </div>
                     
