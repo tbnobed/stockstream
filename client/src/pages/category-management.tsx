@@ -22,6 +22,7 @@ interface Category {
 }
 
 const CATEGORY_TYPES = [
+  { value: "type", label: "Types", description: "Available item types (Shirt, Pants, etc.)" },
   { value: "color", label: "Colors", description: "Available colors for inventory items" },
   { value: "size", label: "Sizes", description: "Available sizes for inventory items" },
   { value: "design", label: "Designs", description: "Available designs for inventory items" },

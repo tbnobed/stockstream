@@ -96,8 +96,13 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     },
   });
 
-  // Use hardcoded types for now (these don't change often)
-  const types = ITEM_TYPES.map(value => ({ value }));
+  const { data: types = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "type"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/type");
+      return await response.json();
+    },
+  });
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
@@ -412,7 +417,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </FormControl>
                       <SelectContent>
                         {types.map((typeItem) => (
-                          <SelectItem key={typeItem.value} value={typeItem.value}>
+                          <SelectItem key={typeItem.id} value={typeItem.value}>
                             {typeItem.value}
                           </SelectItem>
                         ))}
