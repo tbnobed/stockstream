@@ -113,24 +113,35 @@ export default function LabelDesigner() {
   // Auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async (templateData: LabelData) => {
-      console.log('🔄 Auto-save triggered with data:', templateData);
-      console.log('🎯 defaultTemplate available:', !!defaultTemplate);
+      // Use toast instead of console for production debugging
+      toast({
+        title: "Auto-save triggered",
+        description: `Template: ${defaultTemplate ? 'UPDATE' : 'CREATE'}`,
+        duration: 2000,
+      });
       
       if (defaultTemplate) {
         // Update existing default template
-        console.log('📝 Updating existing template:', defaultTemplate.id);
         return apiRequest('PUT', `/api/label-templates/${defaultTemplate.id}`, templateData);
       } else {
         // Create new default template
-        console.log('➕ Creating new template');
         return apiRequest('POST', '/api/label-templates', { ...templateData, isDefault: true });
       }
     },
     onSuccess: (data) => {
-      console.log('✅ Auto-save successful:', data);
+      toast({
+        title: "✅ Template Saved",
+        description: "Your changes have been saved successfully",
+        duration: 2000,
+      });
     },
     onError: (error) => {
-      console.error('❌ Error auto-saving label template:', error);
+      toast({
+        title: "❌ Save Failed",
+        description: error.message || "Failed to save template",
+        variant: "destructive",
+        duration: 5000,
+      });
     },
   });
 
