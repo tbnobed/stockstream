@@ -195,18 +195,12 @@ export default function LabelDesigner() {
     }
   }, [labelData.qrContent, labelData.showQR]);
 
-  // Auto-save label data to server whenever it changes
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      autoSaveMutation.mutate(labelData);
-    }, 2000); // 2 second delay for auto-save
-
-    return () => clearTimeout(timeoutId);
-  }, [labelData]);
+  // Track if template has been loaded to prevent auto-save conflicts
+  const [templateLoaded, setTemplateLoaded] = useState(false);
 
   // Load default template data when available
   useEffect(() => {
-    if (defaultTemplate) {
+    if (defaultTemplate && !templateLoaded) {
       console.log('Loading saved label data:', defaultTemplate);
       const templateData: LabelData = {
         selectedInventoryId: defaultTemplate.selectedInventoryId || "",
@@ -225,8 +219,20 @@ export default function LabelDesigner() {
       };
       console.log('Merged label data:', templateData);
       setLabelData(templateData);
+      setTemplateLoaded(true);
     }
-  }, [defaultTemplate]);
+  }, [defaultTemplate, templateLoaded]);
+
+  // Auto-save label data to server whenever it changes (but only after template is loaded)
+  useEffect(() => {
+    if (!templateLoaded) return; // Don't auto-save until template is loaded
+    
+    const timeoutId = setTimeout(() => {
+      autoSaveMutation.mutate(labelData);
+    }, 2000); // 2 second delay for auto-save
+
+    return () => clearTimeout(timeoutId);
+  }, [labelData, templateLoaded]);
 
   // Save layout to localStorage whenever it changes
   useEffect(() => {
