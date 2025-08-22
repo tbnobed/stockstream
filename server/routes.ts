@@ -518,20 +518,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Export for all categories
-  app.get("/api/categories/export", isAuthenticated, async (req, res) => {
+  // CSV Export for all categories (NEW PATH to bypass cache)
+  app.get("/api/categories/export-fresh", isAuthenticated, async (req, res) => {
     try {
-      console.log("=== CSV EXPORT START ===");
+      console.log("=== CSV EXPORT START ===", new Date().toISOString());
+      
+      // Prevent caching
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       const categories = await storage.getCategories();
       console.log(`Found ${categories.length} categories for export`);
       
       if (categories.length === 0) {
-        console.log("No categories found, sending empty CSV");
+        console.log("ERROR: No categories found, but database has 85!");
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="all_categories.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="all_categories_empty.csv"`);
         res.send("Type,Value,Display Order\n");
         return;
       }
+      
+      console.log("First 3 categories:", JSON.stringify(categories.slice(0, 3)));
       
       // Create CSV content
       const csvHeader = "Type,Value,Display Order\n";
@@ -540,15 +548,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ).join("\n");
       const csvContent = csvHeader + csvRows;
       
-      console.log("CSV content preview:", csvContent.substring(0, 200));
+      console.log("CSV content first 200 chars:", csvContent.substring(0, 200));
+      console.log("Total CSV length:", csvContent.length);
       
       // Set headers for file download
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="all_categories.csv"`);
+      res.setHeader('Content-Disposition', `attachment; filename="all_categories_${Date.now()}.csv"`);
       res.send(csvContent);
     } catch (error) {
       console.error("CSV export error:", error);
-      res.status(500).json({ message: "Failed to export categories" });
+      res.status(500).json({ message: "Failed to export categories", error: error.message });
     }
   });
 

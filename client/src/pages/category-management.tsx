@@ -205,7 +205,7 @@ export default function CategoryManagement() {
   // CSV Export handler
   const handleExportCSV = async () => {
     try {
-      const response = await apiRequest("GET", `/api/categories/export`);
+      const response = await apiRequest("GET", `/api/categories/export-fresh`);
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
