@@ -340,15 +340,35 @@ export default function LabelDesigner() {
   };
 
   const handleInventorySelect = (inventoryItem: any) => {
-    setLabelData(prev => ({
-      ...prev,
+    const updatedData = {
       selectedInventoryId: inventoryItem.id,
       productName: inventoryItem.name,
       productCode: inventoryItem.sku,
       price: inventoryItem.price.toString(),
       qrContent: inventoryItem.sku,
-      sizeIndicator: inventoryItem.size || "M"
+      sizeIndicator: inventoryItem.size || "M",
+      customMessage: labelData.customMessage,
+      logoUrl: labelData.logoUrl,
+      showQR: labelData.showQR,
+      showLogo: labelData.showLogo,
+      showPrice: labelData.showPrice,
+      showMessage: labelData.showMessage,
+      showSize: labelData.showSize
+    };
+    
+    setLabelData(prev => ({
+      ...prev,
+      ...updatedData
     }));
+    
+    // Immediately save the template with inventory data
+    if (templateLoaded) {
+      autoSaveMutation.mutate({
+        ...labelData,
+        ...updatedData
+      });
+    }
+    
     setShowInventoryDropdown(false);
   };
 
