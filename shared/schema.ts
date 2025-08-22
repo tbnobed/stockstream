@@ -44,6 +44,16 @@ export const suppliers = pgTable("suppliers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const categories = pgTable("categories", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: varchar("type").notNull(), // "type", "color", "size", "design", "groupType", "styleGroup"
+  value: varchar("value").notNull(),
+  displayOrder: integer("display_order").default(0), // For custom ordering
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const inventoryItems = pgTable("inventory_items", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   sku: varchar("sku", { length: 50 }).notNull().unique(),
@@ -155,6 +165,12 @@ export const insertInventoryTransactionSchema = createInsertSchema(inventoryTran
   createdAt: true,
 });
 
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // User insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -184,6 +200,9 @@ export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransacti
 
 export type Sale = typeof sales.$inferSelect;
 export type InsertSale = z.infer<typeof insertSaleSchema>;
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 // Extended types with relations
 export type InventoryItemWithSupplier = InventoryItem & {

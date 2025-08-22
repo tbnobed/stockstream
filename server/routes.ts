@@ -6,7 +6,8 @@ import {
   insertSalesAssociateSchema,
   insertSupplierSchema,
   insertInventoryItemSchema,
-  insertSaleSchema
+  insertSaleSchema,
+  insertCategorySchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -428,6 +429,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Storage error:", error);
         res.status(500).json({ message: "Failed to create sale", error: error instanceof Error ? error.message : 'Unknown error' });
       }
+    }
+  });
+
+  // Categories (Admin Only)
+  app.get("/api/categories", isAuthenticated, async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.get("/api/categories/:type", isAuthenticated, async (req, res) => {
+    try {
+      const { type } = req.params;
+      const categories = await storage.getCategoriesByType(type);
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch categories by type" });
+    }
+  });
+
+  app.post("/api/categories", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const category = insertCategorySchema.parse(req.body);
+      const newCategory = await storage.createCategory(category);
+      res.status(201).json(newCategory);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create category" });
+      }
+    }
+  });
+
+  app.put("/api/categories/:id", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updatedCategory = await storage.updateCategory(id, updates);
+      res.json(updatedCategory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/categories/:id", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteCategory(id);
+      if (deleted) {
+        res.json({ message: "Category deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Category not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  app.post("/api/categories/reorder", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { type, categoryIds } = req.body;
+      if (!type || !Array.isArray(categoryIds)) {
+        return res.status(400).json({ message: "Type and categoryIds array required" });
+      }
+      await storage.reorderCategories(type, categoryIds);
+      res.json({ message: "Categories reordered successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reorder categories" });
     }
   });
 

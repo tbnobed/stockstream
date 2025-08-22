@@ -45,6 +45,55 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     queryKey: ["/api/suppliers"],
   });
 
+  // Fetch categories dynamically
+  const { data: types = [] } = useQuery({
+    queryKey: ["/api/categories", "type"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/type");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: colors = [] } = useQuery({
+    queryKey: ["/api/categories", "color"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/color");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: sizes = [] } = useQuery({
+    queryKey: ["/api/categories", "size"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/size");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: designs = [] } = useQuery({
+    queryKey: ["/api/categories", "design"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/design");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: groupTypes = [] } = useQuery({
+    queryKey: ["/api/categories", "groupType"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/groupType");
+      return response as { value: string }[];
+    },
+  });
+
+  const { data: styleGroups = [] } = useQuery({
+    queryKey: ["/api/categories", "styleGroup"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/categories/styleGroup");
+      return response as { value: string }[];
+    },
+  });
+
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
     defaultValues: editingItem ? {
@@ -357,9 +406,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {ITEM_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
+                        {types.map((typeItem) => (
+                          <SelectItem key={typeItem.value} value={typeItem.value}>
+                            {typeItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -379,22 +428,22 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       <div className="space-y-2">
                         <div className="text-sm text-muted-foreground">Select multiple colors:</div>
                         <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
-                          {ITEM_COLORS.map((color) => (
-                            <div key={color} className="flex items-center space-x-2">
+                          {colors.map((colorItem) => (
+                            <div key={colorItem.value} className="flex items-center space-x-2">
                               <Checkbox
-                                id={`color-${color}`}
-                                checked={selectedColors.includes(color)}
+                                id={`color-${colorItem.value}`}
+                                checked={selectedColors.includes(colorItem.value)}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
-                                    setSelectedColors([...selectedColors, color]);
+                                    setSelectedColors([...selectedColors, colorItem.value]);
                                   } else {
-                                    setSelectedColors(selectedColors.filter(c => c !== color));
+                                    setSelectedColors(selectedColors.filter(c => c !== colorItem.value));
                                   }
                                 }}
-                                data-testid={`checkbox-color-${color}`}
+                                data-testid={`checkbox-color-${colorItem.value}`}
                               />
-                              <label htmlFor={`color-${color}`} className="text-sm font-medium">
-                                {color}
+                              <label htmlFor={`color-${colorItem.value}`} className="text-sm font-medium">
+                                {colorItem.value}
                               </label>
                             </div>
                           ))}
@@ -424,9 +473,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {ITEM_COLORS.map((color) => (
-                            <SelectItem key={color} value={color}>
-                              {color}
+                          {colors.map((colorItem) => (
+                            <SelectItem key={colorItem.value} value={colorItem.value}>
+                              {colorItem.value}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -456,9 +505,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {ITEM_DESIGNS.map((design) => (
-                          <SelectItem key={design} value={design}>
-                            {design}
+                        {designs.map((designItem) => (
+                          <SelectItem key={designItem.value} value={designItem.value}>
+                            {designItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -484,9 +533,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {GROUP_TYPES.map((groupType) => (
-                          <SelectItem key={groupType} value={groupType}>
-                            {groupType}
+                        {groupTypes.map((groupTypeItem) => (
+                          <SelectItem key={groupTypeItem.value} value={groupTypeItem.value}>
+                            {groupTypeItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -514,9 +563,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {STYLE_GROUPS.map((styleGroup) => (
-                          <SelectItem key={styleGroup} value={styleGroup}>
-                            {styleGroup}
+                        {styleGroups.map((styleGroupItem) => (
+                          <SelectItem key={styleGroupItem.value} value={styleGroupItem.value}>
+                            {styleGroupItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -536,22 +585,22 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       <div className="space-y-2">
                         <div className="text-sm text-muted-foreground">Select multiple sizes:</div>
                         <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto">
-                          {ITEM_SIZES.map((size) => (
-                            <div key={size} className="flex items-center space-x-2">
+                          {sizes.map((sizeItem) => (
+                            <div key={sizeItem.value} className="flex items-center space-x-2">
                               <Checkbox
-                                id={`size-${size}`}
-                                checked={selectedSizes.includes(size)}
+                                id={`size-${sizeItem.value}`}
+                                checked={selectedSizes.includes(sizeItem.value)}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
-                                    setSelectedSizes([...selectedSizes, size]);
+                                    setSelectedSizes([...selectedSizes, sizeItem.value]);
                                   } else {
-                                    setSelectedSizes(selectedSizes.filter(s => s !== size));
+                                    setSelectedSizes(selectedSizes.filter(s => s !== sizeItem.value));
                                   }
                                 }}
-                                data-testid={`checkbox-size-${size}`}
+                                data-testid={`checkbox-size-${sizeItem.value}`}
                               />
-                              <label htmlFor={`size-${size}`} className="text-sm font-medium">
-                                {size}
+                              <label htmlFor={`size-${sizeItem.value}`} className="text-sm font-medium">
+                                {sizeItem.value}
                               </label>
                             </div>
                           ))}
@@ -581,9 +630,9 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {ITEM_SIZES.map((size) => (
-                            <SelectItem key={size} value={size}>
-                              {size}
+                          {sizes.map((sizeItem) => (
+                            <SelectItem key={sizeItem.value} value={sizeItem.value}>
+                              {sizeItem.value}
                             </SelectItem>
                           ))}
                         </SelectContent>

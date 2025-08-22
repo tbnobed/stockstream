@@ -5,6 +5,7 @@ import {
   inventoryItems,
   inventoryTransactions,
   sales,
+  categories,
   type User,
   type InsertUser,
   type SalesAssociate,
@@ -19,6 +20,8 @@ import {
   type Sale,
   type InsertSale,
   type SaleWithDetails,
+  type Category,
+  type InsertCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, lt, and, like, or, ilike } from "drizzle-orm";
@@ -63,6 +66,7 @@ export interface IStorage {
   // Sales
   getSales(): Promise<SaleWithDetails[]>;
   getSale(id: string): Promise<SaleWithDetails | undefined>;
+  getSalesByOrderNumber(orderNumber: string): Promise<SaleWithDetails[]>;
   createSale(sale: InsertSale): Promise<Sale>;
   
   // Dashboard Stats
@@ -72,6 +76,15 @@ export interface IStorage {
     salesToday: number;
     lowStockCount: number;
   }>;
+
+  // Categories
+  getCategories(): Promise<Category[]>;
+  getCategoriesByType(type: string): Promise<Category[]>;
+  getCategory(id: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<Category>): Promise<Category>;
+  deleteCategory(id: string): Promise<boolean>;
+  reorderCategories(type: string, categoryIds: string[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -504,6 +517,58 @@ export class DatabaseStorage implements IStorage {
         salesToday: 0,
         lowStockCount: 0,
       };
+    }
+  }
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    return db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.type, categories.displayOrder, categories.value);
+  }
+
+  async getCategoriesByType(type: string): Promise<Category[]> {
+    return db.select().from(categories).where(and(eq(categories.type, type), eq(categories.isActive, true))).orderBy(categories.displayOrder, categories.value);
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db
+      .insert(categories)
+      .values(category)
+      .returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: string, categoryUpdate: Partial<Category>): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ ...categoryUpdate, updatedAt: sql`NOW()` })
+      .where(eq(categories.id, id))
+      .returning();
+    if (!updatedCategory) {
+      throw new Error('Category not found');
+    }
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db
+      .update(categories)
+      .set({ isActive: false, updatedAt: sql`NOW()` })
+      .where(eq(categories.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async reorderCategories(type: string, categoryIds: string[]): Promise<void> {
+    // Update display order for each category
+    for (let i = 0; i < categoryIds.length; i++) {
+      await db
+        .update(categories)
+        .set({ displayOrder: i, updatedAt: sql`NOW()` })
+        .where(and(eq(categories.id, categoryIds[i]), eq(categories.type, type)));
     }
   }
 }
