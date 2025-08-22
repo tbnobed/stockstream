@@ -102,6 +102,24 @@ echo "🔄 Applying production constraint fixes..."
 psql "$DATABASE_URL" -c "
 DO \$\$
 BEGIN
+    -- 0. Ensure categories table exists (for existing databases that don't have it)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'categories' 
+        AND table_schema = 'public'
+    ) THEN
+        CREATE TABLE categories (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            type VARCHAR NOT NULL,
+            value VARCHAR NOT NULL,
+            display_order INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT true,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        RAISE NOTICE 'Created missing categories table';
+    END IF;
+    
     -- 1. Ensure all users have corresponding sales_associate records
     INSERT INTO sales_associates (id, name, email, user_id, is_active, created_at)
     SELECT u.id, 
