@@ -909,7 +909,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
-      const templateData = { ...req.body, userId };
+      // Clean up the template data - convert empty string inventory IDs to null
+      const templateData = { 
+        ...req.body, 
+        userId,
+        selectedInventoryId: req.body.selectedInventoryId || null 
+      };
       const template = await storage.createLabelTemplate(templateData);
       res.json(template);
     } catch (error) {
@@ -925,7 +930,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User not authenticated" });
       }
       const { id } = req.params;
-      const updates = req.body;
+      // Clean up the updates - convert empty string inventory IDs to null
+      const updates = { 
+        ...req.body,
+        selectedInventoryId: req.body.selectedInventoryId || null 
+      };
       const template = await storage.updateLabelTemplate(id, userId, updates);
       if (!template) {
         return res.status(404).json({ message: "Label template not found" });
