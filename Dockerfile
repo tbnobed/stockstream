@@ -60,8 +60,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.confi
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Set proper ownership
-RUN chown -R nextjs:nodejs /app
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads && \
+    chown -R nextjs:nodejs /app
 
 # Switch to app user
 USER nextjs
