@@ -829,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate unique filename for local storage
-      const { randomUUID } = require("crypto");
+      const { randomUUID } = await import("crypto");
       const fileId = randomUUID();
       const localFileName = `${fileId}.${fileExtension}`;
       
