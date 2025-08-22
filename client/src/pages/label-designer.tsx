@@ -323,22 +323,9 @@ export default function LabelDesigner() {
   };
 
   const handleLogoSelect = (mediaFile: MediaFile) => {
-    // Handle both local and object storage paths
-    let logoUrl = mediaFile.objectPath;
-    if (logoUrl.startsWith('/uploads/')) {
-      // Local storage - use the path directly
-      logoUrl = logoUrl;
-    } else if (logoUrl.startsWith('/media/')) {
-      // Object storage legacy - convert to uploads path
-      logoUrl = logoUrl.replace('/media/', '/uploads/');
-    } else {
-      // Fallback - assume it's just the filename and prefix with /uploads/
-      logoUrl = `/uploads/${logoUrl}`;
-    }
-    
     setLabelData(prev => ({
       ...prev,
-      logoUrl: logoUrl,
+      logoUrl: mediaFile.objectPath, // Use the objectPath directly
       showLogo: true
     }));
   };
@@ -886,7 +873,7 @@ export default function LabelDesigner() {
                         key={mediaFile.id}
                         className={cn(
                           "relative border rounded-lg p-3 cursor-pointer transition-all hover:border-primary/50 min-h-[120px]",
-                          labelData.logoUrl === `/media/${mediaFile.objectPath.replace('/media/', '')}` 
+                          labelData.logoUrl === mediaFile.objectPath 
                             ? "border-primary bg-primary/5" 
                             : "border-border"
                         )}
@@ -895,7 +882,7 @@ export default function LabelDesigner() {
                       >
                         <div className="aspect-square flex items-center justify-center bg-muted rounded h-20 w-full mb-2">
                           <img 
-                            src={`/media/${mediaFile.objectPath.replace('/media/', '')}`}
+                            src={mediaFile.objectPath}
                             alt={mediaFile.originalName}
                             className="max-w-full max-h-full object-contain"
                             onError={(e) => {
