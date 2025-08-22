@@ -587,6 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Handle Excel file with multiple worksheets
         try {
           const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+          console.log('🔍 Available sheet names in Excel file:', workbook.SheetNames);
           
           // Map sheet names to actual category types
           const sheetToTypeMap = {
@@ -602,6 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
+              console.log(`✅ Processing sheet "${sheetName}" with ${sheetData.length} rows for type "${categoryType}"`);
               
               // Add type information to each row based on sheet name
               const typedData = sheetData.map((row: any) => ({
@@ -613,8 +615,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
               
               allRows.push(...typedData);
+            } else {
+              console.log(`❌ Sheet "${sheetName}" not found in workbook`);
             }
           });
+          
+          console.log(`📊 Total rows collected for import: ${allRows.length}`);
+          allRows.forEach(row => console.log(`   - Type: ${row.type}, Value: ${row.value}`));
         } catch (error) {
           return res.status(400).json({ message: "Failed to parse Excel file" });
         }
