@@ -73,10 +73,18 @@ export function ObjectUploader({
       formData.append('file', file);
 
       console.log("Uploading file to local storage...");
+      
+      // Get JWT token for authentication
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const uploadResponse = await fetch(uploadParams.uploadURL, {
         method: 'PUT',
         body: formData,
-        credentials: 'include', // Include session cookies for authentication
+        headers,
       });
 
       if (!uploadResponse.ok) {
