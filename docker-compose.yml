@@ -38,15 +38,13 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-your_very_long_random_session_secret_key_here_change_in_production}
       JWT_SECRET: ${JWT_SECRET:-your_very_long_random_jwt_secret_key_here_change_in_production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      # Object Storage Configuration (if using external object storage)
-      PRIVATE_OBJECT_DIR: ${PRIVATE_OBJECT_DIR:-}
-      PUBLIC_OBJECT_SEARCH_PATHS: ${PUBLIC_OBJECT_SEARCH_PATHS:-}
-      DEFAULT_OBJECT_STORAGE_BUCKET_ID: ${DEFAULT_OBJECT_STORAGE_BUCKET_ID:-}
+      # Note: Object storage removed - using local file storage in /app/uploads
       PORT: 5000
     ports:
       - "${APP_PORT:-5000}:5000"
     volumes:
       - ./logs:/app/logs
+      - ./uploads:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
       interval: 30s

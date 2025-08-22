@@ -11,9 +11,9 @@
 
 ### ✅ New in This Version
 - **Label Templates Table**: User-specific label template storage in database
-- **Media Files Table**: Logo library with file management
+- **Media Files Table**: Logo library with local file management
 - **Cross-System Persistence**: Label settings sync across different browsers/devices
-- **Object Storage Integration**: Support for external object storage providers
+- **Local File Storage**: All file uploads stored locally in Docker volume
 - **Enhanced Authentication**: JWT tokens with proper session management
 
 ## Quick Start
@@ -64,17 +64,17 @@
 - `SESSION_SECRET`: Session encryption key
 - `JWT_SECRET`: JWT token signing key
 
-### Optional (Object Storage)
-- `PRIVATE_OBJECT_DIR`: Private object storage directory
-- `PUBLIC_OBJECT_SEARCH_PATHS`: Public asset search paths
-- `DEFAULT_OBJECT_STORAGE_BUCKET_ID`: Default storage bucket
+### Note
+- Object storage has been removed - all files are stored locally in `/app/uploads`
+- Files persist via Docker volume mount to `./uploads/` on host
 
 ## Logo Library Features
 - **Supported Formats**: PNG, JPG, JPEG, GIF, SVG
 - **File Size Limit**: 5MB per file
-- **Storage**: Database records with object storage integration
+- **Storage**: Local file storage in `/app/uploads` directory
 - **User Management**: Each user can upload and manage their own logos
 - **Label Integration**: Direct integration with label designer
+- **Persistence**: Files saved to Docker volume `./uploads/` on host
 
 ## Label Template Persistence
 - **User-Specific**: Each user has their own templates
@@ -92,4 +92,4 @@
 - Existing data preserved during updates
 - Multi-item transaction support enabled by default
 - Archive functionality included
-- Object storage integration ready for external providers
+- Local file storage with persistent Docker volumes

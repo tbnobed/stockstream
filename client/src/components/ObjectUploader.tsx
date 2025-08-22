@@ -8,8 +8,9 @@ interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
   onGetUploadParameters: () => Promise<{
-    method: "PUT";
-    url: string;
+    uploadURL: string;
+    localFileName?: string;
+    useObjectStorage: boolean;
   }>;
   onComplete?: (result: { successful: Array<{ uploadURL: string; name: string; size: number; type: string }> }) => void;
   buttonClassName?: string;
@@ -64,35 +65,41 @@ export function ObjectUploader({
 
     try {
       console.log("Getting upload parameters...");
-      const { url: uploadURL } = await onGetUploadParameters();
-      console.log("Upload URL received:", uploadURL);
+      const uploadParams = await onGetUploadParameters();
+      console.log("Upload parameters received:", uploadParams);
 
-      console.log("Uploading file to storage...");
-      const uploadResponse = await fetch(uploadURL, {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+
+      console.log("Uploading file to local storage...");
+      const uploadResponse = await fetch(uploadParams.uploadURL, {
         method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+        body: formData,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.status}`);
+        const errorText = await uploadResponse.text().catch(() => 'Unknown error');
+        throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}. ${errorText}`);
       }
 
-      console.log("File uploaded successfully");
+      const uploadResult = await uploadResponse.json();
+      console.log("Upload successful!", uploadResult);
 
-      // Call completion callback
-      if (onComplete) {
-        onComplete({
-          successful: [{
-            uploadURL,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-          }]
-        });
-      }
+      // Call onComplete with the result, using localPath as uploadURL
+      onComplete?.({
+        successful: [{
+          uploadURL: uploadResult.localPath || uploadParams.uploadURL,
+          name: file.name,
+          size: file.size,
+          type: file.type
+        }]
+      });
+
+      toast({
+        title: "Upload successful",
+        description: `${file.name} has been uploaded successfully.`,
+      });
 
       // Reset file input
       if (fileInputRef.current) {
@@ -103,7 +110,7 @@ export function ObjectUploader({
       console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload file. Please try again.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {

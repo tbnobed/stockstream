@@ -18,7 +18,9 @@ import multer from "multer";
 import csvParser from "csv-parser";
 import { Readable } from "stream";
 import * as XLSX from "xlsx";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+// Object storage removed - using local file storage only
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
@@ -37,6 +39,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+  // Configure multer for media file uploads (images)
+  const mediaUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/svg+xml'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PNG, JPG, JPEG, GIF, SVG files are allowed'));
+      }
+    }
+  });
+
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
 
   // Health check endpoint (before auth middleware)
   app.get('/api/health', async (req, res) => {
@@ -769,8 +793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Media Files Routes
-  const objectStorageService = new ObjectStorageService();
+  // Media Files Routes (Local Storage Only)
 
   // Get media files (logos)
   app.get("/api/media", isAuthenticated, async (req, res) => {
@@ -784,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get upload URL for media file
+  // Get upload URL for media file (local storage only)
   app.post("/api/media/upload", isAuthenticated, async (req, res) => {
     try {
       const { fileName, fileType } = req.body;
@@ -799,11 +822,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid filename" });
       }
 
-      const uploadURL = await objectStorageService.getMediaUploadURL(`.${fileExtension}`);
-      res.json({ uploadURL });
+      // Validate file type
+      const allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg'];
+      if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+        return res.status(400).json({ message: "Invalid file type. Allowed: PNG, JPG, JPEG, GIF, SVG" });
+      }
+
+      // Generate unique filename for local storage
+      const { randomUUID } = require("crypto");
+      const fileId = randomUUID();
+      const localFileName = `${fileId}.${fileExtension}`;
+      
+      res.json({ 
+        uploadURL: `/api/media/local-upload/${localFileName}`,
+        localFileName,
+        useObjectStorage: false 
+      });
     } catch (error) {
       console.error("Failed to get upload URL:", error);
       res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // File upload endpoint
+  app.put("/api/media/local-upload/:fileName", isAuthenticated, mediaUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileName = req.params.fileName;
+      const filePath = path.join(uploadsDir, fileName);
+      
+      // Write file to disk
+      fs.writeFileSync(filePath, req.file.buffer);
+      
+      res.json({ 
+        message: "File uploaded successfully",
+        fileName,
+        localPath: `/uploads/${fileName}`
+      });
+    } catch (error) {
+      console.error("Local file upload error:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // Serve uploaded files
+  app.get("/uploads/:fileName", async (req, res) => {
+    try {
+      const fileName = req.params.fileName;
+      const filePath = path.join(uploadsDir, fileName);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Set appropriate headers
+      const ext = path.extname(fileName).toLowerCase();
+      const mimeTypes: { [key: string]: string } = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml'
+      };
+      
+      const contentType = mimeTypes[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      
+      // Stream the file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error("Error serving local file:", error);
+      res.status(500).json({ error: "Error serving file" });
     }
   });
 
@@ -819,8 +913,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user ID from session
       const userId = (req as any).user?.claims?.sub;
       
-      // Normalize the object path from the upload URL
-      const objectPath = objectStorageService.normalizeMediaPath(uploadURL);
+      // Local storage path only
+      const objectPath = uploadURL; // Direct path like /uploads/filename.ext
       
       const mediaFileData = {
         fileName,
@@ -840,22 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve media files
-  app.get("/media/:mediaPath(*)", async (req, res) => {
-    try {
-      // Correctly construct the media path with /media/ prefix
-      const mediaPath = `/media/${req.params.mediaPath}`;
-      
-      const file = await objectStorageService.getMediaFile(mediaPath);
-      await objectStorageService.downloadObject(file, res);
-    } catch (error) {
-      console.error("Error serving media file:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.status(404).json({ error: "Media file not found" });
-      }
-      return res.status(500).json({ error: "Error serving media file" });
-    }
-  });
+  // Note: Media files are served via /uploads/:fileName endpoint above
 
   // Delete media file
   app.delete("/api/media/:id", isAuthenticated, async (req, res) => {
