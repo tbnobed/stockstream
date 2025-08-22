@@ -877,7 +877,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Label Template endpoints
   app.get("/api/label-templates", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       const templates = await storage.getLabelTemplates(userId);
       res.json(templates);
     } catch (error) {
@@ -888,7 +891,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/label-templates/default", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       const template = await storage.getDefaultLabelTemplate(userId);
       res.json(template || null);
     } catch (error) {
@@ -899,7 +905,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/label-templates", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       const templateData = { ...req.body, userId };
       const template = await storage.createLabelTemplate(templateData);
       res.json(template);
@@ -911,7 +920,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/label-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       const { id } = req.params;
       const updates = req.body;
       const template = await storage.updateLabelTemplate(id, userId, updates);
@@ -927,7 +939,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/label-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       const { id } = req.params;
       const success = await storage.deleteLabelTemplate(id, userId);
       if (!success) {

@@ -95,16 +95,10 @@ export default function LabelDesigner() {
     mutationFn: async (templateData: LabelData) => {
       if (defaultTemplate) {
         // Update existing default template
-        return apiRequest(`/api/label-templates/${defaultTemplate.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(templateData),
-        });
+        return apiRequest('PUT', `/api/label-templates/${defaultTemplate.id}`, templateData);
       } else {
         // Create new default template
-        return apiRequest('/api/label-templates', {
-          method: 'POST',
-          body: JSON.stringify({ ...templateData, isDefault: true }),
-        });
+        return apiRequest('POST', '/api/label-templates', { ...templateData, isDefault: true });
       }
     },
     onError: (error) => {
