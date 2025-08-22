@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { X } from "lucide-react";
-import { insertInventoryItemSchema, type InsertInventoryItem } from "@shared/schema";
+import { insertInventoryItemSchema, type InsertInventoryItem, type Supplier } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,57 +41,63 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [isMultiVariant, setIsMultiVariant] = useState(!editingItem);
 
-  const { data: suppliers } = useQuery({
+  const { data: suppliers = [] } = useQuery<Supplier[]>({
     queryKey: ["/api/suppliers"],
   });
 
-  // Fetch categories dynamically
-  const { data: types = [] } = useQuery({
+  // Fetch categories dynamically - only when modal is open
+  const { data: types = [] } = useQuery<{ value: string }[]>({
     queryKey: ["/api/categories", "type"],
     queryFn: async () => {
-      const response = await apiRequest("/api/categories/type");
-      return response as { value: string }[];
+      const response = await apiRequest("GET", "/api/categories/type");
+      return await response.json() as { value: string }[];
     },
+    enabled: open,
   });
 
-  const { data: colors = [] } = useQuery({
+  const { data: colors = [] } = useQuery<{ value: string }[]>({
     queryKey: ["/api/categories", "color"],
     queryFn: async () => {
-      const response = await apiRequest("/api/categories/color");
-      return response as { value: string }[];
+      const response = await apiRequest("GET", "/api/categories/color");
+      return await response.json() as { value: string }[];
     },
+    enabled: open,
   });
 
-  const { data: sizes = [] } = useQuery({
+  const { data: sizes = [] } = useQuery<{ value: string }[]>({
     queryKey: ["/api/categories", "size"],
     queryFn: async () => {
-      const response = await apiRequest("/api/categories/size");
-      return response as { value: string }[];
+      const response = await apiRequest("GET", "/api/categories/size");
+      return await response.json() as { value: string }[];
     },
+    enabled: open,
   });
 
-  const { data: designs = [] } = useQuery({
+  const { data: designs = [] } = useQuery<{ value: string }[]>({
     queryKey: ["/api/categories", "design"],
     queryFn: async () => {
-      const response = await apiRequest("/api/categories/design");
-      return response as { value: string }[];
+      const response = await apiRequest("GET", "/api/categories/design");
+      return await response.json() as { value: string }[];
     },
+    enabled: open,
   });
 
-  const { data: groupTypes = [] } = useQuery({
+  const { data: groupTypes = [] } = useQuery<{ value: string }[]>({
     queryKey: ["/api/categories", "groupType"],
     queryFn: async () => {
-      const response = await apiRequest("/api/categories/groupType");
-      return response as { value: string }[];
+      const response = await apiRequest("GET", "/api/categories/groupType");
+      return await response.json() as { value: string }[];
     },
+    enabled: open,
   });
 
-  const { data: styleGroups = [] } = useQuery({
+  const { data: styleGroups = [] } = useQuery<{ value: string }[]>({
     queryKey: ["/api/categories", "styleGroup"],
     queryFn: async () => {
-      const response = await apiRequest("/api/categories/styleGroup");
-      return response as { value: string }[];
+      const response = await apiRequest("GET", "/api/categories/styleGroup");
+      return await response.json() as { value: string }[];
     },
+    enabled: open,
   });
 
   const form = useForm<InsertInventoryItem>({
@@ -786,7 +792,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {suppliers && Array.isArray(suppliers) && suppliers.map((supplier: any) => (
+                      {suppliers.map((supplier) => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </SelectItem>
