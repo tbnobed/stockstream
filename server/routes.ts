@@ -545,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoriesOfType.forEach(cat => {
           worksheetData.push([
             cat.value,
-            cat.displayOrder ?? 0,
+            (cat.displayOrder ?? 0).toString(),
             cat.isActive ? 'Yes' : 'No'
           ]);
         });
@@ -638,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Process the imported data
-      async function processImportData() {
+      const processImportData = async () => {
         try {
           let successCount = 0;
           let errorCount = 0;
@@ -696,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Import processing error:", error);
           res.status(500).json({ message: "Failed to process import data" });
         }
-      }
+      };
 
       if (isExcel) {
         await processImportData();
