@@ -164,10 +164,9 @@ export default function CategoryManagement() {
       setIsImporting(false);
       
       if (data.errorCount > 0) {
-        console.log("Import errors:", data.errors);
         toast({
           title: "Import completed with warnings",
-          description: `${data.successCount} categories imported, ${data.errorCount} errors occurred. Check console for details.`,
+          description: `${data.successCount} categories imported, ${data.errorCount} errors occurred`,
           variant: "destructive",
         });
       } else {

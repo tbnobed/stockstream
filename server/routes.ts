@@ -545,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoriesOfType.forEach(cat => {
           worksheetData.push([
             cat.value,
-            (cat.displayOrder ?? 0).toString(),
+            cat.displayOrder ?? 0,
             cat.isActive ? 'Yes' : 'No'
           ]);
         });
@@ -583,53 +583,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isExcel = req.file.originalname.endsWith('.xlsx') || 
                      req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-      console.log(`File received: ${req.file.originalname}, isExcel: ${isExcel}, size: ${req.file.buffer.length}`);
-
       if (isExcel) {
         // Handle Excel file with multiple worksheets
         try {
           const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
           const categoryTypes = ['Type', 'Color', 'Size', 'Design', 'GroupType', 'StyleGroup'];
           
-          // Map sheet names to database category types
-          const sheetTypeMapping: Record<string, string> = {
-            'Type': 'type',
-            'Color': 'color', 
-            'Size': 'size',
-            'Design': 'design',
-            'GroupType': 'groupType',
-            'StyleGroup': 'styleGroup',
-            'Grouptype': 'groupType',
-            'Stylegroup': 'styleGroup'
-          };
-
-          console.log("Available sheet names:", workbook.SheetNames);
-          
           categoryTypes.forEach(sheetName => {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
-              console.log(`Processing sheet ${sheetName}:`, sheetData.length, "rows");
               
               // Add type information to each row based on sheet name
-              const typedData = sheetData
-                .filter((row: any) => {
-                  // Filter out empty rows
-                  const value = row['Value'] || row.value;
-                  return value && value.toString().trim() !== '';
-                })
-                .map((row: any) => ({
-                  ...row,
-                  type: sheetTypeMapping[sheetName] || sheetName.toLowerCase(),
-                  value: (row['Value'] || row.value || '').toString().trim(),
-                  displayOrder: parseInt(row['Display Order'] || row.displayOrder || '0') || 0,
-                  isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
-                }));
+              const typedData = sheetData.map((row: any) => ({
+                ...row,
+                type: sheetName.toLowerCase(),
+                value: row['Value'] || row.value,
+                displayOrder: row['Display Order'] || row.displayOrder || 0,
+                isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
+              }));
               
-              console.log(`Sheet ${sheetName} processed to type:`, sheetTypeMapping[sheetName] || sheetName.toLowerCase());
               allRows.push(...typedData);
-            } else {
-              console.log(`Sheet ${sheetName} not found in workbook`);
             }
           });
         } catch (error) {
@@ -637,28 +611,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else {
         // Handle CSV file
-        const csvData: any[] = [];
-        const stream = Readable.from(req.file.buffer.toString());
-        
-        await new Promise<void>((resolve, reject) => {
+        return new Promise((resolve) => {
+          const csvData: any[] = [];
+          const stream = Readable.from(req.file!.buffer.toString());
+          
           stream
             .pipe(csvParser())
             .on('data', (data) => {
               csvData.push(data);
             })
-            .on('end', () => {
+            .on('end', async () => {
               allRows = csvData;
-              resolve();
+              processImportData();
             })
             .on('error', (error) => {
               console.error("CSV parsing error:", error);
-              reject(error);
+              res.status(500).json({ message: "Failed to parse CSV file" });
             });
         });
       }
 
       // Process the imported data
-      const processImportData = async () => {
+      async function processImportData() {
         try {
           let successCount = 0;
           let errorCount = 0;
@@ -667,8 +641,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const row of allRows) {
             try {
               // Validate required fields
-              if (!row.type || !row.value || row.value.trim() === '') {
-                errors.push(`Row missing required fields (type: ${row.type}, value: "${row.value}")`);
+              if (!row.type || !row.value) {
+                errors.push(`Row missing required fields: ${JSON.stringify(row)}`);
                 errorCount++;
                 continue;
               }
@@ -691,7 +665,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
 
               if (exists) {
-                // Skip duplicates silently - don't count as errors
+                errors.push(`Category "${validatedData.value}" of type "${validatedData.type}" already exists`);
+                errorCount++;
                 continue;
               }
 
@@ -704,26 +679,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          console.log(`Import summary: ${successCount} success, ${errorCount} errors, ${allRows.length} total rows processed`);
           res.json({
             message: "Import completed",
             successCount,
             errorCount,
             errors: errors.slice(0, 10), // Limit errors to first 10
-            totalErrors: errors.length,
-            debug: {
-              totalRowsProcessed: allRows.length,
-              successCount,
-              errorCount
-            }
+            totalErrors: errors.length
           });
         } catch (error) {
           console.error("Import processing error:", error);
           res.status(500).json({ message: "Failed to process import data" });
         }
-      };
+      }
 
-      await processImportData();
+      if (isExcel) {
+        await processImportData();
+      }
     } catch (error) {
       console.error("Import error:", error);
       res.status(500).json({ message: "Failed to import categories" });
