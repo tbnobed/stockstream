@@ -545,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoriesOfType.forEach(cat => {
           worksheetData.push([
             cat.value,
-            cat.displayOrder ?? 0,
+            (cat.displayOrder ?? 0).toString(),
             cat.isActive ? 'Yes' : 'No'
           ]);
         });
@@ -587,9 +587,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Handle Excel file with multiple worksheets
         try {
           const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-          const categoryTypes = ['Type', 'Color', 'Size', 'Design', 'GroupType', 'StyleGroup'];
           
-          categoryTypes.forEach(sheetName => {
+          // Map sheet names to actual category types
+          const sheetToTypeMap = {
+            'Type': 'type',
+            'Color': 'color', 
+            'Size': 'size',
+            'Design': 'design',
+            'GroupType': 'groupType',
+            'StyleGroup': 'styleGroup'
+          };
+          
+          Object.entries(sheetToTypeMap).forEach(([sheetName, categoryType]) => {
             if (workbook.SheetNames.includes(sheetName)) {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet);
@@ -597,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Add type information to each row based on sheet name
               const typedData = sheetData.map((row: any) => ({
                 ...row,
-                type: sheetName.toLowerCase(),
+                type: categoryType, // Use the correct camelCase type
                 value: row['Value'] || row.value,
                 displayOrder: row['Display Order'] || row.displayOrder || 0,
                 isActive: (row['Is Active'] || row.isActive) === 'Yes' || (row['Is Active'] || row.isActive) === true
@@ -632,7 +641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Process the imported data
-      async function processImportData() {
+      const processImportData = async () => {
         try {
           let successCount = 0;
           let errorCount = 0;
@@ -690,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Import processing error:", error);
           res.status(500).json({ message: "Failed to process import data" });
         }
-      }
+      };
 
       if (isExcel) {
         await processImportData();
