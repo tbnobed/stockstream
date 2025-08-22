@@ -76,9 +76,18 @@ export function ObjectUploader({
       })
   );
 
+  const handleButtonClick = () => {
+    console.log("Upload button clicked, opening modal...");
+    setShowModal(true);
+  };
+
   return (
     <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
+      <Button 
+        onClick={handleButtonClick} 
+        className={buttonClassName}
+        data-testid="upload-logo-button"
+      >
         {children}
       </Button>
 

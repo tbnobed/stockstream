@@ -242,30 +242,49 @@ export default function LabelDesigner() {
   };
 
   const handleGetUploadParameters = async () => {
-    const fileName = `logo-${Date.now()}.png`;
-    const response = await apiRequest("POST", "/api/media/upload", {
-      fileName,
-      fileType: "image/png",
-    });
-    const data = await response.json();
-    return {
-      method: "PUT" as const,
-      url: data.uploadURL,
-    };
+    console.log("Getting upload parameters...");
+    try {
+      const fileName = `logo-${Date.now()}.png`;
+      console.log("Generated filename:", fileName);
+      
+      const response = await apiRequest("POST", "/api/media/upload", {
+        fileName,
+        fileType: "image/png",
+      });
+      const data = await response.json();
+      console.log("Upload URL received:", data.uploadURL);
+      
+      return {
+        method: "PUT" as const,
+        url: data.uploadURL,
+      };
+    } catch (error) {
+      console.error("Error getting upload parameters:", error);
+      throw error;
+    }
   };
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log("Upload complete result:", result);
+    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const file = uploadedFile.data as any;
+      console.log("Uploaded file details:", uploadedFile);
+      console.log("File data:", file);
       
-      uploadMediaMutation.mutate({
+      const mediaData = {
         fileName: file?.name || uploadedFile.name || "logo.png",
         originalName: uploadedFile.name || "logo.png",
         fileType: file?.type || "image/png",
         fileSize: file?.size || uploadedFile.size || 0,
         uploadURL: (uploadedFile as any).uploadURL || "",
-      });
+      };
+      
+      console.log("Saving media file metadata:", mediaData);
+      uploadMediaMutation.mutate(mediaData);
+    } else {
+      console.error("No successful uploads found:", result);
     }
   };
 
