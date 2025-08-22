@@ -45,62 +45,14 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     queryKey: ["/api/suppliers"],
   });
 
-  // Fetch categories dynamically with fallback to hardcoded constants
-  const createCategoryQuery = (type: string, fallbackArray: readonly string[]) => ({
-    queryKey: ["categories", type],
-    queryFn: async () => {
-      try {
-        const token = localStorage.getItem("auth_token");
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json"
-        };
-        
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(`/api/categories/${type}`, {
-          method: "GET",
-          headers,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.warn(`Failed to fetch ${type} categories, using fallback:`, error);
-        return fallbackArray.map(value => ({ value }));
-      }
-    },
-    enabled: open,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const { data: types = [] } = useQuery<{ value: string }[]>(
-    createCategoryQuery("type", ITEM_TYPES)
-  );
-
-  const { data: colors = [] } = useQuery<{ value: string }[]>(
-    createCategoryQuery("color", ITEM_COLORS)
-  );
-
-  const { data: sizes = [] } = useQuery<{ value: string }[]>(
-    createCategoryQuery("size", ITEM_SIZES)
-  );
-
-  const { data: designs = [] } = useQuery<{ value: string }[]>(
-    createCategoryQuery("design", ITEM_DESIGNS)
-  );
-
-  const { data: groupTypes = [] } = useQuery<{ value: string }[]>(
-    createCategoryQuery("groupType", GROUP_TYPES)
-  );
-
-  const { data: styleGroups = [] } = useQuery<{ value: string }[]>(
-    createCategoryQuery("styleGroup", STYLE_GROUPS)
-  );
+  // Use hardcoded constants for now while we resolve API issues
+  // TODO: Re-enable dynamic category fetching once API issues are resolved
+  const types = ITEM_TYPES.map(value => ({ value }));
+  const colors = ITEM_COLORS.map(value => ({ value }));
+  const sizes = ITEM_SIZES.map(value => ({ value }));
+  const designs = ITEM_DESIGNS.map(value => ({ value }));
+  const groupTypes = GROUP_TYPES.map(value => ({ value }));
+  const styleGroups = STYLE_GROUPS.map(value => ({ value }));
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
