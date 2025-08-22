@@ -98,6 +98,19 @@ export const sales = pgTable("sales", {
   saleDate: timestamp("sale_date").defaultNow(),
 });
 
+export const mediaFiles = pgTable("media_files", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  fileType: text("file_type").notNull(), // "image/png", "image/jpeg", etc.
+  fileSize: integer("file_size").notNull(), // in bytes
+  objectPath: text("object_path").notNull(), // path in object storage
+  category: text("category").default("logo"), // "logo", "image", etc.
+  uploadedBy: uuid("uploaded_by").references(() => users.id),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const salesAssociatesRelations = relations(salesAssociates, ({ many }) => ({
   sales: many(sales),
@@ -138,6 +151,13 @@ export const salesRelations = relations(sales, ({ one }) => ({
   }),
 }));
 
+export const mediaFilesRelations = relations(mediaFiles, ({ one }) => ({
+  uploadedBy: one(users, {
+    fields: [mediaFiles.uploadedBy],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertSalesAssociateSchema = createInsertSchema(salesAssociates).omit({
   id: true,
@@ -169,6 +189,11 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertMediaFileSchema = createInsertSchema(mediaFiles).omit({
+  id: true,
+  createdAt: true,
 });
 
 // User insert schemas
@@ -204,6 +229,9 @@ export type InsertSale = z.infer<typeof insertSaleSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
+export type MediaFile = typeof mediaFiles.$inferSelect;
+export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
+
 // Extended types with relations
 export type InventoryItemWithSupplier = InventoryItem & {
   supplier: Supplier | null;
@@ -212,4 +240,8 @@ export type InventoryItemWithSupplier = InventoryItem & {
 export type SaleWithDetails = Sale & {
   item: InventoryItem;
   salesAssociate: SalesAssociate;
+};
+
+export type MediaFileWithUploader = MediaFile & {
+  uploadedBy: User | null;
 };

@@ -6,6 +6,7 @@ import {
   inventoryTransactions,
   sales,
   categories,
+  mediaFiles,
   type User,
   type InsertUser,
   type SalesAssociate,
@@ -22,6 +23,8 @@ import {
   type SaleWithDetails,
   type Category,
   type InsertCategory,
+  type MediaFile,
+  type InsertMediaFile,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, lt, and, like, or, ilike } from "drizzle-orm";
@@ -85,6 +88,12 @@ export interface IStorage {
   updateCategory(id: string, category: Partial<Category>): Promise<Category>;
   deleteCategory(id: string): Promise<boolean>;
   reorderCategories(type: string, categoryIds: string[]): Promise<void>;
+
+  // Media Files
+  getMediaFiles(category?: string): Promise<MediaFile[]>;
+  getMediaFile(id: string): Promise<MediaFile | undefined>;
+  createMediaFile(mediaFile: InsertMediaFile): Promise<MediaFile>;
+  deleteMediaFile(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -612,6 +621,42 @@ export class DatabaseStorage implements IStorage {
         .set({ displayOrder: i, updatedAt: sql`NOW()` })
         .where(and(eq(categories.id, categoryIds[i]), eq(categories.type, type)));
     }
+  }
+
+  // Media Files
+  async getMediaFiles(category?: string): Promise<MediaFile[]> {
+    let query = db.select().from(mediaFiles).where(eq(mediaFiles.isActive, true));
+    
+    if (category) {
+      query = query.where(eq(mediaFiles.category, category));
+    }
+    
+    return await query.orderBy(desc(mediaFiles.createdAt));
+  }
+
+  async getMediaFile(id: string): Promise<MediaFile | undefined> {
+    const [mediaFile] = await db
+      .select()
+      .from(mediaFiles)
+      .where(and(eq(mediaFiles.id, id), eq(mediaFiles.isActive, true)));
+    return mediaFile || undefined;
+  }
+
+  async createMediaFile(mediaFileData: InsertMediaFile): Promise<MediaFile> {
+    const [mediaFile] = await db
+      .insert(mediaFiles)
+      .values(mediaFileData)
+      .returning();
+    return mediaFile;
+  }
+
+  async deleteMediaFile(id: string): Promise<boolean> {
+    const result = await db
+      .update(mediaFiles)
+      .set({ isActive: false })
+      .where(eq(mediaFiles.id, id));
+    
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

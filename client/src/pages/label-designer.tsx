@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
-import { Printer, Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown } from "lucide-react";
+import { Printer, Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown, Trash2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { apiRequest } from "@/lib/queryClient";
+import type { UploadResult } from "@uppy/core";
+import type { MediaFile } from "@shared/schema";
 
 interface LabelData {
   selectedInventoryId: string;
@@ -117,6 +121,67 @@ export default function LabelDesigner() {
     queryKey: ["/api/inventory"],
   });
 
+  // Fetch media files
+  const queryClient = useQueryClient();
+  const { data: mediaFiles } = useQuery<MediaFile[]>({
+    queryKey: ["/api/media"],
+    queryFn: async () => {
+      const response = await fetch("/api/media?category=logo");
+      if (!response.ok) throw new Error("Failed to fetch media files");
+      return response.json();
+    },
+  });
+
+  // Upload media file mutation
+  const uploadMediaMutation = useMutation({
+    mutationFn: async (data: { fileName: string; originalName: string; fileType: string; fileSize: number; uploadURL: string }) => {
+      const response = await fetch("/api/media", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to upload media file");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      toast({
+        title: "Success",
+        description: "Logo uploaded successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload logo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete media file mutation
+  const deleteMediaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/media/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete media file");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      toast({
+        title: "Success", 
+        description: "Logo deleted successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete logo",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Generate QR code when content changes
   useEffect(() => {
     if (labelData.showQR && labelData.qrContent) {
@@ -181,6 +246,51 @@ export default function LabelDesigner() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleGetUploadParameters = async () => {
+    const fileName = `logo-${Date.now()}.png`;
+    const response = await fetch("/api/media/upload", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName,
+        fileType: "image/png",
+      }),
+    });
+    if (!response.ok) throw new Error("Failed to get upload URL");
+    const data = await response.json();
+    return {
+      method: "PUT" as const,
+      url: data.uploadURL,
+    };
+  };
+
+  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      const file = uploadedFile.data as any;
+      
+      uploadMediaMutation.mutate({
+        fileName: file?.name || uploadedFile.name || "logo.png",
+        originalName: uploadedFile.name || "logo.png",
+        fileType: file?.type || "image/png",
+        fileSize: file?.size || uploadedFile.size || 0,
+        uploadURL: (uploadedFile as any).uploadURL || "",
+      });
+    }
+  };
+
+  const handleLogoSelect = (mediaFile: MediaFile) => {
+    setLabelData(prev => ({
+      ...prev,
+      logoUrl: `/media/${mediaFile.objectPath.replace('/media/', '')}`,
+      showLogo: true
+    }));
+  };
+
+  const handleLogoDelete = (id: string) => {
+    deleteMediaMutation.mutate(id);
   };
 
   const updateLabelData = (field: keyof LabelData, value: string | boolean) => {
@@ -701,27 +811,92 @@ export default function LabelDesigner() {
               {/* Media Tab */}
               <TabsContent value="media" className="space-y-4">
                 <div>
-                  <Label htmlFor="logo-upload">Logo Upload</Label>
-                  <div className="mt-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full"
+                  <div className="flex items-center justify-between mb-4">
+                    <Label className="text-base font-semibold">Logo Library</Label>
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={5 * 1024 * 1024} // 5MB
+                      onGetUploadParameters={handleGetUploadParameters}
+                      onComplete={handleUploadComplete}
+                      buttonClassName="h-8"
                     >
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2" />
                       Upload Logo
-                    </Button>
+                    </ObjectUploader>
                   </div>
+
+                  {/* Logo Gallery */}
+                  <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+                    {(mediaFiles || []).map((mediaFile) => (
+                      <div
+                        key={mediaFile.id}
+                        className={cn(
+                          "relative border rounded-lg p-2 cursor-pointer transition-all hover:border-primary/50",
+                          labelData.logoUrl === `/media/${mediaFile.objectPath.replace('/media/', '')}` 
+                            ? "border-primary bg-primary/5" 
+                            : "border-border"
+                        )}
+                        onClick={() => handleLogoSelect(mediaFile)}
+                        data-testid={`logo-${mediaFile.id}`}
+                      >
+                        <div className="aspect-video flex items-center justify-center bg-muted rounded">
+                          <img 
+                            src={`/media/${mediaFile.objectPath.replace('/media/', '')}`}
+                            alt={mediaFile.originalName}
+                            className="max-w-full max-h-full object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs mt-1 text-center truncate" title={mediaFile.originalName}>
+                          {mediaFile.originalName}
+                        </p>
+                        
+                        {/* Delete button */}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLogoDelete(mediaFile.id);
+                          }}
+                          data-testid={`delete-logo-${mediaFile.id}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {(!mediaFiles || mediaFiles.length === 0) && (
+                      <div className="col-span-2 text-center py-8 text-muted-foreground">
+                        <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No logos uploaded yet</p>
+                        <p className="text-xs">Upload your first logo to get started</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Currently selected logo */}
                   {labelData.logoUrl && (
-                    <div className="mt-2 p-2 border rounded">
-                      <img src={labelData.logoUrl} className="max-w-20 max-h-16 object-contain" />
+                    <div className="mt-4 p-3 border rounded-lg bg-muted/50">
+                      <Label className="text-sm font-medium">Currently Selected:</Label>
+                      <div className="mt-2 flex items-center space-x-3">
+                        <img 
+                          src={labelData.logoUrl} 
+                          className="w-12 h-12 object-contain border rounded"
+                          alt="Selected logo"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLabelData(prev => ({ ...prev, logoUrl: "", showLogo: false }))}
+                        >
+                          Remove Logo
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -10,13 +10,15 @@ import {
   insertSupplierSchema,
   insertInventoryItemSchema,
   insertSaleSchema,
-  insertCategorySchema
+  insertCategorySchema,
+  insertMediaFileSchema
 } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import csvParser from "csv-parser";
 import { Readable } from "stream";
 import * as XLSX from "xlsx";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
@@ -764,6 +766,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Excel debug error:", error);
       res.status(500).json({ message: "Failed to process Excel file", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Media Files Routes
+  const objectStorageService = new ObjectStorageService();
+
+  // Get media files (logos)
+  app.get("/api/media", isAuthenticated, async (req, res) => {
+    try {
+      const category = req.query.category as string || "logo";
+      const mediaFiles = await storage.getMediaFiles(category);
+      res.json(mediaFiles);
+    } catch (error) {
+      console.error("Failed to fetch media files:", error);
+      res.status(500).json({ message: "Failed to fetch media files" });
+    }
+  });
+
+  // Get upload URL for media file
+  app.post("/api/media/upload", isAuthenticated, async (req, res) => {
+    try {
+      const { fileName, fileType } = req.body;
+      
+      if (!fileName || !fileType) {
+        return res.status(400).json({ message: "fileName and fileType are required" });
+      }
+
+      // Extract file extension from filename
+      const fileExtension = fileName.split('.').pop();
+      if (!fileExtension) {
+        return res.status(400).json({ message: "Invalid filename" });
+      }
+
+      const uploadURL = await objectStorageService.getMediaUploadURL(`.${fileExtension}`);
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Failed to get upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Save media file metadata after upload
+  app.post("/api/media", isAuthenticated, async (req, res) => {
+    try {
+      const { fileName, originalName, fileType, fileSize, uploadURL } = req.body;
+      
+      if (!fileName || !originalName || !fileType || !fileSize || !uploadURL) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Get user ID from session
+      const userId = (req as any).user?.claims?.sub;
+      
+      // Normalize the object path from the upload URL
+      const objectPath = objectStorageService.normalizeMediaPath(uploadURL);
+      
+      const mediaFileData = {
+        fileName,
+        originalName,
+        fileType,
+        fileSize,
+        objectPath,
+        category: "logo",
+        uploadedBy: userId,
+      };
+
+      const mediaFile = await storage.createMediaFile(mediaFileData);
+      res.json(mediaFile);
+    } catch (error) {
+      console.error("Failed to save media file:", error);
+      res.status(500).json({ message: "Failed to save media file" });
+    }
+  });
+
+  // Serve media files
+  app.get("/media/:mediaPath(*)", async (req, res) => {
+    try {
+      const mediaPath = `/media/${req.params.mediaPath}`;
+      const file = await objectStorageService.getMediaFile(mediaPath);
+      await objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error serving media file:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "Media file not found" });
+      }
+      return res.status(500).json({ error: "Error serving media file" });
+    }
+  });
+
+  // Delete media file
+  app.delete("/api/media/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteMediaFile(id);
+      
+      if (success) {
+        res.json({ message: "Media file deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Media file not found" });
+      }
+    } catch (error) {
+      console.error("Failed to delete media file:", error);
+      res.status(500).json({ message: "Failed to delete media file" });
     }
   });
 
