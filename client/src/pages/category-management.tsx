@@ -289,7 +289,7 @@ export default function CategoryManagement() {
                 >
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className="text-xs">
-                      #{category.displayOrder}
+                      #{index}
                     </Badge>
                     <span className="font-medium">{category.value}</span>
                   </div>
