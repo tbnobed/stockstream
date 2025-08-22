@@ -579,9 +579,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      console.log(`🚀 STARTING IMPORT: File "${req.file.originalname}", Size: ${req.file.size} bytes, Type: ${req.file.mimetype}`);
+
       let allRows: any[] = [];
       const isExcel = req.file.originalname.endsWith('.xlsx') || 
                      req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      
+      console.log(`📁 File type detection: isExcel = ${isExcel}`);
 
       if (isExcel) {
         // Handle Excel file with multiple worksheets
@@ -621,7 +625,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           console.log(`📊 Total rows collected for import: ${allRows.length}`);
-          allRows.forEach(row => console.log(`   - Type: ${row.type}, Value: ${row.value}`));
+          if (allRows.length > 0) {
+            allRows.slice(0, 5).forEach(row => console.log(`   - Type: ${row.type}, Value: ${row.value}`));
+            if (allRows.length > 5) console.log(`   ... and ${allRows.length - 5} more rows`);
+          }
         } catch (error) {
           return res.status(400).json({ message: "Failed to parse Excel file" });
         }
@@ -695,6 +702,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
+          console.log(`🔥 IMPORT SUMMARY: ${successCount} success, ${errorCount} errors`);
+          console.log('🔥 First 10 errors:', errors.slice(0, 10));
+          
           res.json({
             message: "Import completed",
             successCount,
