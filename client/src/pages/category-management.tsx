@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Edit, Trash2, Move3D, Settings, Download, Upload } from "lucide-react";
@@ -32,9 +31,21 @@ const CATEGORY_TYPES = [
 ] as const;
 
 export default function CategoryManagement() {
-  const [activeTab, setActiveTab] = useState<string>("color");
+  const [selectedType, setSelectedType] = useState<string>("color");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [newCategoryValue, setNewCategoryValue] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
+
+  // Fetch categories by type
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ["/api/categories", selectedType],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/categories/${selectedType}`);
+      return await response.json() as Category[];
+    },
+  });
 
   // Create category mutation
   const createCategoryMutation = useMutation({
