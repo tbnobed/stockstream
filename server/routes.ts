@@ -844,10 +844,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/media/:mediaPath(*)", async (req, res) => {
     try {
       const mediaPath = `/media/${req.params.mediaPath}`;
+      console.log("Serving media file with path:", mediaPath);
+      console.log("Request params:", req.params);
+      
       const file = await objectStorageService.getMediaFile(mediaPath);
       await objectStorageService.downloadObject(file, res);
     } catch (error) {
       console.error("Error serving media file:", error);
+      console.error("Requested mediaPath:", mediaPath);
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Media file not found" });
       }

@@ -105,7 +105,10 @@ export class ObjectStorageService {
 
   // Gets the media file from the object path.
   async getMediaFile(objectPath: string): Promise<File> {
+    console.log("getMediaFile called with objectPath:", objectPath);
+    
     if (!objectPath.startsWith("/media/")) {
+      console.log("Invalid objectPath - doesn't start with /media/");
       throw new ObjectNotFoundError();
     }
 
@@ -114,10 +117,16 @@ export class ObjectStorageService {
       entityDir = `${entityDir}/`;
     }
     const fullObjectPath = `${entityDir}${objectPath.slice(1)}`; // Remove leading slash
+    console.log("Constructed fullObjectPath:", fullObjectPath);
+    
     const { bucketName, objectName } = parseObjectPath(fullObjectPath);
+    console.log("Parsed bucketName:", bucketName, "objectName:", objectName);
+    
     const bucket = objectStorageClient.bucket(bucketName);
     const objectFile = bucket.file(objectName);
     const [exists] = await objectFile.exists();
+    console.log("File exists check:", exists);
+    
     if (!exists) {
       throw new ObjectNotFoundError();
     }
@@ -125,6 +134,8 @@ export class ObjectStorageService {
   }
 
   normalizeMediaPath(rawPath: string): string {
+    console.log("normalizeMediaPath called with rawPath:", rawPath);
+    
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
       return rawPath;
     }
@@ -132,19 +143,29 @@ export class ObjectStorageService {
     // Extract the path from the URL by removing query parameters and domain
     const url = new URL(rawPath);
     const rawObjectPath = url.pathname;
+    console.log("Extracted rawObjectPath:", rawObjectPath);
   
     let objectEntityDir = this.getPrivateObjectDir();
     if (!objectEntityDir.endsWith("/")) {
       objectEntityDir = `${objectEntityDir}/`;
     }
+    console.log("objectEntityDir:", objectEntityDir);
   
     if (!rawObjectPath.startsWith(objectEntityDir)) {
+      console.log("rawObjectPath doesn't start with objectEntityDir, returning as-is");
       return rawObjectPath;
     }
 
-    // Extract the media ID from the path
+    // Extract the filename from the path (after /.private/media/)
     const mediaPath = rawObjectPath.slice(objectEntityDir.length);
-    return `/media/${mediaPath}`;
+    console.log("Extracted mediaPath:", mediaPath);
+    
+    // Remove "media/" prefix if it exists (to avoid double media/)
+    const finalPath = mediaPath.startsWith("media/") ? mediaPath.slice(6) : mediaPath;
+    const normalizedPath = `/media/${finalPath}`;
+    console.log("Final normalized path:", normalizedPath);
+    
+    return normalizedPath;
   }
 }
 
