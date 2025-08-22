@@ -323,9 +323,22 @@ export default function LabelDesigner() {
   };
 
   const handleLogoSelect = (mediaFile: MediaFile) => {
+    // Handle both local and object storage paths
+    let logoUrl = mediaFile.objectPath;
+    if (logoUrl.startsWith('/uploads/')) {
+      // Local storage - use the path directly
+      logoUrl = logoUrl;
+    } else if (logoUrl.startsWith('/media/')) {
+      // Object storage legacy - convert to uploads path
+      logoUrl = logoUrl.replace('/media/', '/uploads/');
+    } else {
+      // Fallback - assume it's just the filename and prefix with /uploads/
+      logoUrl = `/uploads/${logoUrl}`;
+    }
+    
     setLabelData(prev => ({
       ...prev,
-      logoUrl: `/media/${mediaFile.objectPath.replace('/media/', '')}`,
+      logoUrl: logoUrl,
       showLogo: true
     }));
   };
