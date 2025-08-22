@@ -522,7 +522,7 @@ export class DatabaseStorage implements IStorage {
 
   // Categories
   async getCategories(): Promise<Category[]> {
-    return db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.type, categories.displayOrder, categories.value);
+    return db.select().from(categories).orderBy(categories.type, categories.displayOrder, categories.value);
   }
 
   async getCategoriesByType(type: string): Promise<Category[]> {
@@ -576,10 +576,9 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
     
-    // Mark the category as inactive
+    // Actually delete the category from the database
     const result = await db
-      .update(categories)
-      .set({ isActive: false, updatedAt: sql`NOW()` })
+      .delete(categories)
       .where(eq(categories.id, id));
     
     if (result.rowCount !== null && result.rowCount > 0) {
@@ -587,7 +586,7 @@ export class DatabaseStorage implements IStorage {
       const remainingCategories = await db
         .select()
         .from(categories)
-        .where(and(eq(categories.type, categoryToDelete.type), eq(categories.isActive, true)))
+        .where(eq(categories.type, categoryToDelete.type))
         .orderBy(categories.displayOrder);
       
       // Update display orders to be sequential
