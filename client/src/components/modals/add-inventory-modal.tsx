@@ -47,56 +47,32 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
 
   // Fetch categories dynamically - only when modal is open
   const { data: types = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories", "type"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/type");
-      return await response.json() as { value: string }[];
-    },
+    queryKey: ["/api/categories/type"],
     enabled: open,
   });
 
   const { data: colors = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories", "color"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/color");
-      return await response.json() as { value: string }[];
-    },
+    queryKey: ["/api/categories/color"],
     enabled: open,
   });
 
   const { data: sizes = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories", "size"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/size");
-      return await response.json() as { value: string }[];
-    },
+    queryKey: ["/api/categories/size"],
     enabled: open,
   });
 
   const { data: designs = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories", "design"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/design");
-      return await response.json() as { value: string }[];
-    },
+    queryKey: ["/api/categories/design"],
     enabled: open,
   });
 
   const { data: groupTypes = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories", "groupType"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/groupType");
-      return await response.json() as { value: string }[];
-    },
+    queryKey: ["/api/categories/groupType"],
     enabled: open,
   });
 
   const { data: styleGroups = [] } = useQuery<{ value: string }[]>({
-    queryKey: ["/api/categories", "styleGroup"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/styleGroup");
-      return await response.json() as { value: string }[];
-    },
+    queryKey: ["/api/categories/styleGroup"],
     enabled: open,
   });
 
