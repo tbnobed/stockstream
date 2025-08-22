@@ -720,6 +720,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLabelTemplate(templateData: InsertLabelTemplate): Promise<LabelTemplate> {
+    // If creating a default template, check if one already exists
+    if (templateData.isDefault) {
+      const existingDefault = await this.getDefaultLabelTemplate(templateData.userId);
+      if (existingDefault) {
+        // Update the existing default template instead of creating a new one
+        return await this.updateLabelTemplate(existingDefault.id, templateData.userId, templateData) || existingDefault;
+      }
+    }
+    
     const [template] = await db
       .insert(labelTemplates)
       .values(templateData)
