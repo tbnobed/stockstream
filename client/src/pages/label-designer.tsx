@@ -514,21 +514,23 @@ export default function LabelDesigner() {
     try {
       // Create a temporary container with the exact same HTML and CSS as the print version
       const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '-9999px';
-      tempContainer.style.width = '4in';
-      tempContainer.style.height = '2in';
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-5000px';
+      tempContainer.style.top = '-5000px';
+      tempContainer.style.width = '288px'; // 4 inches at 72 DPI
+      tempContainer.style.height = '144px'; // 2 inches at 72 DPI
       tempContainer.style.fontFamily = 'Arial, sans-serif';
+      tempContainer.style.fontSize = '10px'; // Base font size
+      tempContainer.style.overflow = 'visible';
       
       // Add print CSS styles
       const style = document.createElement('style');
       style.textContent = `
         .temp-label {
-          width: 4in;
-          height: 2in;
+          width: 288px;
+          height: 144px;
           position: relative;
-          padding: 0.1in;
+          padding: 7.2px; /* 0.1in at 72 DPI */
           box-sizing: border-box;
           background: white;
         }
@@ -567,16 +569,16 @@ export default function LabelDesigner() {
           justify-content: center;
         }
         .temp-qr-code img {
-          max-width: 1in;
-          max-height: 1in;
+          max-width: 72px; /* 1in at 72 DPI */
+          max-height: 72px; /* 1in at 72 DPI */
         }
         .temp-logo {
           position: absolute;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 0.8in;
-          height: 0.6in;
+          width: 57.6px; /* 0.8in at 72 DPI */
+          height: 43.2px; /* 0.6in at 72 DPI */
         }
         .temp-logo img {
           max-width: 100%;
@@ -590,8 +592,8 @@ export default function LabelDesigner() {
           justify-content: center;
           font-size: 24px;
           font-weight: bold;
-          min-width: 0.6in;
-          min-height: 0.6in;
+          min-width: 43.2px; /* 0.6in at 72 DPI */
+          min-height: 43.2px; /* 0.6in at 72 DPI */
         }
         .temp-message {
           position: absolute;
@@ -607,9 +609,9 @@ export default function LabelDesigner() {
       `;
       document.head.appendChild(style);
       
-      // Generate the same HTML structure as print
-      const labelWidth = 3.8; // 4in - 0.2in padding
-      const labelHeight = 1.8; // 2in - 0.2in padding
+      // Generate the same HTML structure as print (in pixels)
+      const labelWidth = 273.6; // 288px - 14.4px padding
+      const labelHeight = 129.6; // 144px - 14.4px padding
       
       const convertPosition = (percentage: number, dimension: number) => {
         return (percentage / 100) * dimension;
@@ -618,15 +620,15 @@ export default function LabelDesigner() {
       tempContainer.innerHTML = `
         <div class="temp-label">
           <div class="temp-label-content">
-            <div class="temp-product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}in; top: ${convertPosition(layout.productInfo.y, labelHeight)}in;">
+            <div class="temp-product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}px; top: ${convertPosition(layout.productInfo.y, labelHeight)}px;">
               <div class="temp-product-name">${labelData.productName}</div>
               <div class="temp-product-code">${labelData.productCode}</div>
               ${labelData.showPrice ? `<div class="temp-price">$${labelData.price}</div>` : ''}
             </div>
-            ${labelData.showQR ? `<div class="temp-qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}in; top: ${convertPosition(layout.qrCode.y, labelHeight)}in;"><img src="${qrCodeUrl}" /></div>` : ''}
-            ${labelData.showLogo && labelData.logoUrl ? `<div class="temp-logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}in; top: ${convertPosition(layout.logo.y, labelHeight)}in;"><img src="${labelData.logoUrl}" /></div>` : ''}
-            ${labelData.showSize ? `<div class="temp-size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}in; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}in;">${labelData.sizeIndicator}</div>` : ''}
-            ${labelData.showMessage ? `<div class="temp-message" style="left: ${convertPosition(layout.message.x, labelWidth)}in; top: ${convertPosition(layout.message.y, labelHeight)}in;">${labelData.customMessage}</div>` : ''}
+            ${labelData.showQR ? `<div class="temp-qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}px; top: ${convertPosition(layout.qrCode.y, labelHeight)}px;"><img src="${qrCodeUrl}" /></div>` : ''}
+            ${labelData.showLogo && labelData.logoUrl ? `<div class="temp-logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}px; top: ${convertPosition(layout.logo.y, labelHeight)}px;"><img src="${labelData.logoUrl}" /></div>` : ''}
+            ${labelData.showSize ? `<div class="temp-size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;">${labelData.sizeIndicator}</div>` : ''}
+            ${labelData.showMessage ? `<div class="temp-message" style="left: ${convertPosition(layout.message.x, labelWidth)}px; top: ${convertPosition(layout.message.y, labelHeight)}px;">${labelData.customMessage}</div>` : ''}
           </div>
         </div>
       `;
@@ -634,7 +636,7 @@ export default function LabelDesigner() {
       document.body.appendChild(tempContainer);
       
       // Wait for images to load
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Capture the label as canvas with print dimensions
       const canvas = await html2canvas(tempContainer.firstElementChild as HTMLElement, {
@@ -644,6 +646,7 @@ export default function LabelDesigner() {
         allowTaint: true,
         width: 288, // 4 inches at 72 DPI
         height: 144, // 2 inches at 72 DPI
+        logging: false, // Disable console logs
       });
 
       // Clean up
