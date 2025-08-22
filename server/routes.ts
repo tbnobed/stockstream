@@ -583,6 +583,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isExcel = req.file.originalname.endsWith('.xlsx') || 
                      req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
+      console.log(`File received: ${req.file.originalname}, isExcel: ${isExcel}, size: ${req.file.buffer.length}`);
+
       if (isExcel) {
         // Handle Excel file with multiple worksheets
         try {
@@ -702,12 +704,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
+          console.log(`Import summary: ${successCount} success, ${errorCount} errors, ${allRows.length} total rows processed`);
           res.json({
             message: "Import completed",
             successCount,
             errorCount,
             errors: errors.slice(0, 10), // Limit errors to first 10
-            totalErrors: errors.length
+            totalErrors: errors.length,
+            debug: {
+              totalRowsProcessed: allRows.length,
+              successCount,
+              errorCount
+            }
           });
         } catch (error) {
           console.error("Import processing error:", error);
