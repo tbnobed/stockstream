@@ -13,6 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 import { Printer, Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown, Trash2, Plus } from "lucide-react";
+import html2canvas from "html2canvas";
 import { cn } from "@/lib/utils";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest } from "@/lib/queryClient";
@@ -509,14 +510,58 @@ export default function LabelDesigner() {
     `;
   };
 
-  const duplicateLabel = () => {
-    const newData = { ...labelData };
-    navigator.clipboard.writeText(JSON.stringify(newData));
-    toast({
-      title: "Label Copied",
-      description: "Label configuration copied to clipboard",
-      duration: 2000,
-    });
+  const downloadLabelImage = async () => {
+    try {
+      // Find the label preview container with the specific styling
+      const labelElement = document.querySelector('div[style*="width: 480px"][style*="height: 240px"]') as HTMLElement;
+      if (!labelElement) {
+        toast({
+          title: "Error",
+          description: "Label preview not found",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Capture the label as canvas
+      const canvas = await html2canvas(labelElement, {
+        backgroundColor: 'white',
+        scale: 3, // High resolution for better print quality
+        useCORS: true,
+        allowTaint: true,
+        width: labelElement.offsetWidth,
+        height: labelElement.offsetHeight,
+      });
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `label-${labelData.productCode || 'design'}-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Label Downloaded",
+          description: "Label image saved to your downloads",
+          duration: 2000,
+        });
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error downloading label:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download label image",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   const handleMouseDown = (elementId: string, e: React.MouseEvent) => {
@@ -701,9 +746,9 @@ export default function LabelDesigner() {
                   <Printer className="h-4 w-4 mr-2" />
                   Print Labels
                 </Button>
-                <Button variant="outline" onClick={duplicateLabel}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
+                <Button variant="outline" onClick={downloadLabelImage}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Image
                 </Button>
               </div>
             </div>
