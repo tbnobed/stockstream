@@ -3,7 +3,7 @@
 # Includes logo library, label template persistence, and object storage support
 
 # Build stage - prepare application with correct database driver
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN npm run build && \
     echo "Build completed with logo library and label template support"
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Install system dependencies
 RUN apk add --no-cache dumb-init postgresql-client
