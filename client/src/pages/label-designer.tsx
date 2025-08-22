@@ -61,17 +61,27 @@ const defaultLabelData: LabelData = {
 };
 
 export default function LabelDesigner() {
-  // Load saved data from localStorage or use defaults
+  // Load saved data from localStorage or use defaults with error handling
   const [labelData, setLabelData] = useState<LabelData>(() => {
-    const saved = localStorage.getItem('labelDesignerData');
-    return saved ? { ...defaultLabelData, ...JSON.parse(saved) } : defaultLabelData;
+    try {
+      const saved = localStorage.getItem('labelDesignerData');
+      return saved ? { ...defaultLabelData, ...JSON.parse(saved) } : defaultLabelData;
+    } catch (error) {
+      console.warn('Failed to load saved label data:', error);
+      return defaultLabelData;
+    }
   });
   
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [labelCount, setLabelCount] = useState(() => {
-    const saved = localStorage.getItem('labelDesignerCount');
-    return saved ? parseInt(saved) : 10;
+    try {
+      const saved = localStorage.getItem('labelDesignerCount');
+      return saved ? parseInt(saved) : 10;
+    } catch (error) {
+      console.warn('Failed to load saved label count:', error);
+      return 10;
+    }
   });
   const [showInventoryDropdown, setShowInventoryDropdown] = useState(false);
   const [isDragging, setIsDragging] = useState<string | null>(null);
@@ -79,16 +89,27 @@ export default function LabelDesigner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Load saved layout or use defaults
+  // Load saved layout or use defaults with error handling
   const [layout, setLayout] = useState<LabelLayout>(() => {
-    const saved = localStorage.getItem('labelDesignerLayout');
-    return saved ? JSON.parse(saved) : {
-      productInfo: { x: 5, y: 10 },
-      qrCode: { x: 70, y: 5 },
-      logo: { x: 5, y: 55 },
-      sizeIndicator: { x: 75, y: 55 },
-      message: { x: 10, y: 80 }
-    };
+    try {
+      const saved = localStorage.getItem('labelDesignerLayout');
+      return saved ? JSON.parse(saved) : {
+        productInfo: { x: 5, y: 10 },
+        qrCode: { x: 70, y: 5 },
+        logo: { x: 5, y: 55 },
+        sizeIndicator: { x: 75, y: 55 },
+        message: { x: 10, y: 80 }
+      };
+    } catch (error) {
+      console.warn('Failed to load saved layout:', error);
+      return {
+        productInfo: { x: 5, y: 10 },
+        qrCode: { x: 70, y: 5 },
+        logo: { x: 5, y: 55 },
+        sizeIndicator: { x: 75, y: 55 },
+        message: { x: 10, y: 80 }
+      };
+    }
   });
 
   // Fetch inventory items
@@ -105,17 +126,29 @@ export default function LabelDesigner() {
 
   // Save label data to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('labelDesignerData', JSON.stringify(labelData));
+    try {
+      localStorage.setItem('labelDesignerData', JSON.stringify(labelData));
+    } catch (error) {
+      console.warn('Failed to save label data:', error);
+    }
   }, [labelData]);
 
   // Save layout to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('labelDesignerLayout', JSON.stringify(layout));
+    try {
+      localStorage.setItem('labelDesignerLayout', JSON.stringify(layout));
+    } catch (error) {
+      console.warn('Failed to save layout:', error);
+    }
   }, [layout]);
 
   // Save label count to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('labelDesignerCount', labelCount.toString());
+    try {
+      localStorage.setItem('labelDesignerCount', labelCount.toString());
+    } catch (error) {
+      console.warn('Failed to save label count:', error);
+    }
   }, [labelCount]);
 
   const generateQRCode = async () => {
