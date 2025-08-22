@@ -962,6 +962,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
+      // Disable caching for dynamic template data
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       const templates = await storage.getLabelTemplates(userId);
       res.json(templates);
     } catch (error) {
@@ -976,6 +981,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
+      // Disable caching for dynamic template data
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       const template = await storage.getDefaultLabelTemplate(userId);
       res.json(template || null);
     } catch (error) {
