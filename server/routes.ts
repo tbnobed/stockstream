@@ -561,6 +561,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate Excel buffer
       const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
       
+      console.log(`📤 EXPORT: Generated Excel with sheets: ${workbook.SheetNames?.join(', ')}`);
+      workbook.SheetNames?.forEach(sheetName => {
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet);
+        console.log(`   Sheet "${sheetName}": ${data.length} rows`);
+      });
+      
       // Set headers for Excel download
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', 'attachment; filename="categories.xlsx"');
