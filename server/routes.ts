@@ -843,7 +843,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve media files
   app.get("/media/:mediaPath(*)", async (req, res) => {
     try {
-      const mediaPath = `/media/${req.params.mediaPath}`;
+      // Fix: Don't add extra /media/ prefix since mediaPath already contains it
+      const mediaPath = `/${req.params.mediaPath}`;
       console.log("Serving media file with path:", mediaPath);
       console.log("Request params:", req.params);
       
@@ -851,7 +852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await objectStorageService.downloadObject(file, res);
     } catch (error) {
       console.error("Error serving media file:", error);
-      console.error("Requested mediaPath:", mediaPath);
+      console.error("Requested mediaPath:", `/${req.params.mediaPath}`);
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Media file not found" });
       }
