@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest } from "@/lib/queryClient";
 // Removed Uppy dependency
-import type { MediaFile } from "@shared/schema";
+import type { MediaFile, LabelTemplate } from "@shared/schema";
 
 interface LabelData {
   selectedInventoryId: string;
@@ -86,7 +86,7 @@ export default function LabelDesigner() {
   const { toast } = useToast();
 
   // Query to get default label template (disable caching for fresh data)
-  const { data: defaultTemplate, error: templateError, isLoading: templateLoading } = useQuery({
+  const { data: defaultTemplate, error: templateError, isLoading: templateLoading } = useQuery<LabelTemplate>({
     queryKey: ['/api/label-templates/default'],
     retry: false,
     staleTime: 0,
@@ -95,31 +95,10 @@ export default function LabelDesigner() {
     refetchOnWindowFocus: true,
   });
 
-  // Debug template loading
-  useEffect(() => {
-    if (templateError) {
-      console.error('❌ Template loading failed:', templateError);
-    }
-    if (templateLoading) {
-      console.log('🔄 Loading template...');
-    }
-    if (defaultTemplate) {
-      console.log('✅ Template loaded successfully:', defaultTemplate);
-    } else if (!templateLoading && !templateError) {
-      console.warn('⚠️ No template found, using defaults');
-    }
-  }, [defaultTemplate, templateError, templateLoading]);
 
   // Auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async (templateData: LabelData) => {
-      // Use toast instead of console for production debugging
-      toast({
-        title: "Auto-save triggered",
-        description: `Template: ${defaultTemplate ? 'UPDATE' : 'CREATE'}`,
-        duration: 2000,
-      });
-      
       if (defaultTemplate) {
         // Update existing default template
         return apiRequest('PUT', `/api/label-templates/${defaultTemplate.id}`, templateData);
@@ -128,20 +107,8 @@ export default function LabelDesigner() {
         return apiRequest('POST', '/api/label-templates', { ...templateData, isDefault: true });
       }
     },
-    onSuccess: (data) => {
-      toast({
-        title: "✅ Template Saved",
-        description: "Your changes have been saved successfully",
-        duration: 2000,
-      });
-    },
     onError: (error) => {
-      toast({
-        title: "❌ Save Failed",
-        description: error.message || "Failed to save template",
-        variant: "destructive",
-        duration: 5000,
-      });
+      console.error('Error auto-saving label template:', error);
     },
   });
 
@@ -240,13 +207,6 @@ export default function LabelDesigner() {
   // Load default template data when available
   useEffect(() => {
     if (defaultTemplate && !templateLoaded) {
-      // Show toast to confirm template loading in production
-      toast({
-        title: "📁 Loading Template",
-        description: `Loading: ${defaultTemplate.customMessage?.substring(0, 30)}...`,
-        duration: 2000,
-      });
-      
       console.log('Loading saved label data:', defaultTemplate);
       const templateData: LabelData = {
         selectedInventoryId: defaultTemplate.selectedInventoryId || "",
@@ -257,29 +217,17 @@ export default function LabelDesigner() {
         customMessage: defaultTemplate.customMessage || "Thank you for your purchase",
         sizeIndicator: defaultTemplate.sizeIndicator || "M",
         logoUrl: defaultTemplate.logoUrl || "",
-        showQR: defaultTemplate.showQR !== undefined ? defaultTemplate.showQR : true,
-        showLogo: defaultTemplate.showLogo !== undefined ? defaultTemplate.showLogo : false,
-        showPrice: defaultTemplate.showPrice !== undefined ? defaultTemplate.showPrice : true,
-        showMessage: defaultTemplate.showMessage !== undefined ? defaultTemplate.showMessage : true,
-        showSize: defaultTemplate.showSize !== undefined ? defaultTemplate.showSize : true,
+        showQR: defaultTemplate.showQR ?? true,
+        showLogo: defaultTemplate.showLogo ?? false,
+        showPrice: defaultTemplate.showPrice ?? true,
+        showMessage: defaultTemplate.showMessage ?? true,
+        showSize: defaultTemplate.showSize ?? true,
       };
       console.log('Merged label data:', templateData);
       setLabelData(templateData);
       setTemplateLoaded(true);
-      
-      // Confirm template loaded
-      toast({
-        title: "✅ Template Loaded",
-        description: "Ready for auto-save",
-        duration: 2000,
-      });
     } else if (!defaultTemplate && !templateLoading && !templateError && !templateLoaded) {
       // No template found - enable auto-save for new template creation
-      toast({
-        title: "📝 Creating New Template",
-        description: "No saved template found. Ready to create one!",
-        duration: 3000,
-      });
       setTemplateLoaded(true); // Enable auto-save even without existing template
     }
   }, [defaultTemplate, templateLoaded, templateLoading, templateError]);
