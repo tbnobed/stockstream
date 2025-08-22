@@ -242,17 +242,14 @@ export default function LabelDesigner() {
   };
 
   const handleGetUploadParameters = async () => {
-    console.log("Getting upload parameters...");
     try {
       const fileName = `logo-${Date.now()}.png`;
-      console.log("Generated filename:", fileName);
       
       const response = await apiRequest("POST", "/api/media/upload", {
         fileName,
         fileType: "image/png",
       });
       const data = await response.json();
-      console.log("Upload URL received:", data.uploadURL);
       
       return {
         method: "PUT" as const,
@@ -265,11 +262,8 @@ export default function LabelDesigner() {
   };
 
   const handleUploadComplete = (result: { successful: Array<{ uploadURL: string; name: string; size: number; type: string }> }) => {
-    console.log("Upload complete result:", result);
-    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
-      console.log("Uploaded file details:", uploadedFile);
       
       const mediaData = {
         fileName: uploadedFile.name,
@@ -279,7 +273,6 @@ export default function LabelDesigner() {
         uploadURL: uploadedFile.uploadURL,
       };
       
-      console.log("Saving media file metadata:", mediaData);
       uploadMediaMutation.mutate(mediaData);
     } else {
       console.error("No successful uploads found:", result);
