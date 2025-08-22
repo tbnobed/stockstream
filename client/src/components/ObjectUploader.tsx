@@ -78,7 +78,14 @@ export function ObjectUploader({
 
   const handleButtonClick = () => {
     console.log("Upload button clicked, opening modal...");
+    console.log("Current showModal state:", showModal);
     setShowModal(true);
+    console.log("Modal state set to true");
+  };
+
+  const handleModalClose = () => {
+    console.log("Modal close requested");
+    setShowModal(false);
   };
 
   return (
@@ -91,12 +98,16 @@ export function ObjectUploader({
         {children}
       </Button>
 
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-      />
+      {showModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}>
+          <DashboardModal
+            uppy={uppy}
+            open={showModal}
+            onRequestClose={handleModalClose}
+            proudlyDisplayPoweredByUppy={false}
+          />
+        </div>
+      )}
     </div>
   );
 }
