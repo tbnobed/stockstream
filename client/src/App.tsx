@@ -13,6 +13,7 @@ import Reports from "@/pages/reports";
 import Associates from "@/pages/associates";
 import Suppliers from "@/pages/suppliers";
 import CategoryManagement from "@/pages/category-management";
+import LabelDesigner from "@/pages/label-designer";
 import Login from "@/pages/login";
 import MobileSales from "@/pages/mobile-sales";
 import Sidebar from "@/components/layout/sidebar";
@@ -93,6 +94,7 @@ function AuthenticatedApp() {
           <Route path="/inventory" component={Inventory} />
           <Route path="/sales" component={Sales} />
           <Route path="/mobile-sales" component={MobileSales} />
+          <Route path="/labels" component={LabelDesigner} />
           {userRole === 'admin' && (
             <>
               <Route path="/reports" component={Reports} />
