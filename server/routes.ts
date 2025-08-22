@@ -681,9 +681,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const categoryData = {
                 type: row.type.toString().trim().toLowerCase(),
                 value: row.value.toString().trim(),
-                displayOrder: parseInt(row.displayOrder) || 0,
-                isActive: row.isActive === 'Yes' || row.isActive === true || row.isActive === 'true',
+                displayOrder: parseInt(row.displayOrder) || parseInt(row['Display Order']) || 0,
+                isActive: row.isActive === 'Yes' || row.isActive === true || row.isActive === 'true' ||
+                         row['Is Active'] === 'Yes' || row['Is Active'] === true || row['Is Active'] === 'true',
               };
+
+              console.log(`🔧 Processing row:`, { 
+                originalRow: row, 
+                parsedData: categoryData 
+              });
 
               // Validate category schema
               const validatedData = insertCategorySchema.parse(categoryData);
@@ -731,6 +737,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Import error:", error);
       res.status(500).json({ message: "Failed to import categories" });
+    }
+  });
+
+  // Debug endpoint for Excel testing
+  app.post("/api/debug/excel", isAuthenticated, requireAdmin, upload.single('testFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const isExcel = req.file.originalname.endsWith('.xlsx') || 
+                     req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      if (!isExcel) {
+        return res.status(400).json({ message: "Not an Excel file" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      
+      const result = {
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        sheetNames: workbook.SheetNames,
+        sheets: {} as any
+      };
+
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const sheetData = XLSX.utils.sheet_to_json(worksheet);
+        result.sheets[sheetName] = {
+          rowCount: sheetData.length,
+          sampleData: sheetData.slice(0, 3) // First 3 rows
+        };
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Excel debug error:", error);
+      res.status(500).json({ message: "Failed to process Excel file", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
