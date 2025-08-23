@@ -1,8 +1,12 @@
 # InventoryPro Docker Deployment Guide
 
-## Multi-Item Transaction Support
+## Enhanced Features Support
 
-This deployment guide covers the enhanced InventoryPro system with multi-item transaction support, shopping cart functionality, and QR code scanning integration.
+This deployment guide covers the enhanced InventoryPro system with:
+- Multi-item transaction support and shopping cart functionality
+- QR code scanning integration for inventory management
+- Digital receipt system with QR code access for customers
+- Advanced category management with dynamic fields
 
 ## Prerequisites
 
@@ -26,9 +30,10 @@ The deployment script will:
 - Set up environment variables
 - Build optimized Docker images
 - Create PostgreSQL database
-- Apply schema migrations
+- Apply schema migrations including receipt fields
 - Create admin user
 - Verify multi-item transaction functionality
+- Configure QR code receipt system
 
 ### Default Credentials
 - **URL**: http://localhost:5000
@@ -81,6 +86,17 @@ This will:
 - Verify archive functionality works correctly
 - Provide rollback if needed
 
+### QR Code Receipt System
+
+The QR code receipt functionality is automatically included in new deployments. For existing deployments, the Docker entrypoint script will automatically apply the required database changes:
+
+**Features:**
+- Digital receipts accessible via QR codes
+- 90-day expiration on receipt links
+- Public receipt viewing without authentication
+- Complete transaction details and customer information
+- Mobile-friendly receipt format
+
 ## Architecture Overview
 
 ### Multi-Item Transaction Features
@@ -91,6 +107,7 @@ This will:
 - **Quantity Management**: Individual quantity controls per item
 - **Order Grouping**: Multiple items share single order number
 - **Price Calculation**: Automatic total computation
+- **Digital Receipts**: QR code access to customer receipts
 
 ### Database Schema Changes
 
@@ -118,6 +135,10 @@ ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
 
 -- Added column for archive functionality
 ALTER TABLE inventory_items ADD COLUMN is_active BOOLEAN DEFAULT true;
+
+-- Added columns for QR code receipt system
+ALTER TABLE sales ADD COLUMN receipt_token VARCHAR(50);
+ALTER TABLE sales ADD COLUMN receipt_expires_at TIMESTAMP;
 ```
 
 **Category Field Examples:**

@@ -324,7 +324,28 @@ BEGIN
         RAISE NOTICE 'Ensured all inventory items have is_active set';
     END IF;
     
-    -- 5. Fix category display orders to be sequential (only if categories table exists)
+    -- 5. Add receipt fields to sales table for QR code receipt functionality
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'sales' 
+        AND column_name = 'receipt_token' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE sales ADD COLUMN receipt_token VARCHAR(50);
+        RAISE NOTICE 'Added receipt_token column to sales table';
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'sales' 
+        AND column_name = 'receipt_expires_at' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE sales ADD COLUMN receipt_expires_at TIMESTAMP;
+        RAISE NOTICE 'Added receipt_expires_at column to sales table';
+    END IF;
+    
+    -- 6. Fix category display orders to be sequential (only if categories table exists)
     IF EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'categories' 
@@ -350,7 +371,7 @@ BEGIN
     
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
-" && echo "✅ Production constraints and schema configured for multi-item transactions and category fields" || echo "⚠️  Constraint and schema configuration completed with warnings"
+" && echo "✅ Production constraints and schema configured for multi-item transactions, category fields, and QR code receipts" || echo "⚠️  Constraint and schema configuration completed with warnings"
 
 # Final health check
 echo "🔍 Performing final health check..."
