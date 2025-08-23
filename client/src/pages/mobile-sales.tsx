@@ -200,7 +200,7 @@ export default function MobileSales() {
       console.log("Processing mobile sale with order:", orderNumber);
       
       // Process each item in the cart as individual sale records with same order number
-      const salesPromises = cart.map(item => {
+      const salesPromises = cart.map(async (item) => {
         const saleData = {
           itemId: item.id,
           salesAssociateId: (user as any)?.id,
@@ -212,16 +212,22 @@ export default function MobileSales() {
         };
         
         console.log("Creating individual sale:", saleData);
-        return apiRequest("POST", "/api/sales", saleData);
+        const response = await apiRequest("POST", "/api/sales", saleData);
+        return await response.json();
       });
       
       const results = await Promise.all(salesPromises);
       
       // Get receipt token from the first sale (they all share the same order)
       const firstSaleResult = results[0];
+      console.log("Sale result:", firstSaleResult);
+      
       if (firstSaleResult?.receiptToken) {
+        console.log("Found receiptToken:", firstSaleResult.receiptToken);
         setReceiptToken(firstSaleResult.receiptToken);
         setShowReceiptQR(true);
+      } else {
+        console.log("No receiptToken found in result");
       }
       
       toast({
