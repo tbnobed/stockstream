@@ -75,6 +75,9 @@ export interface IStorage {
   getSalesByOrderNumber(orderNumber: string): Promise<SaleWithDetails[]>;
   createSale(sale: InsertSale): Promise<Sale>;
   
+  // Receipts
+  getReceiptByToken(token: string): Promise<any>;
+  
   // Dashboard Stats
   getDashboardStats(): Promise<{
     totalRevenue: number;
@@ -414,6 +417,48 @@ export class DatabaseStorage implements IStorage {
     return newSale;
   }
 
+  async getReceiptByToken(token: string): Promise<any> {
+    const [result] = await db
+      .select()
+      .from(sales)
+      .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
+      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .where(eq(sales.receiptToken, token));
+    
+    if (!result) return null;
+    
+    // Group sales by order number to show all items in the order
+    const orderSales = await db
+      .select()
+      .from(sales)
+      .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
+      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .where(eq(sales.orderNumber, result.sales.orderNumber));
+    
+    // Calculate total amount for the entire order
+    const totalAmount = orderSales.reduce((sum, row) => sum + Number(row.sales.totalAmount), 0);
+    
+    return {
+      orderNumber: result.sales.orderNumber,
+      saleDate: result.sales.saleDate,
+      receiptExpiresAt: result.sales.receiptExpiresAt,
+      items: orderSales.map(row => ({
+        name: row.inventory_items.name,
+        sku: row.inventory_items.sku,
+        quantity: row.sales.quantity,
+        unitPrice: row.sales.unitPrice,
+        totalAmount: row.sales.totalAmount,
+      })),
+      totalAmount: totalAmount.toFixed(2),
+      paymentMethod: result.sales.paymentMethod,
+      salesAssociate: {
+        firstName: result.sales_associates.name.split(' ')[0] || '',
+        lastName: result.sales_associates.name.split(' ').slice(1).join(' ') || '',
+        associateCode: result.sales_associates.id.slice(0, 8), // Use first 8 chars of ID as code
+      },
+    };
+  }
+
   async addStockToItem(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem> {
     // Update inventory quantity
     const [updatedItem] = await db
@@ -636,13 +681,17 @@ export class DatabaseStorage implements IStorage {
 
   // Media Files
   async getMediaFiles(category?: string): Promise<MediaFile[]> {
-    let query = db.select().from(mediaFiles).where(eq(mediaFiles.isActive, true));
+    const conditions = [eq(mediaFiles.isActive, true)];
     
     if (category) {
-      query = query.where(eq(mediaFiles.category, category));
+      conditions.push(eq(mediaFiles.category, category));
     }
     
-    return await query.orderBy(desc(mediaFiles.createdAt));
+    return await db
+      .select()
+      .from(mediaFiles)
+      .where(and(...conditions))
+      .orderBy(desc(mediaFiles.createdAt));
   }
 
   async getMediaFile(id: string): Promise<MediaFile | undefined> {

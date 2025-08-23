@@ -96,6 +96,9 @@ export const sales = pgTable("sales", {
   paymentMethod: text("payment_method").notNull(), // "cash" or "venmo"
   salesAssociateId: uuid("sales_associate_id").notNull().references(() => salesAssociates.id),
   saleDate: timestamp("sale_date").defaultNow(),
+  // Receipt fields
+  receiptToken: varchar("receipt_token", { length: 50 }),
+  receiptExpiresAt: timestamp("receipt_expires_at"),
 });
 
 export const mediaFiles = pgTable("media_files", {

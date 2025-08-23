@@ -16,6 +16,7 @@ import CategoryManagement from "@/pages/category-management";
 import LabelDesigner from "@/pages/label-designer";
 import Login from "@/pages/login";
 import MobileSales from "@/pages/mobile-sales";
+import Receipt from "@/pages/receipt";
 import Sidebar from "@/components/layout/sidebar";
 
 // Mobile detection utility
@@ -95,6 +96,7 @@ function AuthenticatedApp() {
           <Route path="/sales" component={Sales} />
           <Route path="/mobile-sales" component={MobileSales} />
           <Route path="/labels" component={LabelDesigner} />
+          <Route path="/receipt/:token" component={Receipt} />
           {userRole === 'admin' && (
             <>
               <Route path="/reports" component={Reports} />
@@ -128,6 +130,7 @@ function AppContent() {
     return (
       <Switch>
         <Route path="/login" component={Login} />
+        <Route path="/receipt/:token" component={Receipt} />
         <Route>
           <Login />
         </Route>

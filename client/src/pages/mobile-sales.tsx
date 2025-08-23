@@ -23,6 +23,8 @@ import {
   LogOut
 } from "lucide-react";
 import QRScanner from "@/components/qr-scanner";
+import { QRCodeDisplay } from "@/components/QRCodeDisplay";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface InventoryItem {
   id: string;
@@ -48,6 +50,8 @@ export default function MobileSales() {
   const [showScanner, setShowScanner] = useState(false);
   const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [receiptToken, setReceiptToken] = useState<string | null>(null);
+  const [showReceiptQR, setShowReceiptQR] = useState(false);
   const { toast } = useToast();
 
   // Fetch inventory items
@@ -211,7 +215,14 @@ export default function MobileSales() {
         return apiRequest("POST", "/api/sales", saleData);
       });
       
-      await Promise.all(salesPromises);
+      const results = await Promise.all(salesPromises);
+      
+      // Get receipt token from the first sale (they all share the same order)
+      const firstSaleResult = results[0];
+      if (firstSaleResult?.receiptToken) {
+        setReceiptToken(firstSaleResult.receiptToken);
+        setShowReceiptQR(true);
+      }
       
       toast({
         title: "Sale processed",
@@ -564,6 +575,42 @@ export default function MobileSales() {
         onScan={handleQRScan}
         onClose={() => setShowScanner(false)}
       />
+
+      {/* Receipt QR Code Modal */}
+      <Dialog open={showReceiptQR} onOpenChange={setShowReceiptQR}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Customer Receipt</DialogTitle>
+          </DialogHeader>
+          {receiptToken && (
+            <QRCodeDisplay
+              url={`${window.location.origin}/receipt/${receiptToken}`}
+              title="Digital Receipt"
+              description="Share this QR code with your customer for their digital receipt"
+              showUrl={false}
+              className="border-0 shadow-none"
+            />
+          )}
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowReceiptQR(false)}
+              className="flex-1"
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowReceiptQR(false);
+                setReceiptToken(null);
+              }}
+              className="flex-1"
+            >
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

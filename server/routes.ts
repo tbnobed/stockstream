@@ -469,8 +469,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Creating sale with data:", JSON.stringify(req.body, null, 2));
       const sale = insertSaleSchema.parse(req.body);
       console.log("Parsed sale data:", JSON.stringify(sale, null, 2));
-      const newSale = await storage.createSale(sale);
-      res.status(201).json(newSale);
+      
+      // Generate receipt token and expiration (90 days from now)
+      const receiptToken = `RCT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const receiptExpiresAt = new Date();
+      receiptExpiresAt.setDate(receiptExpiresAt.getDate() + 90);
+      
+      // Add receipt fields to sale data
+      const saleWithReceipt = {
+        ...sale,
+        receiptToken,
+        receiptExpiresAt,
+      };
+      
+      const newSale = await storage.createSale(saleWithReceipt);
+      
+      // Return sale data with QR code URL for the receipt
+      const receiptUrl = `${req.protocol}://${req.get('host')}/receipt/${receiptToken}`;
+      
+      res.status(201).json({
+        ...newSale,
+        receiptUrl,
+        qrCodeData: receiptUrl, // Frontend can use this to generate QR code
+      });
     } catch (error) {
       console.error("Sales creation error:", error);
       if (error instanceof z.ZodError) {
@@ -480,6 +501,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Storage error:", error);
         res.status(500).json({ message: "Failed to create sale", error: error instanceof Error ? error.message : 'Unknown error' });
       }
+    }
+  });
+
+  // Receipt Endpoint (Public - no authentication required)
+  app.get("/api/receipts/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const receipt = await storage.getReceiptByToken(token);
+      
+      if (!receipt) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+      
+      // Check if receipt is expired
+      const now = new Date();
+      const isExpired = receipt.receiptExpiresAt && now > new Date(receipt.receiptExpiresAt);
+      
+      if (isExpired) {
+        return res.json({ ...receipt, isExpired: true });
+      }
+      
+      res.json({ ...receipt, isExpired: false });
+    } catch (error) {
+      console.error("Error fetching receipt:", error);
+      res.status(500).json({ message: "Failed to fetch receipt" });
     }
   });
 
