@@ -21,6 +21,7 @@ import * as XLSX from "xlsx";
 // Object storage removed - using local file storage only
 import path from "path";
 import fs from "fs";
+import { emailService } from "./emailService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
@@ -91,6 +92,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       res.status(503).json(health);
+    }
+  });
+
+  // Email service routes
+  app.get('/api/email/status', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const isConfigured = emailService.isConfigured();
+      
+      if (!isConfigured) {
+        return res.json({
+          configured: false,
+          message: 'Email service is not configured. Please set SMTP environment variables.'
+        });
+      }
+
+      const connectionTest = await emailService.testConnection();
+      
+      res.json({
+        configured: true,
+        connectionActive: connectionTest,
+        message: connectionTest 
+          ? 'Email service is configured and working' 
+          : 'Email service is configured but connection failed'
+      });
+    } catch (error) {
+      console.error('Email status check failed:', error);
+      res.status(500).json({
+        configured: emailService.isConfigured(),
+        connectionActive: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/email/test', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { recipientEmail } = req.body;
+      
+      if (!recipientEmail) {
+        return res.status(400).json({ message: 'Recipient email is required' });
+      }
+
+      if (!emailService.isConfigured()) {
+        return res.status(400).json({ 
+          message: 'Email service is not configured. Please set SMTP environment variables.' 
+        });
+      }
+
+      const success = await emailService.sendEmail({
+        to: recipientEmail,
+        subject: 'InventoryPro Email Test',
+        text: 'This is a test email from InventoryPro. If you received this, email is working correctly!',
+        html: `
+          <h2>InventoryPro Email Test</h2>
+          <p>This is a test email from InventoryPro.</p>
+          <p><strong>If you received this, email is working correctly!</strong></p>
+          <p>Sent at: ${new Date().toISOString()}</p>
+        `
+      });
+
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: `Test email sent successfully to ${recipientEmail}` 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send test email. Check server logs for details.' 
+        });
+      }
+    } catch (error) {
+      console.error('Test email failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/email/receipt', isAuthenticated, async (req, res) => {
+    try {
+      const { receiptToken, customerEmail, customerName } = req.body;
+      
+      if (!receiptToken || !customerEmail) {
+        return res.status(400).json({ message: 'Receipt token and customer email are required' });
+      }
+
+      if (!emailService.isConfigured()) {
+        return res.status(400).json({ 
+          message: 'Email service is not configured. Please set SMTP environment variables.' 
+        });
+      }
+
+      // Get receipt data to find the order number
+      const receipt = await storage.getReceiptByToken(receiptToken);
+      if (!receipt) {
+        return res.status(404).json({ message: 'Receipt not found or expired' });
+      }
+
+      const receiptUrl = `${req.protocol}://${req.get('host')}/receipt/${receiptToken}`;
+      
+      const success = await emailService.sendReceiptEmail(
+        customerEmail,
+        receipt.orderNumber,
+        receiptUrl,
+        customerName
+      );
+
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: `Receipt email sent successfully to ${customerEmail}` 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send receipt email. Check server logs for details.' 
+        });
+      }
+    } catch (error) {
+      console.error('Receipt email failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/email/low-stock-alert', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { adminEmail } = req.body;
+      
+      if (!adminEmail) {
+        return res.status(400).json({ message: 'Admin email is required' });
+      }
+
+      if (!emailService.isConfigured()) {
+        return res.status(400).json({ 
+          message: 'Email service is not configured. Please set SMTP environment variables.' 
+        });
+      }
+
+      const lowStockItems = await storage.getLowStockItems();
+      
+      if (lowStockItems.length === 0) {
+        return res.json({ 
+          success: true, 
+          message: 'No low stock items to report' 
+        });
+      }
+
+      const formattedItems = lowStockItems.map(item => ({
+        name: item.name,
+        sku: item.sku,
+        stock: item.quantity,
+        lowStockThreshold: item.minStockLevel
+      }));
+
+      const success = await emailService.sendLowStockAlert(adminEmail, formattedItems);
+
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: `Low stock alert sent successfully to ${adminEmail}`,
+          itemCount: lowStockItems.length
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send low stock alert. Check server logs for details.' 
+        });
+      }
+    } catch (error) {
+      console.error('Low stock alert email failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -486,6 +666,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Return sale data with QR code URL for the receipt
       const receiptUrl = `${req.protocol}://${req.get('host')}/receipt/${receiptToken}`;
+      
+      // Optional: Send receipt email if customer email is provided in the request
+      const { customerEmail, customerName } = req.body;
+      if (customerEmail && emailService.isConfigured()) {
+        try {
+          await emailService.sendReceiptEmail(
+            customerEmail,
+            newSale.orderNumber,
+            receiptUrl,
+            customerName
+          );
+          console.log(`📧 Receipt email sent to ${customerEmail} for order ${newSale.orderNumber}`);
+        } catch (emailError) {
+          console.error(`📧 Failed to send receipt email to ${customerEmail}:`, emailError);
+          // Don't fail the sale if email fails
+        }
+      }
       
       res.status(201).json({
         ...newSale,

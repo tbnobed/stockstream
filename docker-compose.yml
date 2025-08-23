@@ -38,6 +38,13 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-your_very_long_random_session_secret_key_here_change_in_production}
       JWT_SECRET: ${JWT_SECRET:-your_very_long_random_jwt_secret_key_here_change_in_production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # Email Configuration (Optional - for receipt emails and notifications)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-InventoryPro}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       # Note: Object storage removed - using local file storage in /app/uploads
       PORT: 5000
     ports:
