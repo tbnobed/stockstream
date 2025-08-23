@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: item.name,
         sku: item.sku,
         stock: item.quantity,
-        lowStockThreshold: item.minStockLevel
+        lowStockThreshold: item.minStockLevel ?? 0
       }));
 
       const success = await emailService.sendLowStockAlert(adminEmail, formattedItems);
