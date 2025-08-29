@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,6 +34,8 @@ interface CartItem {
 const transactionFormSchema = z.object({
   paymentMethod: z.enum(["cash", "venmo"]),
   salesAssociateId: z.string().min(1, "Sales associate is required"),
+  customerName: z.string().optional(),
+  customerEmail: z.string().email("Please enter a valid email").optional().or(z.literal("")),
 });
 
 type TransactionFormData = z.infer<typeof transactionFormSchema>;
@@ -63,6 +65,8 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     defaultValues: {
       paymentMethod: "cash",
       salesAssociateId: "",
+      customerName: "",
+      customerEmail: "",
     },
   });
 
@@ -98,6 +102,8 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
           totalAmount: item.totalPrice.toString(),
           paymentMethod: data.formData.paymentMethod,
           orderNumber: orderNumber,
+          customerEmail: data.formData.customerEmail?.trim() || undefined,
+          customerName: data.formData.customerName?.trim() || undefined,
         };
         return apiRequest("POST", "/api/sales", saleData);
       });
@@ -521,6 +527,53 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                   </FormItem>
                 )}
               />
+
+              {/* Customer Information Fields */}
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <Label className="text-sm font-medium">Customer Information (Optional - for Email Receipt)</Label>
+                
+                <FormField
+                  control={form.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter customer name"
+                          {...field}
+                          data-testid="input-modal-customer-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="customerEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Enter customer email"
+                          {...field}
+                          data-testid="input-modal-customer-email"
+                        />
+                      </FormControl>
+                      {field.value && (
+                        <FormDescription className="text-xs">
+                          ✉️ Customer will receive a digital receipt via email
+                        </FormDescription>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               <div className="flex justify-end space-x-3 pt-4">
                 <Button

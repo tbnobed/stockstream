@@ -46,6 +46,8 @@ export default function MobileSales() {
   const [skuInput, setSkuInput] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo">("cash");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
@@ -209,6 +211,8 @@ export default function MobileSales() {
           totalAmount: (item.cartQuantity * parseFloat(item.price)).toString(),
           paymentMethod: paymentMethod,
           orderNumber: orderNumber,
+          customerEmail: customerEmail.trim() || undefined,
+          customerName: customerName.trim() || undefined,
         };
         
         console.log("Creating individual sale:", saleData);
@@ -238,6 +242,8 @@ export default function MobileSales() {
       // Reset on success
       setCart([]);
       setSkuInput("");
+      setCustomerEmail("");
+      setCustomerName("");
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
@@ -553,6 +559,31 @@ export default function MobileSales() {
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Customer Information */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Customer Information (Optional - for Email Receipt)</Label>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Customer name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  data-testid="input-customer-name"
+                />
+                <Input
+                  type="email"
+                  placeholder="Customer email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  data-testid="input-customer-email"
+                />
+              </div>
+              {customerEmail && (
+                <p className="text-xs text-muted-foreground">
+                  ✉️ Customer will receive a digital receipt via email
+                </p>
+              )}
             </div>
 
             <Separator />
