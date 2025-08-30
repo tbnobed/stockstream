@@ -765,14 +765,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updates = req.body;
       
+      console.log("Category update request:", { id, updates });
+      
       // Handle parentCategory explicitly - convert undefined to null for database
-      if ('parentCategory' in updates && updates.parentCategory === undefined) {
-        updates.parentCategory = null;
+      if ('parentCategory' in updates) {
+        if (updates.parentCategory === undefined || updates.parentCategory === null || updates.parentCategory === '') {
+          updates.parentCategory = null;
+        }
       }
       
+      console.log("Processed updates:", updates);
+      
       const updatedCategory = await storage.updateCategory(id, updates);
+      console.log("Updated category result:", updatedCategory);
       res.json(updatedCategory);
     } catch (error) {
+      console.error("Error updating category:", error);
       res.status(500).json({ message: "Failed to update category" });
     }
   });
