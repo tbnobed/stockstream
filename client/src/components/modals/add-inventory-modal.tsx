@@ -239,6 +239,27 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     },
   });
 
+  // Generate SKU using abbreviations from database categories
+  const generateSKUFromAbbreviations = (formData: any): string => {
+    // Helper function to find abbreviation for a category value
+    const findAbbreviation = (categoryArray: Category[], value: string): string => {
+      const found = categoryArray.find(cat => cat.value === value);
+      return found?.abbreviation || value.substring(0, 2).toUpperCase();
+    };
+
+    // Get abbreviations for each field
+    const categoryAbbr = formData.category ? findAbbreviation(categories, formData.category) : "";
+    const designAbbr = formData.design ? findAbbreviation(designs, formData.design) : "";
+    const groupAbbr = formData.group ? findAbbreviation(groups, formData.group) : "";
+    const styleAbbr = formData.style ? findAbbreviation(filteredStyles, formData.style) : "";
+    const colorAbbr = formData.color ? findAbbreviation(colors, formData.color) : "";
+    const sizeAbbr = formData.size ? findAbbreviation(filteredSizes, formData.size) : "";
+
+    // Build SKU in format: Category-Design-Group-Style-Color-Size
+    const parts = [categoryAbbr, designAbbr, groupAbbr, styleAbbr, colorAbbr, sizeAbbr].filter(Boolean);
+    return parts.join("-");
+  };
+
   // Auto-populate item name and SKU based on selections
   const autoPopulateFromCategories = () => {
     const formData = form.getValues();
@@ -253,15 +274,8 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       styleGroup: formData.style || undefined,
     });
     
-    // Generate SKU from categories
-    const sku = generateCategorySKU({
-      type: formData.category || undefined,
-      color: formData.color || undefined,
-      size: formData.size || undefined,
-      design: formData.design || undefined,
-      groupType: formData.group || undefined,
-      styleGroup: formData.style || undefined,
-    });
+    // Generate SKU using abbreviations from database
+    const sku = generateSKUFromAbbreviations(formData);
     
     // Update form values
     form.setValue("name", itemName);
@@ -270,11 +284,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
 
   const generateSkuFromForm = () => {
     const formData = form.getValues();
-    const sku = generateSKU({
-      type: formData.category || undefined,
-      color: formData.color || undefined,
-      size: formData.size || undefined,
-    });
+    const sku = generateSKUFromAbbreviations(formData);
     form.setValue("sku", sku);
   };
 
@@ -313,13 +323,10 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
             groupType: baseData.group || undefined,
             styleGroup: baseData.style || undefined,
           }),
-          sku: generateCategorySKU({
-            type: baseData.category || undefined,
+          sku: generateSKUFromAbbreviations({
+            ...baseData,
             color,
             size,
-            design: baseData.design || undefined,
-            groupType: baseData.group || undefined,
-            styleGroup: baseData.style || undefined,
           })
         };
         variants.push(variantData);
