@@ -235,6 +235,8 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  parentCategory: z.string().nullish(), // Explicitly allow null and undefined
 });
 
 export const insertMediaFileSchema = createInsertSchema(mediaFiles).omit({

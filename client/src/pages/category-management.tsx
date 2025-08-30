@@ -254,7 +254,7 @@ export default function CategoryManagement() {
     createCategoryMutation.mutate({
       type: selectedType,
       value: newCategoryValue.trim(),
-      parentCategory: newCategoryParent === "none" ? undefined : newCategoryParent,
+      parentCategory: newCategoryParent === "none" ? "" : newCategoryParent,
     });
   };
 
@@ -264,7 +264,7 @@ export default function CategoryManagement() {
     const updateData = {
       id: category.id,
       value: newValue.trim(),
-      parentCategory: newParent === "none" ? undefined : newParent,
+      parentCategory: newParent === "none" ? "" : newParent,
     };
     
     console.log("Updating category with data:", updateData);
@@ -677,7 +677,7 @@ function EditCategoryForm({ category, onSave, onCancel, isLoading, allCategories
 
   const handleSave = () => {
     if (value.trim()) {
-      onSave(value.trim(), parentCategory === "none" ? undefined : parentCategory);
+      onSave(value.trim(), parentCategory === "none" ? "" : parentCategory);
     }
   };
 

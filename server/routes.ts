@@ -767,9 +767,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Category update request:", { id, updates });
       
-      // Handle parentCategory explicitly - convert undefined to null for database
+      // Handle parentCategory explicitly - empty string means no parent (null)
       if ('parentCategory' in updates) {
-        if (updates.parentCategory === undefined || updates.parentCategory === null || updates.parentCategory === '') {
+        if (updates.parentCategory === "" || !updates.parentCategory) {
           updates.parentCategory = null;
         }
       }
