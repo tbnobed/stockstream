@@ -52,6 +52,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [isMultiVariant, setIsMultiVariant] = useState(!editingItem);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const { data: suppliers = [] } = useQuery<Supplier[]>({
     queryKey: ["/api/suppliers"],
@@ -106,6 +107,15 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     },
   });
 
+  // Filter styles and sizes based on selected category
+  const filteredStyles = styles.filter(style => 
+    !selectedCategory || !style.parentCategory || style.parentCategory === selectedCategory
+  );
+  
+  const filteredSizes = sizes.filter(size => 
+    !selectedCategory || !size.parentCategory || size.parentCategory === selectedCategory
+  );
+
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
     defaultValues: editingItem ? {
@@ -144,11 +154,13 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   // Reset form when editingItem changes
   useEffect(() => {
     if (editingItem && open) {
+      const categoryValue = editingItem.category || editingItem.type || "";
+      setSelectedCategory(categoryValue);
       form.reset({
         sku: editingItem.sku || "",
         name: editingItem.name || "",
         description: editingItem.description || "",
-        category: editingItem.category || editingItem.type || "",
+        category: categoryValue,
         size: editingItem.size || "",
         color: editingItem.color || "",
         design: editingItem.design || "",
@@ -161,6 +173,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         supplierId: editingItem.supplierId || undefined,
       });
     } else if (!editingItem && open) {
+      setSelectedCategory("");
       form.reset({
         sku: "",
         name: "",
@@ -270,6 +283,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     form.reset();
     setSelectedColors([]);
     setSelectedSizes([]);
+    setSelectedCategory("");
     setIsMultiVariant(!editingItem);
     if (onClose) onClose();
   };
@@ -410,6 +424,10 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                     <FormLabel>Category</FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
+                      setSelectedCategory(value);
+                      // Clear dependent fields when category changes
+                      form.setValue("style", "");
+                      form.setValue("size", "");
                       setTimeout(autoPopulateFromCategories, 100);
                     }} value={field.value || ""}>
                       <FormControl>
@@ -575,7 +593,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {styles.map((styleItem) => (
+                        {filteredStyles.map((styleItem) => (
                           <SelectItem key={styleItem.id} value={styleItem.value}>
                             {styleItem.value}
                           </SelectItem>
@@ -597,7 +615,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                       <div className="space-y-2">
                         <div className="text-sm text-muted-foreground">Select multiple sizes:</div>
                         <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto">
-                          {sizes.map((sizeItem) => (
+                          {filteredSizes.map((sizeItem) => (
                             <div key={sizeItem.id} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`size-${sizeItem.value}`}
@@ -642,7 +660,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sizes.map((sizeItem) => (
+                          {filteredSizes.map((sizeItem) => (
                             <SelectItem key={sizeItem.id} value={sizeItem.value}>
                               {sizeItem.value}
                             </SelectItem>
