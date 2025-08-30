@@ -39,7 +39,7 @@ export default function CategoryManagement() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryValue, setNewCategoryValue] = useState("");
-  const [newCategoryParent, setNewCategoryParent] = useState("");
+  const [newCategoryParent, setNewCategoryParent] = useState("none");
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
 
@@ -71,7 +71,7 @@ export default function CategoryManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       setIsAddingCategory(false);
       setNewCategoryValue("");
-      setNewCategoryParent("");
+      setNewCategoryParent("none");
       toast({
         title: "Success",
         description: "Category added successfully",
@@ -254,7 +254,7 @@ export default function CategoryManagement() {
     createCategoryMutation.mutate({
       type: selectedType,
       value: newCategoryValue.trim(),
-      parentCategory: newCategoryParent || undefined,
+      parentCategory: newCategoryParent === "none" ? undefined : newCategoryParent || undefined,
     });
   };
 
@@ -264,7 +264,7 @@ export default function CategoryManagement() {
     updateCategoryMutation.mutate({
       id: category.id,
       value: newValue.trim(),
-      parentCategory: newParent,
+      parentCategory: newParent === "none" ? undefined : newParent,
     });
   };
 
@@ -519,7 +519,7 @@ export default function CategoryManagement() {
                           <SelectValue placeholder="Select parent category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Parent</SelectItem>
+                          <SelectItem value="none">No Parent</SelectItem>
                           {allCategories.map((category) => (
                             <SelectItem key={category.id} value={category.value}>
                               {category.value}
@@ -538,7 +538,7 @@ export default function CategoryManagement() {
                       onClick={() => {
                         setIsAddingCategory(false);
                         setNewCategoryValue("");
-                        setNewCategoryParent("");
+                        setNewCategoryParent("none");
                       }}
                     >
                       Cancel
@@ -665,11 +665,11 @@ interface EditCategoryFormProps {
 
 function EditCategoryForm({ category, onSave, onCancel, isLoading, allCategories, selectedType }: EditCategoryFormProps) {
   const [value, setValue] = useState(category.value);
-  const [parentCategory, setParentCategory] = useState(category.parentCategory || "");
+  const [parentCategory, setParentCategory] = useState(category.parentCategory || "none");
 
   const handleSave = () => {
     if (value.trim()) {
-      onSave(value.trim(), parentCategory || undefined);
+      onSave(value.trim(), parentCategory === "none" ? undefined : parentCategory);
     }
   };
 
@@ -694,7 +694,7 @@ function EditCategoryForm({ category, onSave, onCancel, isLoading, allCategories
               <SelectValue placeholder="Select parent category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Parent</SelectItem>
+              <SelectItem value="none">No Parent</SelectItem>
               {allCategories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.value}>
                   {cat.value}
