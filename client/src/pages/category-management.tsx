@@ -59,7 +59,7 @@ export default function CategoryManagement() {
       const response = await apiRequest("GET", "/api/categories/category");
       return await response.json() as Category[];
     },
-    enabled: selectedType === "style" || selectedType === "size",
+    enabled: selectedType === "style" || selectedType === "size" || selectedType === "design" || selectedType === "group",
   });
 
   // Create category mutation
@@ -510,8 +510,8 @@ export default function CategoryManagement() {
                     />
                   </div>
                   
-                  {/* Parent Category Selection for Styles and Sizes */}
-                  {(selectedType === "style" || selectedType === "size") && (
+                  {/* Parent Category Selection for Styles, Sizes, Designs, and Groups */}
+                  {(selectedType === "style" || selectedType === "size" || selectedType === "design" || selectedType === "group") && (
                     <div>
                       <Label htmlFor="parentCategory">Parent Category (Optional)</Label>
                       <Select value={newCategoryParent} onValueChange={setNewCategoryParent}>
@@ -528,7 +528,10 @@ export default function CategoryManagement() {
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {selectedType === "style" ? "Select which category this style belongs to (e.g., Hat, Shirt)" : "Select which category this size applies to (e.g., Hat, Shirt)"}
+                        {selectedType === "style" && "Select which category this style belongs to (e.g., Hat, Shirt)"}
+                        {selectedType === "size" && "Select which category this size applies to (e.g., Hat, Shirt)"}
+                        {selectedType === "design" && "Select which category this design belongs to (e.g., Hat, Shirt)"}
+                        {selectedType === "group" && "Select which category this group applies to (e.g., Hat, Shirt)"}
                       </p>
                     </div>
                   )}
@@ -685,8 +688,8 @@ function EditCategoryForm({ category, onSave, onCancel, isLoading, allCategories
         />
       </div>
       
-      {/* Parent Category Selection for Styles and Sizes */}
-      {(selectedType === "style" || selectedType === "size") && (
+      {/* Parent Category Selection for Styles, Sizes, Designs, and Groups */}
+      {(selectedType === "style" || selectedType === "size" || selectedType === "design" || selectedType === "group") && (
         <div>
           <Label htmlFor="editParentCategory">Parent Category</Label>
           <Select value={parentCategory} onValueChange={setParentCategory}>
@@ -703,7 +706,10 @@ function EditCategoryForm({ category, onSave, onCancel, isLoading, allCategories
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-1">
-            {selectedType === "style" ? "Which category does this style belong to?" : "Which category does this size apply to?"}
+            {selectedType === "style" && "Which category does this style belong to?"}
+            {selectedType === "size" && "Which category does this size apply to?"}
+            {selectedType === "design" && "Which category does this design belong to?"}
+            {selectedType === "group" && "Which category does this group apply to?"}
           </p>
         </div>
       )}
