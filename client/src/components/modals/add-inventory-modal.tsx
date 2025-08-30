@@ -32,6 +32,8 @@ interface Category {
   id: string;
   type: string;
   value: string;
+  abbreviation?: string;
+  parentCategory?: string;
   displayOrder: number;
   isActive: boolean;
   createdAt: string;
@@ -80,26 +82,26 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     },
   });
 
-  const { data: groupTypes = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories", "groupType"],
+  const { data: groups = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "group"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/groupType");
+      const response = await apiRequest("GET", "/api/categories/group");
       return await response.json();
     },
   });
 
-  const { data: styleGroups = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories", "styleGroup"],
+  const { data: styles = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "style"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/styleGroup");
+      const response = await apiRequest("GET", "/api/categories/style");
       return await response.json();
     },
   });
 
-  const { data: types = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories", "type"],
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", "category"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/categories/type");
+      const response = await apiRequest("GET", "/api/categories/category");
       return await response.json();
     },
   });
@@ -110,12 +112,12 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       sku: editingItem.sku || "",
       name: editingItem.name || "",
       description: editingItem.description || "",
-      type: editingItem.type || "",
+      category: editingItem.category || editingItem.type || "",
       size: editingItem.size || "",
       color: editingItem.color || "",
       design: editingItem.design || "",
-      groupType: editingItem.groupType || "",
-      styleGroup: editingItem.styleGroup || "",
+      group: editingItem.group || editingItem.groupType || "",
+      style: editingItem.style || editingItem.styleGroup || "",
       price: editingItem.price || "",
       cost: editingItem.cost || "",
       quantity: editingItem.quantity || 0,
@@ -125,12 +127,12 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
       sku: "",
       name: "",
       description: "",
-      type: "",
+      category: "",
       size: "",
       color: "",
       design: "",
-      groupType: "",
-      styleGroup: "",
+      group: "",
+      style: "",
       price: "",
       cost: "",
       quantity: 0,
@@ -146,12 +148,12 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         sku: editingItem.sku || "",
         name: editingItem.name || "",
         description: editingItem.description || "",
-        type: editingItem.type || "",
+        category: editingItem.category || editingItem.type || "",
         size: editingItem.size || "",
         color: editingItem.color || "",
         design: editingItem.design || "",
-        groupType: editingItem.groupType || "",
-        styleGroup: editingItem.styleGroup || "",
+        group: editingItem.group || editingItem.groupType || "",
+        style: editingItem.style || editingItem.styleGroup || "",
         price: editingItem.price || "",
         cost: editingItem.cost || "",
         quantity: editingItem.quantity || 0,
@@ -163,12 +165,12 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
         sku: "",
         name: "",
         description: "",
-        type: "",
+        category: "",
         size: "",
         color: "",
         design: "",
-        groupType: "",
-        styleGroup: "",
+        group: "",
+        style: "",
         price: "",
         cost: "",
         quantity: 0,
@@ -230,22 +232,22 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     
     // Generate item name from categories
     const itemName = generateItemName({
-      type: formData.type || undefined,
+      type: formData.category || undefined,
       color: formData.color || undefined,
       size: formData.size || undefined,
       design: formData.design || undefined,
-      groupType: formData.groupType || undefined,
-      styleGroup: formData.styleGroup || undefined,
+      groupType: formData.group || undefined,
+      styleGroup: formData.style || undefined,
     });
     
     // Generate SKU from categories
     const sku = generateCategorySKU({
-      type: formData.type || undefined,
+      type: formData.category || undefined,
       color: formData.color || undefined,
       size: formData.size || undefined,
       design: formData.design || undefined,
-      groupType: formData.groupType || undefined,
-      styleGroup: formData.styleGroup || undefined,
+      groupType: formData.group || undefined,
+      styleGroup: formData.style || undefined,
     });
     
     // Update form values
@@ -256,7 +258,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
   const generateSkuFromForm = () => {
     const formData = form.getValues();
     const sku = generateSKU({
-      type: formData.type || undefined,
+      type: formData.category || undefined,
       color: formData.color || undefined,
       size: formData.size || undefined,
     });
@@ -290,20 +292,20 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
           color,
           size,
           name: generateItemName({
-            type: baseData.type || undefined,
+            type: baseData.category || undefined,
             color,
             size,
             design: baseData.design || undefined,
-            groupType: baseData.groupType || undefined,
-            styleGroup: baseData.styleGroup || undefined,
+            groupType: baseData.group || undefined,
+            styleGroup: baseData.style || undefined,
           }),
           sku: generateCategorySKU({
-            type: baseData.type || undefined,
+            type: baseData.category || undefined,
             color,
             size,
             design: baseData.design || undefined,
-            groupType: baseData.groupType || undefined,
-            styleGroup: baseData.styleGroup || undefined,
+            groupType: baseData.group || undefined,
+            styleGroup: baseData.style || undefined,
           })
         };
         variants.push(variantData);
@@ -402,23 +404,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="type"
+                name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type</FormLabel>
+                    <FormLabel>Category</FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
                       setTimeout(autoPopulateFromCategories, 100);
                     }} value={field.value || ""}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-item-type">
-                          <SelectValue placeholder="Select type" />
+                        <SelectTrigger data-testid="select-item-category">
+                          <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {types.map((typeItem) => (
-                          <SelectItem key={typeItem.id} value={typeItem.value}>
-                            {typeItem.value}
+                        {categories.map((categoryItem) => (
+                          <SelectItem key={categoryItem.id} value={categoryItem.value}>
+                            {categoryItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -529,23 +531,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
               
               <FormField
                 control={form.control}
-                name="groupType"
+                name="group"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Group Type</FormLabel>
+                    <FormLabel>Group</FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
                       setTimeout(autoPopulateFromCategories, 100);
                     }} value={field.value || ""}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-item-group-type">
-                          <SelectValue placeholder="Select group type" />
+                        <SelectTrigger data-testid="select-item-group">
+                          <SelectValue placeholder="Select group" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groupTypes.map((groupTypeItem) => (
-                          <SelectItem key={groupTypeItem.id} value={groupTypeItem.value}>
-                            {groupTypeItem.value}
+                        {groups.map((groupItem) => (
+                          <SelectItem key={groupItem.id} value={groupItem.value}>
+                            {groupItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -559,23 +561,23 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="styleGroup"
+                name="style"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Style Group</FormLabel>
+                    <FormLabel>Style</FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
                       setTimeout(autoPopulateFromCategories, 100);
                     }} value={field.value || ""}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-item-style-group">
-                          <SelectValue placeholder="Select style group" />
+                        <SelectTrigger data-testid="select-item-style">
+                          <SelectValue placeholder="Select style" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {styleGroups.map((styleGroupItem) => (
-                          <SelectItem key={styleGroupItem.id} value={styleGroupItem.value}>
-                            {styleGroupItem.value}
+                        {styles.map((styleItem) => (
+                          <SelectItem key={styleItem.id} value={styleItem.value}>
+                            {styleItem.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
