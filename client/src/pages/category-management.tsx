@@ -39,6 +39,7 @@ export default function CategoryManagement() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryValue, setNewCategoryValue] = useState("");
+  const [newCategoryParent, setNewCategoryParent] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
 
@@ -51,15 +52,26 @@ export default function CategoryManagement() {
     },
   });
 
+  // Fetch all categories for parent selection (only for style/size types that can have parents)
+  const { data: allCategories = [] } = useQuery({
+    queryKey: ["/api/categories", "category"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories/category");
+      return await response.json() as Category[];
+    },
+    enabled: selectedType === "style" || selectedType === "size",
+  });
+
   // Create category mutation
   const createCategoryMutation = useMutation({
-    mutationFn: async (data: { type: string; value: string }) => {
+    mutationFn: async (data: { type: string; value: string; parentCategory?: string }) => {
       return apiRequest("POST", "/api/categories", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       setIsAddingCategory(false);
       setNewCategoryValue("");
+      setNewCategoryParent("");
       toast({
         title: "Success",
         description: "Category added successfully",
@@ -77,8 +89,11 @@ export default function CategoryManagement() {
 
   // Update category mutation
   const updateCategoryMutation = useMutation({
-    mutationFn: async (data: { id: string; value: string }) => {
-      return apiRequest("PUT", `/api/categories/${data.id}`, { value: data.value });
+    mutationFn: async (data: { id: string; value: string; parentCategory?: string }) => {
+      return apiRequest("PUT", `/api/categories/${data.id}`, { 
+        value: data.value,
+        parentCategory: data.parentCategory 
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -239,15 +254,17 @@ export default function CategoryManagement() {
     createCategoryMutation.mutate({
       type: selectedType,
       value: newCategoryValue.trim(),
+      parentCategory: newCategoryParent || undefined,
     });
   };
 
-  const handleUpdateCategory = (category: Category, newValue: string) => {
+  const handleUpdateCategory = (category: Category, newValue: string, newParent?: string) => {
     if (!newValue.trim()) return;
     
     updateCategoryMutation.mutate({
       id: category.id,
       value: newValue.trim(),
+      parentCategory: newParent,
     });
   };
 
@@ -492,12 +509,36 @@ export default function CategoryManagement() {
                       onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
                     />
                   </div>
+                  
+                  {/* Parent Category Selection for Styles and Sizes */}
+                  {(selectedType === "style" || selectedType === "size") && (
+                    <div>
+                      <Label htmlFor="parentCategory">Parent Category (Optional)</Label>
+                      <Select value={newCategoryParent} onValueChange={setNewCategoryParent}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select parent category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No Parent</SelectItem>
+                          {allCategories.map((category) => (
+                            <SelectItem key={category.id} value={category.value}>
+                              {category.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedType === "style" ? "Select which category this style belongs to (e.g., Hat, Shirt)" : "Select which category this size applies to (e.g., Hat, Shirt)"}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
                       onClick={() => {
                         setIsAddingCategory(false);
                         setNewCategoryValue("");
+                        setNewCategoryParent("");
                       }}
                     >
                       Cancel
@@ -583,9 +624,11 @@ export default function CategoryManagement() {
                         </DialogHeader>
                         <EditCategoryForm
                           category={category}
-                          onSave={(newValue) => handleUpdateCategory(category, newValue)}
+                          onSave={(newValue, newParent) => handleUpdateCategory(category, newValue, newParent)}
                           onCancel={() => setEditingCategory(null)}
                           isLoading={updateCategoryMutation.isPending}
+                          allCategories={allCategories}
+                          selectedType={selectedType}
                         />
                       </DialogContent>
                     </Dialog>
@@ -613,17 +656,20 @@ export default function CategoryManagement() {
 
 interface EditCategoryFormProps {
   category: Category;
-  onSave: (value: string) => void;
+  onSave: (value: string, parentCategory?: string) => void;
   onCancel: () => void;
   isLoading: boolean;
+  allCategories: Category[];
+  selectedType: string;
 }
 
-function EditCategoryForm({ category, onSave, onCancel, isLoading }: EditCategoryFormProps) {
+function EditCategoryForm({ category, onSave, onCancel, isLoading, allCategories, selectedType }: EditCategoryFormProps) {
   const [value, setValue] = useState(category.value);
+  const [parentCategory, setParentCategory] = useState(category.parentCategory || "");
 
   const handleSave = () => {
     if (value.trim()) {
-      onSave(value.trim());
+      onSave(value.trim(), parentCategory || undefined);
     }
   };
 
@@ -638,6 +684,30 @@ function EditCategoryForm({ category, onSave, onCancel, isLoading }: EditCategor
           onKeyDown={(e) => e.key === "Enter" && handleSave()}
         />
       </div>
+      
+      {/* Parent Category Selection for Styles and Sizes */}
+      {(selectedType === "style" || selectedType === "size") && (
+        <div>
+          <Label htmlFor="editParentCategory">Parent Category</Label>
+          <Select value={parentCategory} onValueChange={setParentCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select parent category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No Parent</SelectItem>
+              {allCategories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.value}>
+                  {cat.value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            {selectedType === "style" ? "Which category does this style belong to?" : "Which category does this size apply to?"}
+          </p>
+        </div>
+      )}
+      
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel}>
           Cancel
