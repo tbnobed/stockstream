@@ -254,7 +254,7 @@ export default function CategoryManagement() {
     createCategoryMutation.mutate({
       type: selectedType,
       value: newCategoryValue.trim(),
-      parentCategory: newCategoryParent === "none" ? undefined : newCategoryParent || undefined,
+      parentCategory: newCategoryParent === "none" ? undefined : newCategoryParent,
     });
   };
 

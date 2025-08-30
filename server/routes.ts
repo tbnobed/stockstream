@@ -764,6 +764,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
+      
+      // Handle parentCategory explicitly - convert undefined to null for database
+      if ('parentCategory' in updates && updates.parentCategory === undefined) {
+        updates.parentCategory = null;
+      }
+      
       const updatedCategory = await storage.updateCategory(id, updates);
       res.json(updatedCategory);
     } catch (error) {
