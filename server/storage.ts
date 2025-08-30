@@ -260,11 +260,11 @@ export class DatabaseStorage implements IStorage {
         ilike(inventoryItems.sku, `%${searchTerm}%`),
         ilike(inventoryItems.name, `%${searchTerm}%`),
         ilike(inventoryItems.description, `%${searchTerm}%`),
-        ilike(inventoryItems.type, `%${searchTerm}%`),
+        ilike(inventoryItems.category, `%${searchTerm}%`),
         ilike(inventoryItems.color, `%${searchTerm}%`),
         ilike(inventoryItems.design, `%${searchTerm}%`),
-        ilike(inventoryItems.groupType, `%${searchTerm}%`),
-        ilike(inventoryItems.styleGroup, `%${searchTerm}%`)
+        ilike(inventoryItems.group, `%${searchTerm}%`),
+        ilike(inventoryItems.style, `%${searchTerm}%`)
       )
     ];
 

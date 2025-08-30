@@ -15,6 +15,8 @@ interface Category {
   id: string;
   type: string;
   value: string;
+  abbreviation?: string;
+  parentCategory?: string;
   displayOrder: number;
   isActive: boolean;
   createdAt: string;
@@ -22,17 +24,17 @@ interface Category {
 }
 
 const CATEGORY_TYPES = [
-  { value: "type", label: "Types", description: "Available item types (Shirt, Pants, etc.)" },
-  { value: "color", label: "Colors", description: "Available colors for inventory items" },
-  { value: "size", label: "Sizes", description: "Available sizes for inventory items" },
-  { value: "design", label: "Designs", description: "Available designs for inventory items" },
-  { value: "groupType", label: "Group Types", description: "Customer group classifications" },
-  { value: "styleGroup", label: "Style Groups", description: "Product style classifications" },
+  { value: "category", label: "Categories", description: "Main product categories (Hat, Shirt, Coin, etc.)" },
+  { value: "design", label: "Designs", description: "Product designs and patterns (Arizona, Lipstick, etc.)" },
+  { value: "group", label: "Groups", description: "Target audience groups (Supporter, Ladies, Member, etc.)" },
+  { value: "style", label: "Styles", description: "Product styles (Flex Fit, T-Shirt, Snap Back, etc.)" },
+  { value: "color", label: "Colors", description: "Available colors (Black, White, Red, etc.)" },
+  { value: "size", label: "Sizes", description: "Available sizes (S/M, L/XL, OSFA, etc.)" },
 ] as const;
 
 export default function CategoryManagement() {
   const [selectedType, setSelectedType] = useState<string>(() => {
-    return localStorage.getItem("category-selected-type") || "type";
+    return localStorage.getItem("category-selected-type") || "category";
   });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -531,7 +533,19 @@ export default function CategoryManagement() {
                     <Badge variant="outline" className="text-xs">
                       #{index}
                     </Badge>
-                    <span className="font-medium">{category.value}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{category.value}</span>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        {category.abbreviation && (
+                          <Badge variant="secondary" className="text-xs font-mono">
+                            {category.abbreviation}
+                          </Badge>
+                        )}
+                        {category.parentCategory && (
+                          <span className="text-xs">→ {category.parentCategory}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2">

@@ -46,8 +46,10 @@ export const suppliers = pgTable("suppliers", {
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  type: varchar("type").notNull(), // "type", "color", "size", "design", "groupType", "styleGroup"
+  type: varchar("type").notNull(), // "category", "color", "size", "design", "group", "style"
   value: varchar("value").notNull(),
+  abbreviation: varchar("abbreviation", { length: 10 }), // New field for abbreviations like "H", "BK", "S/M"
+  parentCategory: varchar("parent_category"), // For hierarchical dependencies (style->category, size->category)
   displayOrder: integer("display_order").default(0), // For custom ordering
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -59,12 +61,13 @@ export const inventoryItems = pgTable("inventory_items", {
   sku: varchar("sku", { length: 50 }).notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
-  type: text("type").notNull(), // e.g., "shirt", "pants", "shoes"
-  size: text("size"), // e.g., "S", "M", "L", "XL", "9", "10"
-  color: text("color"), // e.g., "red", "blue", "black"
-  design: text("design"), // e.g., "Lipstick", "Cancer", "Event-Specific"
-  groupType: text("group_type"), // e.g., "Supporter", "Ladies", "Member-Only"
-  styleGroup: text("style_group"), // e.g., "T-Shirt", "V-Neck", "Tank Top"
+  // Updated field names to match client requirements
+  category: text("category").notNull(), // Was "type" - e.g., "Hat", "Coin", "Shirt"  
+  size: text("size"), // e.g., "S/M", "L/XL", "OSFA"
+  color: text("color"), // e.g., "Black", "White", "Red"
+  design: text("design"), // e.g., "Lipstick", "Cancer", "Arizona"
+  group: text("group"), // Was "groupType" - e.g., "Supporter", "Ladies", "Member"
+  style: text("style"), // Was "styleGroup" - e.g., "Flex Fit", "Snap Back", "Trucker"
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Selling price
   cost: decimal("cost", { precision: 10, scale: 2 }), // Landed cost (what you paid)
   quantity: integer("quantity").notNull().default(0),
@@ -95,6 +98,9 @@ export const sales = pgTable("sales", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(), // "cash" or "venmo"
   salesAssociateId: uuid("sales_associate_id").notNull().references(() => salesAssociates.id),
+  // Customer information for email receipts
+  customerName: text("customer_name"),
+  customerEmail: text("customer_email"),
   saleDate: timestamp("sale_date").defaultNow(),
   // Receipt fields
   receiptToken: varchar("receipt_token", { length: 50 }),
