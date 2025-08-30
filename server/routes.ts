@@ -765,8 +765,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updates = req.body;
       
-      console.log("Category update request:", { id, updates });
-      
       // Handle parentCategory explicitly - empty string means no parent (null)
       if ('parentCategory' in updates) {
         if (updates.parentCategory === "" || !updates.parentCategory) {
@@ -774,13 +772,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log("Processed updates:", updates);
-      
       const updatedCategory = await storage.updateCategory(id, updates);
-      console.log("Updated category result:", updatedCategory);
       res.json(updatedCategory);
     } catch (error) {
-      console.error("Error updating category:", error);
       res.status(500).json({ message: "Failed to update category" });
     }
   });

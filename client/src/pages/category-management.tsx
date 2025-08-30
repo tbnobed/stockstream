@@ -261,16 +261,11 @@ export default function CategoryManagement() {
   const handleUpdateCategory = (category: Category, newValue: string, newParent?: string) => {
     if (!newValue.trim()) return;
     
-    const updateData = {
+    updateCategoryMutation.mutate({
       id: category.id,
       value: newValue.trim(),
       parentCategory: newParent === "none" ? "" : newParent,
-    };
-    
-    console.log("Updating category with data:", updateData);
-    console.log("newParent value:", newParent);
-    
-    updateCategoryMutation.mutate(updateData);
+    });
   };
 
   const handleDeleteCategory = (id: string) => {

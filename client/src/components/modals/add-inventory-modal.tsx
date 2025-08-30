@@ -107,14 +107,26 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
     },
   });
 
-  // Filter styles and sizes based on selected category
-  const filteredStyles = styles.filter(style => 
-    !selectedCategory || !style.parentCategory || style.parentCategory === selectedCategory
-  );
-  
-  const filteredSizes = sizes.filter(size => 
-    !selectedCategory || !size.parentCategory || size.parentCategory === selectedCategory
-  );
+  // Smart hierarchical filtering - show assigned items if any exist, otherwise show unassigned
+  const getFilteredItems = (items: Category[]) => {
+    if (!selectedCategory) return items;
+    
+    // Find items assigned to this category
+    const assignedItems = items.filter(item => item.parentCategory === selectedCategory);
+    
+    // If there are assigned items, show only those
+    if (assignedItems.length > 0) {
+      return assignedItems;
+    }
+    
+    // Otherwise, show only unassigned items (no parent category)
+    return items.filter(item => !item.parentCategory);
+  };
+
+  const filteredStyles = getFilteredItems(styles);
+  const filteredSizes = getFilteredItems(sizes);
+  const filteredDesigns = getFilteredItems(designs);
+  const filteredGroups = getFilteredItems(groups);
 
   const form = useForm<InsertInventoryItem>({
     resolver: zodResolver(insertInventoryItemSchema),
@@ -249,8 +261,8 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
 
     // Get abbreviations for each field
     const categoryAbbr = formData.category ? findAbbreviation(categories, formData.category) : "";
-    const designAbbr = formData.design ? findAbbreviation(designs, formData.design) : "";
-    const groupAbbr = formData.group ? findAbbreviation(groups, formData.group) : "";
+    const designAbbr = formData.design ? findAbbreviation(filteredDesigns, formData.design) : "";
+    const groupAbbr = formData.group ? findAbbreviation(filteredGroups, formData.group) : "";
     const styleAbbr = formData.style ? findAbbreviation(filteredStyles, formData.style) : "";
     const colorAbbr = formData.color ? findAbbreviation(colors, formData.color) : "";
     const sizeAbbr = formData.size ? findAbbreviation(filteredSizes, formData.size) : "";
@@ -542,7 +554,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {designs.map((designItem) => (
+                        {filteredDesigns.map((designItem) => (
                           <SelectItem key={designItem.id} value={designItem.value}>
                             {designItem.value}
                           </SelectItem>
@@ -570,7 +582,7 @@ export default function AddInventoryModal({ open, onOpenChange, editingItem, onC
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groups.map((groupItem) => (
+                        {filteredGroups.map((groupItem) => (
                           <SelectItem key={groupItem.id} value={groupItem.value}>
                             {groupItem.value}
                           </SelectItem>
