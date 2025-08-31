@@ -551,7 +551,7 @@ export default function LabelDesigner() {
           width: 480px;
           height: 240px;
           position: relative;
-          padding: 12px; /* 0.1in at 120 DPI */
+          padding: 0; /* No padding - match preview exactly */
           box-sizing: border-box;
           background: white;
         }
@@ -630,11 +630,11 @@ export default function LabelDesigner() {
       `;
       document.head.appendChild(style);
       
-      // Generate the same HTML structure as print (in pixels at 120 DPI)
-      const labelWidth = 456; // 480px - 24px padding (3.8in at 120 DPI)
-      const labelHeight = 216; // 240px - 24px padding (1.8in at 120 DPI)
+      // Use same dimensions as preview canvas for exact positioning match
+      const labelWidth = 480; // Match preview canvas width exactly
+      const labelHeight = 240; // Match preview canvas height exactly
       
-      // Simple percentage to pixel conversion for print canvas
+      // Simple percentage to pixel conversion - same as preview
       const convertPosition = (percentage: number, dimension: number) => {
         return (percentage / 100) * dimension;
       };
@@ -660,14 +660,14 @@ export default function LabelDesigner() {
       // Wait for images to load
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Capture the label as canvas with print dimensions
+      // Capture the label as canvas with exact same dimensions as preview
       const canvas = await html2canvas(tempContainer.firstElementChild as HTMLElement, {
         backgroundColor: 'white',
         scale: 2, // Higher resolution for print quality
         useCORS: true,
         allowTaint: true,
-        width: 480, // Container width
-        height: 240, // Container height
+        width: 480, // Match preview width exactly
+        height: 240, // Match preview height exactly
         logging: false, // Disable console logs
       });
 
