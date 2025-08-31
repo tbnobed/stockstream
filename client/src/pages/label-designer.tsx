@@ -122,7 +122,7 @@ export default function LabelDesigner() {
     message: { x: 8, y: 75 }          // Bottom area, custom message
   };
 
-  const [layout, setLayout] = useState<LabelLayout>(defaultLayout);
+  const [layout, setLayout] = useState<LabelLayout>(() => defaultLayout);
 
   // Simple percentage positioning - same for both preview and print/download
   const convertPercentageToPixels = (percentage: number, containerSize: number) => {
@@ -251,14 +251,20 @@ export default function LabelDesigner() {
     return () => clearTimeout(timeoutId);
   }, [labelData, templateLoaded]);
 
-  // Save layout to localStorage whenever it changes
+  // Save layout to database whenever it changes (remove localStorage to avoid conflicts)
   useEffect(() => {
-    try {
-      localStorage.setItem('labelDesignerLayout', JSON.stringify(layout));
-    } catch (error) {
-      console.warn('Failed to save layout:', error);
-    }
-  }, [layout]);
+    if (!templateLoaded || !defaultTemplate?.id) return;
+    
+    const timeoutId = setTimeout(() => {
+      // Save layout to database immediately when it changes
+      autoSaveMutation.mutate({
+        ...labelData,
+        layoutPositions: layout
+      } as any);
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [layout, templateLoaded, defaultTemplate?.id]);
 
   // Save label count to localStorage whenever it changes
   useEffect(() => {
@@ -755,13 +761,7 @@ export default function LabelDesigner() {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && defaultTemplate?.id) {
-      // Save layout immediately when dragging ends to prevent reset
-      autoSaveMutation.mutate({
-        ...labelData,
-        layoutPositions: layout
-      } as any);
-    }
+    // Layout is now automatically saved via useEffect when it changes
     setIsDragging(null);
     setDragOffset({ x: 0, y: 0 });
   };
