@@ -1,0 +1,190 @@
+obtv-admin@retail-dev:~/retail$ docker compose down -v
+[+] Running 5/5
+ ✔ Container inventorypro-app   Removed                                                                                           0.7s
+ ✔ Container inventorypro-db    Removed                                                                                           0.3s
+ ✔ Volume retail_uploads_data   Removed                                                                                           0.0s
+ ✔ Volume retail_postgres_data  Removed                                                                                           0.0s
+ ✔ Network retail_default       Removed                                                                                           0.3s
+obtv-admin@retail-dev:~/retail$ ./fix-group-deployment.sh
+🔧 UNIVERSAL GROUP KEYWORD FIX
+==============================
+📝 Fixing shared/schema.ts...
+✅ shared/schema.ts fixed
+📝 Fixing docker-entrypoint.sh...
+✅ docker-entrypoint.sh fixed
+📝 Fixing other shell scripts...
+✅ All shell scripts checked
+🗑️ Clearing old migrations...
+✅ Old migrations cleared
+🔄 Generating fresh migration...
+⚠️ No migration generated (might be up to date)
+
+🎯 VERIFICATION:
+----------------
+docker-entrypoint.sh group column:
+381:        ALTER TABLE inventory_items ADD COLUMN "group" TEXT;
+shared/schema.ts group field:
+69:  "group": text("group"), // Was "groupType" - e.g., "Supporter", "Ladies", "Member" (quoted at JS level for PostgreSQL reserved keyword)
+
+✅ UNIVERSAL FIX APPLIED!
+🚀 Now run: docker-compose build --no-cache && docker-compose up -d
+obtv-admin@retail-dev:~/retail$ docker-compose build --no-cache
+[+] Building 76.7s (26/26) FINISHED
+ => [internal] load local bake definitions                                                                                        0.0s
+ => => reading from stdin 509B                                                                                                    0.0s
+ => [internal] load build definition from Dockerfile                                                                              0.0s
+ => => transferring dockerfile: 2.92kB                                                                                            0.0s
+ => [internal] load metadata for docker.io/library/node:20-alpine                                                                 0.3s
+ => [internal] load .dockerignore                                                                                                 0.0s
+ => => transferring context: 1.17kB                                                                                               0.0s
+ => CACHED [builder 1/7] FROM docker.io/library/node:20-alpine@sha256:df02558528d3d3d0d621f112e232611aecfee7cbc654f6b375765f72bb  0.0s
+ => [internal] load build context                                                                                                 0.0s
+ => => transferring context: 143.73kB                                                                                             0.0s
+ => CACHED [builder 2/7] WORKDIR /app                                                                                             0.0s
+ => [production  2/13] RUN apk add --no-cache dumb-init postgresql-client                                                         1.4s
+ => [builder 3/7] COPY package*.json ./                                                                                           0.0s
+ => [builder 4/7] RUN npm ci                                                                                                     21.0s
+ => [production  3/13] RUN addgroup -g 1001 -S nodejs &&     adduser -S nextjs -u 1001                                            0.3s
+ => [production  4/13] WORKDIR /app                                                                                               0.0s
+ => [production  5/13] COPY package*.json ./                                                                                      0.0s
+ => [production  6/13] RUN npm ci && npm cache clean --force                                                                     21.1s
+ => [builder 5/7] COPY . .                                                                                                        0.1s
+ => [builder 6/7] RUN echo "import { drizzle } from 'drizzle-orm/postgres-js';" > server/db.ts &&     echo "import postgres from  0.2s
+ => [builder 7/7] RUN npm run build &&     npx esbuild server/index.ts --platform=node --packages=external --bundle --format=es  21.7s
+ => [production  7/13] COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist                                                 0.0s
+ => [production  8/13] COPY --from=builder --chown=nextjs:nodejs /app/server ./server                                             0.0s
+ => [production  9/13] COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared                                             0.0s
+ => [production 10/13] COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts                       0.0s
+ => [production 11/13] COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh                                              0.0s
+ => [production 12/13] RUN chmod +x /usr/local/bin/docker-entrypoint.sh                                                           0.2s
+ => [production 13/13] RUN mkdir -p /app/uploads &&     chown -R nextjs:nodejs /app                                              23.7s
+ => exporting to image                                                                                                            8.2s
+ => => exporting layers                                                                                                           8.2s
+ => => writing image sha256:978464be71e265e8f5f16b48f1df81a9a0eacb8f63db2575f9315393aaccb7e1                                      0.0s
+ => => naming to docker.io/library/retail-app                                                                                     0.0s
+ => resolving provenance for metadata file                                                                                        0.0s
+[+] Building 1/1
+ ✔ retail-app  Built                                                                                                              0.0s
+obtv-admin@retail-dev:~/retail$ docker compose up -d
+[+] Running 5/5
+ ✔ Network retail_default         Created                                                                                         0.0s
+ ✔ Volume "retail_uploads_data"   Created                                                                                         0.0s
+ ✔ Volume "retail_postgres_data"  Created                                                                                         0.0s
+ ✔ Container inventorypro-db      Healthy                                                                                         5.8s
+ ✔ Container inventorypro-app     Started                                                                                         5.9s
+obtv-admin@retail-dev:~/retail$ docker compose logs -f
+inventorypro-app  | 🚀 Starting InventoryPro application...
+inventorypro-app  | 📋 Auto-applying production database fixes...
+inventorypro-app  | ⏳ Waiting for database connection...
+inventorypro-app  | ✅ Database connection established
+inventorypro-app  | 📊 Checking database schema...
+inventorypro-app  | 🔧 Users table not found, initializing database...
+inventorypro-app  | 📋 Creating database schema...
+inventorypro-app  | Reading config file '/app/drizzle.config.ts'
+inventorypro-app  | Using 'pg' driver for database querying
+inventorypro-app  | [⣷] Pulling schema from database...
+[✓] Pulling schema from database...
+inventorypro-app  | [✓] Changes applied
+inventorypro-app  | npm notice
+inventorypro-db   | The files belonging to this database system will be owned by user "postgres".
+inventorypro-db   | This user must also own the server process.
+inventorypro-db   |
+inventorypro-db   | The database cluster will be initialized with locale "en_US.utf8".
+inventorypro-db   | The default database encoding has accordingly been set to "UTF8".
+inventorypro-db   | The default text search configuration will be set to "english".
+inventorypro-db   |
+inventorypro-db   | Data page checksums are disabled.
+inventorypro-db   |
+inventorypro-db   | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+inventorypro-db   | creating subdirectories ... ok
+inventorypro-db   | selecting dynamic shared memory implementation ... posix
+inventorypro-db   | selecting default max_connections ... 100
+inventorypro-db   | selecting default shared_buffers ... 128MB
+inventorypro-db   | selecting default time zone ... UTC
+inventorypro-db   | creating configuration files ... ok
+inventorypro-app  | npm notice New major version of npm available! 10.8.2 -> 11.5.2
+inventorypro-app  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+inventorypro-app  | npm notice To update run: npm install -g npm@11.5.2
+inventorypro-app  | npm notice
+inventorypro-app  | 🔍 Verifying created tables...
+inventorypro-app  |        table_name
+inventorypro-app  | ------------------------
+inventorypro-app  |  categories
+inventorypro-app  |  inventory_items
+inventorypro-db   | running bootstrap script ... ok
+inventorypro-db   | sh: locale: not found
+inventorypro-db   | 2025-08-31 09:05:54.261 UTC [35] WARNING:  no usable system locales were found
+inventorypro-db   | performing post-bootstrap initialization ... ok
+inventorypro-db   | initdb: warning: enabling "trust" authentication for local connections
+inventorypro-db   | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+inventorypro-db   | syncing data to disk ... ok
+inventorypro-db   |
+inventorypro-db   |
+inventorypro-app  |  inventory_transactions
+inventorypro-app  |  label_templates
+inventorypro-app  |  media_files
+inventorypro-app  |  sales
+inventorypro-app  |  sales_associates
+inventorypro-app  |  sessions
+inventorypro-app  |  suppliers
+inventorypro-app  |  users
+inventorypro-app  | (10 rows)
+inventorypro-app  |
+inventorypro-app  | 🔐 Ensuring sessions table exists...
+inventorypro-app  | ✅ Sessions table verified
+inventorypro-app  | 📂 Ensuring categories table exists...
+inventorypro-app  | ✅ Categories table verified
+inventorypro-app  | 📦 Ensuring inventory_transactions table exists...
+inventorypro-db   | Success. You can now start the database server using:
+inventorypro-app  | ✅ Inventory transactions table verified
+inventorypro-app  | 🖼️  Ensuring media_files table exists...
+inventorypro-app  | ✅ Media files table verified
+inventorypro-app  | 🏷️  Ensuring label_templates table exists...
+inventorypro-app  | ✅ Label templates table verified
+inventorypro-app  | 🛒 Verifying multi-item transaction schema...
+inventorypro-app  | ✅ Multi-item transaction schema verified
+inventorypro-app  | 🌱 Creating default admin user and sales associate...
+inventorypro-app  | ✅ Admin user and sales associate created successfully
+inventorypro-app  | ✅ Database initialization completed
+inventorypro-app  | 🔄 Applying production constraint fixes...
+inventorypro-app  | ERROR:  syntax error at or near "group"
+inventorypro-app  | LINE 208:         ALTER TABLE inventory_items ADD COLUMN group TEXT;
+inventorypro-app  |                                                          ^
+inventorypro-app  | ⚠️  Constraint and schema configuration completed with warnings
+inventorypro-app  | 🔍 Performing final health check...
+inventorypro-app  | ✅ Database health check passed
+inventorypro-app  | 🌐 Starting application server...
+inventorypro-app  | 9:06:05 AM [express] serving on port 5000
+inventorypro-db   |
+inventorypro-db   |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+inventorypro-db   |
+inventorypro-db   | waiting for server to start....2025-08-31 09:05:55.216 UTC [41] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-31 09:05:55.216 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-31 09:05:55.220 UTC [44] LOG:  database system was shut down at 2025-08-31 09:05:55 UTC
+inventorypro-db   | 2025-08-31 09:05:55.227 UTC [41] LOG:  database system is ready to accept connections
+inventorypro-db   |  done
+inventorypro-db   | server started
+inventorypro-db   | CREATE DATABASE
+inventorypro-db   |
+inventorypro-db   |
+inventorypro-db   | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+inventorypro-db   |
+inventorypro-db   | waiting for server to shut down....2025-08-31 09:05:55.379 UTC [41] LOG:  received fast shutdown request
+inventorypro-db   | 2025-08-31 09:05:55.379 UTC [41] LOG:  aborting any active transactions
+inventorypro-db   | 2025-08-31 09:05:55.384 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+inventorypro-db   | 2025-08-31 09:05:55.384 UTC [42] LOG:  shutting down
+inventorypro-db   | 2025-08-31 09:05:55.385 UTC [42] LOG:  checkpoint starting: shutdown immediate
+inventorypro-db   | 2025-08-31 09:05:55.425 UTC [42] LOG:  checkpoint complete: wrote 921 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.022 s, sync=0.016 s, total=0.041 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4239 kB, estimate=4239 kB
+inventorypro-db   | 2025-08-31 09:05:55.436 UTC [41] LOG:  database system is shut down
+inventorypro-db   |  done
+inventorypro-db   | server stopped
+inventorypro-db   |
+inventorypro-db   | PostgreSQL init process complete; ready for start up.
+inventorypro-db   |
+inventorypro-db   | 2025-08-31 09:05:55.513 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-31 09:05:55.513 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+inventorypro-db   | 2025-08-31 09:05:55.513 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+inventorypro-db   | 2025-08-31 09:05:55.514 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-31 09:05:55.518 UTC [57] LOG:  database system was shut down at 2025-08-31 09:05:55 UTC
+inventorypro-db   | 2025-08-31 09:05:55.525 UTC [1] LOG:  database system is ready to accept connections
+inventorypro-db   | 2025-08-31 09:06:04.467 UTC [80] ERROR:  syntax error at or near "group" at character 7964

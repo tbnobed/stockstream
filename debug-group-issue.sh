@@ -39,12 +39,12 @@ else
 fi
 
 echo ""
-echo "6. 🎯 EXACT SEARCH for unquoted 'ADD COLUMN group TEXT':"
+echo "6. 🎯 EXACT SEARCH for unquoted 'ADD COLUMN "group" TEXT':"
 echo "--------------------------------------------------------"
-if grep -r "ADD COLUMN group TEXT" . --include="*.sh" --include="*.sql" --include="*.ts"; then
+if grep -r "ADD COLUMN "group" TEXT" . --include="*.sh" --include="*.sql" --include="*.ts"; then
     echo "^^ FOUND UNQUOTED INSTANCES ABOVE ^^"
 else
-    echo "✅ No unquoted 'ADD COLUMN group TEXT' found"
+    echo "✅ No unquoted 'ADD COLUMN "group" TEXT' found"
 fi
 
 echo ""

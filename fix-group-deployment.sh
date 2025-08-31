@@ -19,9 +19,9 @@ fi
 # 2. Fix docker-entrypoint.sh 
 echo "📝 Fixing docker-entrypoint.sh..."
 if [ -f "docker-entrypoint.sh" ]; then
-    # Replace any unquoted ADD COLUMN group with quoted version
-    sed -i 's/ADD COLUMN group TEXT/ADD COLUMN "group" TEXT/g' docker-entrypoint.sh
-    sed -i 's/ADD COLUMN group /ADD COLUMN "group" /g' docker-entrypoint.sh
+    # Replace any unquoted ADD COLUMN "group" with quoted version
+    sed -i 's/ADD COLUMN "group" TEXT/ADD COLUMN "group" TEXT/g' docker-entrypoint.sh
+    sed -i 's/ADD COLUMN "group" /ADD COLUMN "group" /g' docker-entrypoint.sh
     echo "✅ docker-entrypoint.sh fixed"
 else
     echo "❌ docker-entrypoint.sh not found"
@@ -31,8 +31,8 @@ fi
 echo "📝 Fixing other shell scripts..."
 for script in *.sh; do
     if [ -f "$script" ] && [ "$script" != "fix-group-deployment.sh" ]; then
-        sed -i 's/ADD COLUMN group TEXT/ADD COLUMN "group" TEXT/g' "$script"
-        sed -i 's/ADD COLUMN group /ADD COLUMN "group" /g' "$script"
+        sed -i 's/ADD COLUMN "group" TEXT/ADD COLUMN "group" TEXT/g' "$script"
+        sed -i 's/ADD COLUMN "group" /ADD COLUMN "group" /g' "$script"
     fi
 done
 echo "✅ All shell scripts checked"
@@ -57,7 +57,7 @@ echo ""
 echo "🎯 VERIFICATION:"
 echo "----------------"
 echo "docker-entrypoint.sh group column:"
-grep -n "ADD COLUMN.*group" docker-entrypoint.sh || echo "  No ADD COLUMN group found"
+grep -n "ADD COLUMN.*group" docker-entrypoint.sh || echo "  No ADD COLUMN "group" found"
 
 echo "shared/schema.ts group field:"  
 grep -n '"group".*text' shared/schema.ts || echo "  No quoted group field found"
