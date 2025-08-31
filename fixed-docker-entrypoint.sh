@@ -36,6 +36,14 @@ if ! npm run db:push; then
 fi
 echo "✅ Database schema applied successfully"
 
+# Seed initial data if this is a fresh database
+echo "🌱 Seeding initial data..."
+if ! node seed-initial-data.js; then
+    echo "❌ Initial data seeding failed"
+    exit 1
+fi
+echo "✅ Initial data seeded successfully"
+
 # Start the application
 echo "🎯 Starting InventoryPro application..."
 exec npm run start

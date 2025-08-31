@@ -1,0 +1,87 @@
+obtv-admin@retail-dev:~/retail$ docker compose logs -f
+inventorypro-app  | 🚀 Starting InventoryPro deployment...
+inventorypro-app  | ⏳ Waiting for PostgreSQL...
+inventorypro-app  | ✅ PostgreSQL is ready
+inventorypro-app  | 📦 Applying database schema...
+inventorypro-app  |
+inventorypro-app  | > rest-express@1.0.0 db:push
+inventorypro-app  | > drizzle-kit push
+inventorypro-app  |
+inventorypro-app  | No config path provided, using default 'drizzle.config.ts'
+inventorypro-app  | Reading config file '/app/drizzle.config.ts'
+inventorypro-app  | Using 'pg' driver for database querying
+inventorypro-app  | [⣷] Pulling schema from database...
+[✓] Pulling schema from database...
+inventorypro-app  | [✓] Changes applied
+inventorypro-app  | npm notice
+inventorypro-app  | npm notice New major version of npm available! 10.8.2 -> 11.5.2
+inventorypro-app  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+inventorypro-app  | npm notice To update run: npm install -g npm@11.5.2
+inventorypro-app  | npm notice
+inventorypro-app  | ✅ Database schema applied successfully
+inventorypro-app  | 🎯 Starting InventoryPro application...
+inventorypro-app  |
+inventorypro-app  | > rest-express@1.0.0 start
+inventorypro-app  | > NODE_ENV=production node dist/index.js
+inventorypro-app  |
+inventorypro-app  | 9:19:04 AM [express] serving on port 5000
+inventorypro-db   | The files belonging to this database system will be owned by user "postgres".
+inventorypro-db   | This user must also own the server process.
+inventorypro-db   |
+inventorypro-db   | The database cluster will be initialized with locale "en_US.utf8".
+inventorypro-db   | The default database encoding has accordingly been set to "UTF8".
+inventorypro-db   | The default text search configuration will be set to "english".
+inventorypro-db   |
+inventorypro-db   | Data page checksums are disabled.
+inventorypro-db   |
+inventorypro-db   | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+inventorypro-db   | creating subdirectories ... ok
+inventorypro-db   | selecting dynamic shared memory implementation ... posix
+inventorypro-db   | selecting default max_connections ... 100
+inventorypro-db   | selecting default shared_buffers ... 128MB
+inventorypro-db   | selecting default time zone ... UTC
+inventorypro-db   | creating configuration files ... ok
+inventorypro-db   | running bootstrap script ... ok
+inventorypro-db   | sh: locale: not found
+inventorypro-db   | 2025-08-31 09:18:56.226 UTC [35] WARNING:  no usable system locales were found
+inventorypro-db   | performing post-bootstrap initialization ... ok
+inventorypro-db   | initdb: warning: enabling "trust" authentication for local connections
+inventorypro-db   | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+inventorypro-db   | syncing data to disk ... ok
+inventorypro-db   |
+inventorypro-db   |
+inventorypro-db   | Success. You can now start the database server using:
+inventorypro-db   |
+inventorypro-db   |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+inventorypro-db   |
+inventorypro-db   | waiting for server to start....2025-08-31 09:18:57.244 UTC [41] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-31 09:18:57.245 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-31 09:18:57.248 UTC [44] LOG:  database system was shut down at 2025-08-31 09:18:57 UTC
+inventorypro-db   | 2025-08-31 09:18:57.255 UTC [41] LOG:  database system is ready to accept connections
+inventorypro-db   |  done
+inventorypro-db   | server started
+inventorypro-db   | CREATE DATABASE
+inventorypro-db   |
+inventorypro-db   |
+inventorypro-db   | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+inventorypro-db   |
+inventorypro-db   | waiting for server to shut down...2025-08-31 09:18:57.420 UTC [41] LOG:  received fast shutdown request
+inventorypro-db   | .2025-08-31 09:18:57.421 UTC [41] LOG:  aborting any active transactions
+inventorypro-db   | 2025-08-31 09:18:57.426 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+inventorypro-db   | 2025-08-31 09:18:57.426 UTC [42] LOG:  shutting down
+inventorypro-db   | 2025-08-31 09:18:57.427 UTC [42] LOG:  checkpoint starting: shutdown immediate
+inventorypro-db   | 2025-08-31 09:18:57.465 UTC [42] LOG:  checkpoint complete: wrote 921 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.023 s, sync=0.014 s, total=0.039 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4239 kB, estimate=4239 kB
+inventorypro-db   | 2025-08-31 09:18:57.475 UTC [41] LOG:  database system is shut down
+inventorypro-db   |  done
+inventorypro-db   | server stopped
+inventorypro-db   |
+inventorypro-db   | PostgreSQL init process complete; ready for start up.
+inventorypro-db   |
+inventorypro-db   | 2025-08-31 09:18:57.556 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-31 09:18:57.556 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+inventorypro-db   | 2025-08-31 09:18:57.556 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+inventorypro-db   | 2025-08-31 09:18:57.558 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-31 09:18:57.562 UTC [57] LOG:  database system was shut down at 2025-08-31 09:18:57 UTC
+inventorypro-db   | 2025-08-31 09:18:57.569 UTC [1] LOG:  database system is ready to accept connections
+inventorypro-app  | 9:20:28 AM [express] GET /api/auth/user 401 in 49ms :: {"message":"User not found or inactive"}
+inventorypro-app  | 9:20:34 AM [express] POST /api/auth/login 401 in 6ms :: {"message":"Invalid associate code"}
