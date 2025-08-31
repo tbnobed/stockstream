@@ -113,13 +113,12 @@ export default function LabelDesigner() {
   });
 
   // Load saved layout or use defaults with error handling
-  // Carefully calculated layout to prevent overlaps in print/download
-  // Based on 288px × 576px canvas (2" × 4" at 144 DPI)
+  // Balanced layout allowing right-side placement while preventing overlaps
   const defaultLayout: LabelLayout = {
     productInfo: { x: 3, y: 5 },      // Top-left, small text block
-    qrCode: { x: 60, y: 3 },          // Top-right, 1.5"×1.5" = 216px needs 60% to fit in 288px width
-    logo: { x: 5, y: 48 },            // Mid-left, 1.2"×0.9" = 172px×129px 
-    sizeIndicator: { x: 65, y: 55 },  // Mid-right, 0.8"×0.8" = 115px×115px
+    qrCode: { x: 60, y: 5 },          // Top-right, properly positioned
+    logo: { x: 5, y: 45 },            // Mid-left area
+    sizeIndicator: { x: 75, y: 60 },  // Bottom-right corner
     message: { x: 8, y: 75 }          // Bottom area, custom message
   };
 
@@ -722,21 +721,21 @@ export default function LabelDesigner() {
     let maxX = 85;
     let maxY = 85;
     
-    // Adjust constraints based on actual element sizes to prevent overlaps
+    // Adjust constraints to allow right-side placement while preventing edge overflow
     if (isDragging === 'logo') {
-      maxX = 40; // Logo 1.2"×0.9" (172px×129px) needs room - max 40% = 115px start
-      maxY = 65; // Logo height constraint
+      maxX = 70; // Logo 1.2" wide - allow up to 70% (leaves 30% = 144px for element)
+      maxY = 75; // Logo height constraint
     } else if (isDragging === 'qrCode') {
-      maxX = 25; // QR 1.5"×1.5" (216px×216px) needs lots of room - max 25% = 72px start  
-      maxY = 60; // QR height constraint
+      maxX = 62; // QR 1.5" wide - allow up to 62% (leaves 38% = 219px for element)
+      maxY = 62; // QR height constraint  
     } else if (isDragging === 'sizeIndicator') {
-      maxX = 60; // Size 0.8"×0.8" (115px×115px) - max 60% = 173px start
-      maxY = 70; // Size height constraint
+      maxX = 80; // Size 0.8" wide - allow up to 80% (leaves 20% = 115px for element)
+      maxY = 80; // Size height constraint
     } else if (isDragging === 'productInfo') {
-      maxX = 50; // Product info text block constraint
-      maxY = 35; // Keep product info in top area
+      maxX = 75; // Product info text block - allow most of width
+      maxY = 40; // Keep product info in top area
     } else if (isDragging === 'message') {
-      maxX = 60; // Message text constraint
+      maxX = 70; // Message text - allow good width
       maxY = 90; // Message can go to bottom
     }
     
