@@ -118,18 +118,18 @@ export default function LabelDesigner() {
       const saved = localStorage.getItem('labelDesignerLayout');
       return saved ? JSON.parse(saved) : {
         productInfo: { x: 5, y: 10 },
-        qrCode: { x: 70, y: 5 },
-        logo: { x: 5, y: 55 },
-        sizeIndicator: { x: 75, y: 55 },
+        qrCode: { x: 75, y: 2 }, // Moved further right and higher to avoid overlap
+        logo: { x: 35, y: 45 }, // Moved to center-left to avoid QR code  
+        sizeIndicator: { x: 80, y: 65 }, // Adjusted to make room
         message: { x: 10, y: 80 }
       };
     } catch (error) {
       console.warn('Failed to load saved layout:', error);
       return {
         productInfo: { x: 5, y: 10 },
-        qrCode: { x: 70, y: 5 },
-        logo: { x: 5, y: 55 },
-        sizeIndicator: { x: 75, y: 55 },
+        qrCode: { x: 75, y: 2 }, // Moved further right and higher to avoid overlap
+        logo: { x: 35, y: 45 }, // Moved to center-left to avoid QR code
+        sizeIndicator: { x: 80, y: 65 }, // Adjusted to make room
         message: { x: 10, y: 80 }
       };
     }
@@ -466,8 +466,8 @@ export default function LabelDesigner() {
               display: flex;
               align-items: center;
               justify-content: center;
-              width: 1.2in; /* Much larger logo for print */
-              height: 0.9in; /* Much larger logo for print */
+              width: .8in; /* Much larger logo for print */
+              height: 0.6in; /* Much larger logo for print */
             }
             .logo img {
               max-width: 100%;
@@ -728,9 +728,24 @@ export default function LabelDesigner() {
     const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
     const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
     
-    // Constrain to container bounds
-    const constrainedX = Math.max(0, Math.min(85, x));
-    const constrainedY = Math.max(0, Math.min(85, y));
+    // Constrain to container bounds with better element size consideration
+    let maxX = 85;
+    let maxY = 85;
+    
+    // Adjust constraints based on element type and larger sizes
+    if (isDragging === 'logo') {
+      maxX = 70; // Logo is now 1.2" wide, needs more space
+      maxY = 75; // Logo is now 0.9" tall
+    } else if (isDragging === 'qrCode') {
+      maxX = 70; // QR code is now 1.5" square, needs more space
+      maxY = 70;
+    } else if (isDragging === 'sizeIndicator') {
+      maxX = 80; // Size indicator is 0.8" square
+      maxY = 75;
+    }
+    
+    const constrainedX = Math.max(0, Math.min(maxX, x));
+    const constrainedY = Math.max(0, Math.min(maxY, y));
     
     setLayout(prev => ({
       ...prev,
