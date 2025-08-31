@@ -387,15 +387,15 @@ BEGIN
     -- 6a. Make sales_associate_id nullable for volunteer sales support
     -- Check if sales_associate_id is currently NOT NULL and make it nullable
     DECLARE
-        is_nullable TEXT;
+        column_nullable TEXT;
     BEGIN
-        SELECT is_nullable INTO is_nullable
+        SELECT is_nullable INTO column_nullable
         FROM information_schema.columns 
         WHERE table_name = 'sales' 
         AND column_name = 'sales_associate_id' 
         AND table_schema = 'public';
         
-        IF is_nullable = 'NO' THEN
+        IF column_nullable = 'NO' THEN
             ALTER TABLE sales ALTER COLUMN sales_associate_id DROP NOT NULL;
             RAISE NOTICE 'Made sales_associate_id column nullable for volunteer system';
         ELSE

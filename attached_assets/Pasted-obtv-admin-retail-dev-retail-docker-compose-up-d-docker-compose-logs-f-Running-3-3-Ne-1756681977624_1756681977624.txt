@@ -1,0 +1,345 @@
+obtv-admin@retail-dev:~/retail$ docker compose up -d && docker compose logs -f
+[+] Running 3/3
+ ✔ Network retail_default      Created                                                                                                                                                                                                                                                         0.1s 
+ ✔ Container inventorypro-db   Healthy                                                                                                                                                                                                                                                         5.8s 
+ ✔ Container inventorypro-app  Started                                                                                                                                                                                                                                                         6.0s 
+inventorypro-db  | 
+inventorypro-db   | PostgreSQL Database directory appears to contain a database; Skipping initialization
+inventorypro-db   | 
+inventorypro-db   | 2025-08-31 23:11:53.382 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-31 23:11:53.382 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+inventorypro-db   | 2025-08-31 23:11:53.382 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+inventorypro-db   | 2025-08-31 23:11:53.383 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-31 23:11:53.388 UTC [29] LOG:  database system was shut down at 2025-08-31 23:10:19 UTC
+inventorypro-db   | 2025-08-31 23:11:53.398 UTC [1] LOG:  database system is ready to accept connections
+inventorypro-app  | 🚀 Starting InventoryPro application...
+inventorypro-app  | 📋 Auto-applying production database fixes...
+inventorypro-app  | ⏳ Waiting for database connection...
+inventorypro-app  | ✅ Database connection established
+inventorypro-app  | 📊 Checking database schema...
+inventorypro-app  | ✅ Database already initialized
+inventorypro-app  | 🔄 Applying production constraint fixes...
+inventorypro-app  | NOTICE:  Ensured all inventory items have is_active set
+inventorypro-db   | 2025-08-31 23:11:59.206 UTC [42] ERROR:  column reference "is_nullable" is ambiguous at character 8
+inventorypro-db   | 2025-08-31 23:11:59.206 UTC [42] DETAIL:  It could refer to either a PL/pgSQL variable or a table column.
+inventorypro-db   | 2025-08-31 23:11:59.206 UTC [42] QUERY:  SELECT is_nullable                          FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'sales' 
+inventorypro-db   | 	        AND column_name = 'sales_associate_id' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 2025-08-31 23:11:59.206 UTC [42] CONTEXT:  PL/pgSQL function inline_code_block line 234 at SQL statement
+inventorypro-app  | ERROR:  column reference "is_nullable" is ambiguous
+inventorypro-app  | LINE 1: SELECT is_nullable                          FROM information...
+inventorypro-app  |                ^
+inventorypro-app  | DETAIL:  It could refer to either a PL/pgSQL variable or a table column.
+inventorypro-app  | QUERY:  SELECT is_nullable                          FROM information_schema.columns 
+inventorypro-app  |         WHERE table_name = 'sales' 
+inventorypro-app  |         AND column_name = 'sales_associate_id' 
+inventorypro-app  |         AND table_schema = 'public'
+inventorypro-app  | CONTEXT:  PL/pgSQL function inline_code_block line 234 at SQL statement
+inventorypro-db   | 2025-08-31 23:11:59.206 UTC [42] STATEMENT:  
+inventorypro-db   | 	DO $$
+inventorypro-db   | 	BEGIN
+inventorypro-db   | 	    -- 0. Ensure categories table exists (for existing databases that don't have it)
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.tables 
+inventorypro-db   | 	        WHERE table_name = 'categories' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        CREATE TABLE categories (
+inventorypro-db   | 	            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+inventorypro-db   | 	            type VARCHAR NOT NULL,
+inventorypro-db   | 	            value VARCHAR NOT NULL,
+inventorypro-db   | 	            display_order INTEGER DEFAULT 0,
+inventorypro-db   | 	            is_active BOOLEAN DEFAULT true,
+inventorypro-db   | 	            created_at TIMESTAMP DEFAULT NOW(),
+inventorypro-db   | 	            updated_at TIMESTAMP DEFAULT NOW()
+inventorypro-db   | 	        );
+inventorypro-db   | 	        RAISE NOTICE 'Created missing categories table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 0a. Ensure media_files table exists (for logo library functionality)
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.tables 
+inventorypro-db   | 	        WHERE table_name = 'media_files' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        CREATE TABLE media_files (
+inventorypro-db   | 	            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+inventorypro-db   | 	            file_name TEXT NOT NULL,
+inventorypro-db   | 	            original_name TEXT NOT NULL,
+inventorypro-db   | 	            file_type TEXT NOT NULL,
+inventorypro-db   | 	            file_size INTEGER NOT NULL,
+inventorypro-db   | 	            object_path TEXT NOT NULL,
+inventorypro-db   | 	            category TEXT DEFAULT 'logo',
+inventorypro-db   | 	            uploaded_by UUID REFERENCES users(id),
+inventorypro-db   | 	            is_active BOOLEAN DEFAULT true,
+inventorypro-db   | 	            created_at TIMESTAMP DEFAULT NOW()
+inventorypro-db   | 	        );
+inventorypro-db   | 	        RAISE NOTICE 'Created missing media_files table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 0b. Ensure label_templates table exists (for label template persistence)
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.tables 
+inventorypro-db   | 	        WHERE table_name = 'label_templates' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        CREATE TABLE label_templates (
+inventorypro-db   | 	            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+inventorypro-db   | 	            user_id UUID NOT NULL REFERENCES users(id),
+inventorypro-db   | 	            name TEXT NOT NULL DEFAULT 'Default Template',
+inventorypro-db   | 	            is_default BOOLEAN DEFAULT false,
+inventorypro-db   | 	            selected_inventory_id UUID REFERENCES inventory_items(id),
+inventorypro-db   | 	            product_name TEXT DEFAULT 'Product Name',
+inventorypro-db   | 	            product_code TEXT DEFAULT 'PRD-001',
+inventorypro-db   | 	            price TEXT DEFAULT '25.00',
+inventorypro-db   | 	            qr_content TEXT DEFAULT 'PRD-001',
+inventorypro-db   | 	            custom_message TEXT DEFAULT 'Thank you for your purchase',
+inventorypro-db   | 	            size_indicator TEXT DEFAULT 'M',
+inventorypro-db   | 	            logo_url TEXT DEFAULT '',
+inventorypro-db   | 	            show_qr BOOLEAN DEFAULT true,
+inventorypro-db   | 	            show_logo BOOLEAN DEFAULT false,
+inventorypro-db   | 	            show_price BOOLEAN DEFAULT true,
+inventorypro-db   | 	            show_message BOOLEAN DEFAULT true,
+inventorypro-db   | 	            show_size BOOLEAN DEFAULT true,
+inventorypro-app  | ⚠️  Constraint and schema configuration completed with warnings
+inventorypro-app  | 🔍 Performing final health check...
+inventorypro-db   | 	            layout_positions TEXT,
+inventorypro-db   | 	            created_at TIMESTAMP DEFAULT NOW(),
+inventorypro-db   | 	            updated_at TIMESTAMP DEFAULT NOW()
+inventorypro-db   | 	        );
+inventorypro-db   | 	        RAISE NOTICE 'Created missing label_templates table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 0c. Ensure volunteer_sessions table exists (for volunteer system)
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.tables 
+inventorypro-db   | 	        WHERE table_name = 'volunteer_sessions' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        CREATE TABLE volunteer_sessions (
+inventorypro-db   | 	            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+inventorypro-db   | 	            email TEXT NOT NULL,
+inventorypro-db   | 	            session_token VARCHAR(128) NOT NULL UNIQUE,
+inventorypro-db   | 	            expires_at TIMESTAMP NOT NULL,
+inventorypro-db   | 	            created_at TIMESTAMP DEFAULT NOW()
+inventorypro-db   | 	        );
+inventorypro-db   | 	        RAISE NOTICE 'Created missing volunteer_sessions table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 1. Ensure all users have corresponding sales_associate records
+inventorypro-db   | 	    INSERT INTO sales_associates (id, name, email, user_id, is_active, created_at)
+inventorypro-db   | 	    SELECT u.id, 
+inventorypro-db   | 	           COALESCE(
+inventorypro-db   | 	               NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), 
+inventorypro-db   | 	               u.username
+inventorypro-db   | 	           ) as name,
+inventorypro-db   | 	           COALESCE(u.email, u.username || '@inventorypro.com') as email,
+inventorypro-db   | 	           u.id, 
+inventorypro-db   | 	           COALESCE(u.is_active, true), 
+inventorypro-db   | 	           NOW()
+inventorypro-db   | 	    FROM users u 
+inventorypro-db   | 	    WHERE NOT EXISTS (SELECT 1 FROM sales_associates sa WHERE sa.id = u.id)
+inventorypro-db   | 	    ON CONFLICT (id) DO NOTHING;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 2. Remove unique constraint on order_number for multi-item transactions
+inventorypro-db   | 	    -- Check if unique constraint exists and drop it
+inventorypro-db   | 	    IF EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.table_constraints 
+inventorypro-db   | 	        WHERE constraint_name = 'sales_order_number_unique' 
+inventorypro-db   | 	        AND table_name = 'sales'
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE sales DROP CONSTRAINT sales_order_number_unique;
+inventorypro-db   | 	        RAISE NOTICE 'Dropped unique constraint: sales_order_number_unique';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- Also check for any unique index on order_number and drop it
+inventorypro-db   | 	    IF EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM pg_indexes 
+inventorypro-db   | 	        WHERE indexname = 'sales_order_number_unique' 
+inventorypro-db   | 	        AND tablename = 'sales'
+inventorypro-db   | 	        AND schemaname = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        DROP INDEX sales_order_number_unique;
+inventorypro-db   | 	        RAISE NOTICE 'Dropped unique index: sales_order_number_unique';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- Check for any other unique constraints on order_number column
+inventorypro-db   | 	    DECLARE
+inventorypro-db   | 	        constraint_rec RECORD;
+inventorypro-db   | 	    BEGIN
+inventorypro-db   | 	        FOR constraint_rec IN 
+inventorypro-db   | 	            SELECT pc.conname 
+inventorypro-db   | 	            FROM pg_constraint pc
+inventorypro-db   | 	            JOIN pg_class pgc ON pc.conrelid = pgc.oid
+inventorypro-db   | 	            JOIN pg_attribute pa ON pc.conrelid = pa.attrelid AND pa.attnum = ANY(pc.conkey)
+inventorypro-db   | 	            JOIN pg_namespace pn ON pgc.relnamespace = pn.oid
+inventorypro-db   | 	            WHERE pgc.relname = 'sales' 
+inventorypro-db   | 	            AND pa.attname = 'order_number' 
+inventorypro-db   | 	            AND pc.contype = 'u'
+inventorypro-db   | 	            AND pn.nspname = 'public'
+inventorypro-db   | 	        LOOP
+inventorypro-db   | 	            EXECUTE 'ALTER TABLE sales DROP CONSTRAINT ' || constraint_rec.conname;
+inventorypro-db   | 	            RAISE NOTICE 'Dropped additional constraint: %', constraint_rec.conname;
+inventorypro-db   | 	        END LOOP;
+inventorypro-db   | 	    END;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 3. Add new category fields to inventory_items if they don't exist
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'inventory_items' 
+inventorypro-db   | 	        AND column_name = 'design' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE inventory_items ADD COLUMN design TEXT;
+inventorypro-db   | 	        RAISE NOTICE 'Added design column to inventory_items';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'inventory_items' 
+inventorypro-db   | 	        AND column_name = 'group_type' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE inventory_items ADD COLUMN group_type TEXT;
+inventorypro-db   | 	        RAISE NOTICE 'Added group_type column to inventory_items';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'inventory_items' 
+inventorypro-db   | 	        AND column_name = 'style_group' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
+inventorypro-db   | 	        RAISE NOTICE 'Added style_group column to inventory_items';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 4. Add is_active field for archive functionality
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'inventory_items' 
+inventorypro-db   | 	        AND column_name = 'is_active' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE inventory_items ADD COLUMN is_active BOOLEAN DEFAULT true;
+inventorypro-db   | 	        RAISE NOTICE 'Added is_active column to inventory_items';
+inventorypro-db   | 	        
+inventorypro-db   | 	        -- Set all existing items as active
+inventorypro-db   | 	        UPDATE inventory_items SET is_active = true WHERE is_active IS NULL;
+inventorypro-db   | 	        RAISE NOTICE 'Set all existing inventory items as active';
+inventorypro-db   | 	    ELSE
+inventorypro-db   | 	        -- Ensure existing items without is_active set are marked as active
+inventorypro-db   | 	        UPDATE inventory_items SET is_active = true WHERE is_active IS NULL;
+inventorypro-db   | 	        RAISE NOTICE 'Ensured all inventory items have is_active set';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 5. Add receipt fields to sales table for QR code receipt functionality
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'sales' 
+inventorypro-db   | 	        AND column_name = 'receipt_token' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE sales ADD COLUMN receipt_token VARCHAR(50);
+inventorypro-db   | 	        RAISE NOTICE 'Added receipt_token column to sales table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'sales' 
+inventorypro-db   | 	        AND column_name = 'receipt_expires_at' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE sales ADD COLUMN receipt_expires_at TIMESTAMP;
+inventorypro-db   | 	        RAISE NOTICE 'Added receipt_expires_at column to sales table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 6. Add volunteer email field to sales table for volunteer system support
+inventorypro-db   | 	    IF NOT EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'sales' 
+inventorypro-db   | 	        AND column_name = 'volunteer_email' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        ALTER TABLE sales ADD COLUMN volunteer_email TEXT;
+inventorypro-db   | 	        RAISE NOTICE 'Added volunteer_email column to sales table';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 6a. Make sales_associate_id nullable for volunteer sales support
+inventorypro-db   | 	    -- Check if sales_associate_id is currently NOT NULL and make it nullable
+inventorypro-db   | 	    DECLARE
+inventorypro-db   | 	        is_nullable TEXT;
+inventorypro-db   | 	    BEGIN
+inventorypro-db   | 	        SELECT is_nullable INTO is_nullable
+inventorypro-db   | 	        FROM information_schema.columns 
+inventorypro-db   | 	        WHERE table_name = 'sales' 
+inventorypro-db   | 	        AND column_name = 'sales_associate_id' 
+inventorypro-db   | 	        AND table_schema = 'public';
+inventorypro-db   | 	        
+inventorypro-db   | 	        IF is_nullable = 'NO' THEN
+inventorypro-db   | 	            ALTER TABLE sales ALTER COLUMN sales_associate_id DROP NOT NULL;
+inventorypro-db   | 	            RAISE NOTICE 'Made sales_associate_id column nullable for volunteer system';
+inventorypro-db   | 	        ELSE
+inventorypro-db   | 	            RAISE NOTICE 'sales_associate_id column is already nullable';
+inventorypro-db   | 	        END IF;
+inventorypro-db   | 	    END;
+inventorypro-db   | 	    
+inventorypro-db   | 	    -- 7. Fix category display orders to be sequential (only if categories table exists)
+inventorypro-db   | 	    IF EXISTS (
+inventorypro-db   | 	        SELECT 1 FROM information_schema.tables 
+inventorypro-db   | 	        WHERE table_name = 'categories' 
+inventorypro-db   | 	        AND table_schema = 'public'
+inventorypro-db   | 	    ) THEN
+inventorypro-db   | 	        WITH ordered_categories AS (
+inventorypro-db   | 	            SELECT 
+inventorypro-db   | 	                id,
+inventorypro-db   | 	                type,
+inventorypro-db   | 	                ROW_NUMBER() OVER (PARTITION BY type ORDER BY display_order, value) - 1 AS new_display_order
+inventorypro-db   | 	            FROM categories 
+inventorypro-db   | 	            WHERE is_active = true
+inventorypro-db   | 	        )
+inventorypro-db   | 	        UPDATE categories 
+inventorypro-db   | 	        SET display_order = ordered_categories.new_display_order,
+inventorypro-db   | 	            updated_at = NOW()
+inventorypro-db   | 	        FROM ordered_categories 
+inventorypro-db   | 	        WHERE categories.id = ordered_categories.id;
+inventorypro-db   | 	        RAISE NOTICE 'Fixed category display orders to be sequential';
+inventorypro-db   | 	    ELSE
+inventorypro-db   | 	        RAISE NOTICE 'Categories table does not exist yet, skipping display order fix';
+inventorypro-db   | 	    END IF;
+inventorypro-db   | 	    
+inventorypro-db   | 	    RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
+inventorypro-db   | 	END $$;
+inventorypro-db   | 	
+inventorypro-app  | ✅ Database health check passed
+inventorypro-app  | 🌐 Starting application server...
+inventorypro-app  | 11:12:00 PM [express] serving on port 5000
+inventorypro-app  | 11:12:22 PM [express] GET /api/volunteer/session 200 in 49ms :: {"valid":true,"email":"tbnapps@gmail.…
+inventorypro-app  | 11:12:22 PM [express] GET /api/volunteer/inventory 200 in 14ms :: [{"id":"f77b9dc2-9659-4bdc-863b-9d9…
+inventorypro-db   | 2025-08-31 23:12:30.677 UTC [59] ERROR:  null value in column "sales_associate_id" of relation "sales" violates not-null constraint
+inventorypro-db   | 2025-08-31 23:12:30.677 UTC [59] DETAIL:  Failing row contains (fb05cfac-6046-4521-a12e-411a6854004c, ORD-950671, 6ae41a88-3f4e-424b-ace5-6cb78c8a9dd3, 1, 25.00, 25.00, cash, null, null, null, 2025-08-31 23:12:30.674959, RCT-1756681950671-3fwqebqgf, 2025-11-29 23:12:30.671, tbnapps@gmail.com).
+inventorypro-db   | 2025-08-31 23:12:30.677 UTC [59] STATEMENT:  insert into "sales" ("id", "order_number", "item_id", "quantity", "unit_price", "total_amount", "payment_method", "sales_associate_id", "volunteer_email", "customer_name", "customer_email", "sale_date", "receipt_token", "receipt_expires_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, default, default, default, $9, $10) returning "id", "order_number", "item_id", "quantity", "unit_price", "total_amount", "payment_method", "sales_associate_id", "volunteer_email", "customer_name", "customer_email", "sale_date", "receipt_token", "receipt_expires_at"
+inventorypro-app  | Volunteer sale creation error: PostgresError: null value in column "sales_associate_id" of relation "sales" violates not-null constraint
+inventorypro-app  |     at ErrorResponse (file:///app/node_modules/postgres/src/connection.js:794:26)
+inventorypro-app  |     at handle (file:///app/node_modules/postgres/src/connection.js:480:6)
+inventorypro-app  |     at Socket.data (file:///app/node_modules/postgres/src/connection.js:315:9)
+inventorypro-app  |     at Socket.emit (node:events:524:28)
+inventorypro-app  |     at addChunk (node:internal/streams/readable:561:12)
+inventorypro-app  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+inventorypro-app  |     at Readable.push (node:internal/streams/readable:392:5)
+inventorypro-app  |     at TCP.onStreamRead (node:internal/stream_base_commons:191:23) {
+inventorypro-app  |   severity_local: 'ERROR',
+inventorypro-app  |   severity: 'ERROR',
+inventorypro-app  |   code: '23502',
+inventorypro-app  |   detail: 'Failing row contains (fb05cfac-6046-4521-a12e-411a6854004c, ORD-950671, 6ae41a88-3f4e-424b-ace5-6cb78c8a9dd3, 1, 25.00, 25.00, cash, null, null, null, 2025-08-31 23:12:30.674959, RCT-1756681950671-3fwqebqgf, 2025-11-29 23:12:30.671, tbnapps@gmail.com).',
+inventorypro-app  |   schema_name: 'public',
+inventorypro-app  |   table_name: 'sales',
+inventorypro-app  |   column_name: 'sales_associate_id',
+inventorypro-app  |   file: 'execMain.c',
+inventorypro-app  |   line: '1971',
+inventorypro-app  |   routine: 'ExecConstraints'
+inventorypro-app  | }
+inventorypro-app  | 11:12:30 PM [express] POST /api/volunteer/sales 500 in 16ms :: {"message":"Failed to create sale"}
+
