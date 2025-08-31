@@ -371,6 +371,7 @@ BEGIN
     END IF;
     
     -- Updated field names: group and style instead of group_type and style_group
+    -- NOTE: "group" is a PostgreSQL reserved keyword and MUST be quoted
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'inventory_items' 
