@@ -374,36 +374,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Volunteers can create sales but with their email instead of associate ID
   app.post("/api/volunteer/sales", validateVolunteerSession, async (req: any, res) => {
     try {
-      const saleData = req.body;
+      const { items, paymentMethod, customerName, customerEmail } = req.body;
       const volunteerEmail = req.volunteerSession.email;
+      
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Items array is required" });
+      }
       
       // Generate order number using the same pattern as frontend
       const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
       
-      // Generate receipt token and expiration (90 days from now)
+      // Generate receipt token and expiration (90 days from now)  
       const receiptToken = `RCT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const receiptExpiresAt = new Date();
       receiptExpiresAt.setDate(receiptExpiresAt.getDate() + 90);
       
-      // Override any salesAssociateId with null and set volunteer info
-      const volunteerSale = {
-        ...saleData,
-        orderNumber: orderNumber, // Add generated order number
-        salesAssociateId: null, // No associate ID for volunteers
-        volunteerEmail: volunteerEmail, // Track volunteer sales by email
-        receiptToken: receiptToken,
-        receiptExpiresAt: receiptExpiresAt
-      };
-
-      const sale = await storage.createSale(volunteerSale);
+      // Process each item in the cart as individual sale records with same order number
+      const salesPromises = items.map(async (item: any) => {
+        const saleData = {
+          itemId: item.inventoryItemId, // Map from frontend format
+          quantity: item.quantity,
+          unitPrice: item.priceAtSale,
+          totalAmount: item.priceAtSale * item.quantity,
+          paymentMethod: paymentMethod,
+          orderNumber: orderNumber,
+          salesAssociateId: null, // No associate ID for volunteers
+          volunteerEmail: volunteerEmail, // Track volunteer sales by email
+          receiptToken: receiptToken,
+          receiptExpiresAt: receiptExpiresAt,
+          customerName: customerName?.trim() || undefined,
+          customerEmail: customerEmail?.trim() || undefined,
+        };
+        
+        return await storage.createSale(saleData);
+      });
+      
+      const completedSales = await Promise.all(salesPromises);
+      const firstSale = completedSales[0];
       
       // Return sale data with QR code URL for the receipt
       const receiptUrl = `${req.protocol}://${req.get('host')}/receipt/${receiptToken}`;
       
       res.status(201).json({
-        ...sale,
+        ...firstSale,
         receiptUrl,
         qrCodeData: receiptUrl, // Frontend can use this to generate QR code
+        orderNumber: orderNumber,
+        receiptToken: receiptToken,
+        totalItems: completedSales.length
       });
     } catch (error) {
       console.error("Volunteer sale creation error:", error);
