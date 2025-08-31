@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import NewSaleModal from "@/components/modals/new-sale-modal";
 import AddInventoryModal from "@/components/modals/add-inventory-modal";
-import PrintLabelsModal from "@/components/modals/print-labels-modal";
 import InventoryCheckModal from "@/components/modals/inventory-check-modal";
 import ReportsModal from "@/components/modals/reports-modal";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 export default function Dashboard() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [showAddInventoryModal, setShowAddInventoryModal] = useState(false);
-  const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
+  const [, navigate] = useLocation();
   const [showInventoryCheckModal, setShowInventoryCheckModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
   const { user } = useAuth();
@@ -315,7 +315,7 @@ export default function Dashboard() {
                 <Button
                   variant="ghost"
                   className="w-full justify-between p-3 h-auto hover:bg-muted"
-                  onClick={() => setShowPrintLabelsModal(true)}
+                  onClick={() => navigate('/label-designer')}
                   data-testid="quick-action-print"
                 >
                   <div className="flex items-center">
@@ -406,10 +406,6 @@ export default function Dashboard() {
         onOpenChange={setShowAddInventoryModal}
       />
       
-      <PrintLabelsModal
-        open={showPrintLabelsModal}
-        onOpenChange={setShowPrintLabelsModal}
-      />
       
       <InventoryCheckModal
         open={showInventoryCheckModal}
