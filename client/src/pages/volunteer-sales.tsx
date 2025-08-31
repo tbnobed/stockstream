@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, ShoppingCart, Package, UserCheck, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  QrCode, 
+  ShoppingCart, 
+  Plus, 
+  Minus, 
+  DollarSign, 
+  CreditCard, 
+  Trash2,
+  Camera,
+  LogOut,
+  UserCheck, 
+  Clock, 
+  AlertCircle, 
+  CheckCircle 
+} from 'lucide-react';
+import QRScanner from "@/components/qr-scanner";
+import { QRCodeDisplay } from "@/components/QRCodeDisplay";
 import { useToast } from '@/hooks/use-toast';
-import type { InventoryItem, Sale } from '@shared/schema';
+import type { InventoryItem } from '@shared/schema';
 
 interface VolunteerSession {
   email: string;
@@ -19,8 +35,15 @@ interface VolunteerSession {
 }
 
 interface CartItem {
-  item: InventoryItem;
+  id: string;
+  name: string;
+  sku: string;
+  price: string;
   quantity: number;
+  cartQuantity: number;
+  type: string;
+  size?: string;
+  color?: string;
 }
 
 export default function VolunteerSales() {
@@ -29,9 +52,16 @@ export default function VolunteerSales() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isProcessingSale, setIsProcessingSale] = useState(false);
-  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const [skuInput, setSkuInput] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo">("cash");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [searchResults, setSearchResults] = useState<InventoryItem[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [receiptToken, setReceiptToken] = useState<string | null>(null);
+  const [showReceiptQR, setShowReceiptQR] = useState(false);
   const { toast } = useToast();
 
   // Check for existing session on load
@@ -46,7 +76,6 @@ export default function VolunteerSales() {
   useEffect(() => {
     if (session) {
       loadInventory();
-      loadRecentSales();
     }
   }, [session]);
 
@@ -130,12 +159,7 @@ export default function VolunteerSales() {
     localStorage.removeItem('volunteer_session_token');
     setSession(null);
     setCart([]);
-    setInventory([]);
     setEmail('');
-    toast({
-      title: "Logged Out",
-      description: "Your volunteer session has ended."
-    });
   };
 
   const loadInventory = async () => {
@@ -145,10 +169,16 @@ export default function VolunteerSales() {
           'x-volunteer-session': session!.sessionToken
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setInventory(data);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load inventory",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       toast({
@@ -159,482 +189,505 @@ export default function VolunteerSales() {
     }
   };
 
-  const loadRecentSales = async () => {
-    try {
-      const response = await fetch('/api/volunteer/sales', {
-        headers: {
-          'x-volunteer-session': session!.sessionToken
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Show only recent sales (last 10)
-        setRecentSales(data.slice(-10).reverse());
-      }
-    } catch (error) {
-      console.error('Failed to load recent sales:', error);
-    }
-  };
-
-  const searchInventory = async (term: string) => {
-    if (!term.trim()) {
-      loadInventory();
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/volunteer/inventory/search/${encodeURIComponent(term)}`, {
-        headers: {
-          'x-volunteer-session': session!.sessionToken
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setInventory(data);
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-    }
-  };
-
-  const addToCart = (item: InventoryItem) => {
-    const existingItem = cart.find(cartItem => cartItem.item.id === item.id);
+  // Add item to cart by SKU
+  const addItemBySku = () => {
+    const item = inventory.find((i: InventoryItem) => 
+      i.sku.toLowerCase() === skuInput.toLowerCase()
+    );
     
-    if (existingItem) {
-      if (existingItem.quantity < item.quantity) {
-        setCart(cart.map(cartItem => 
-          cartItem.item.id === item.id 
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        ));
+    if (item) {
+      addToCart(item);
+      setSkuInput("");
+      setSearchResults([]);
+      setShowResults(false);
+      toast({
+        title: "Added to cart",
+        description: `${item.name} added to cart`,
+      });
+    } else {
+      // Show search results if no exact match
+      const results = inventory.filter((i: InventoryItem) =>
+        i.sku.toLowerCase().includes(skuInput.toLowerCase()) ||
+        i.name.toLowerCase().includes(skuInput.toLowerCase())
+      );
+      
+      if (results.length > 0) {
+        setSearchResults(results);
+        setShowResults(true);
       } else {
         toast({
-          title: "Stock Limit Reached",
-          description: `Only ${item.quantity} units available`,
+          title: "Item not found",
+          description: `No item found with SKU: ${skuInput}`,
           variant: "destructive"
         });
       }
-    } else {
-      setCart([...cart, { item, quantity: 1 }]);
     }
   };
 
-  const removeFromCart = (itemId: string) => {
-    setCart(cart.filter(cartItem => cartItem.item.id !== itemId));
-  };
-
-  const updateCartQuantity = (itemId: string, quantity: number) => {
-    const cartItem = cart.find(ci => ci.item.id === itemId);
-    const maxQuantity = cartItem?.item.quantity || 0;
-    
-    if (quantity > maxQuantity) {
+  // Add item to cart
+  const addToCart = (item: InventoryItem) => {
+    if (item.quantity <= 0) {
       toast({
-        title: "Stock Limit",
-        description: `Only ${maxQuantity} units available`,
+        title: "Out of stock",
+        description: `${item.name} is out of stock`,
         variant: "destructive"
       });
       return;
     }
+
+    const existingItem = cart.find(cartItem => cartItem.id === item.id);
     
-    if (quantity <= 0) {
-      removeFromCart(itemId);
-    } else {
-      setCart(cart.map(cartItem => 
-        cartItem.item.id === itemId 
-          ? { ...cartItem, quantity }
+    if (existingItem) {
+      if (existingItem.cartQuantity >= item.quantity) {
+        toast({
+          title: "Insufficient stock",
+          description: `Only ${item.quantity} available`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setCart(cart.map(cartItem =>
+        cartItem.id === item.id
+          ? { ...cartItem, cartQuantity: cartItem.cartQuantity + 1 }
           : cartItem
       ));
+    } else {
+      setCart([...cart, {
+        ...item,
+        cartQuantity: 1
+      }]);
     }
   };
 
-  const processSale = async (paymentMethod: 'cash' | 'venmo') => {
+  // Update cart item quantity
+  const updateCartQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+
+    const inventoryItem = inventory.find(item => item.id === itemId);
+    if (inventoryItem && newQuantity > inventoryItem.quantity) {
+      toast({
+        title: "Insufficient stock",
+        description: `Only ${inventoryItem.quantity} available`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCart(cart.map(item =>
+      item.id === itemId
+        ? { ...item, cartQuantity: newQuantity }
+        : item
+    ));
+  };
+
+  // Remove item from cart
+  const removeFromCart = (itemId: string) => {
+    setCart(cart.filter(item => item.id !== itemId));
+  };
+
+  // Calculate total
+  const calculateTotal = () => {
+    return cart.reduce((total, item) => total + (Number(item.price) * item.cartQuantity), 0);
+  };
+
+  // Handle QR scan result
+  const handleQRScan = (result: string) => {
+    console.log("QR scan result:", result);
+    setSkuInput(result);
+    setShowScanner(false);
+    
+    // Auto-add if exact match found
+    const item = inventory.find((i: InventoryItem) => 
+      i.sku.toLowerCase() === result.toLowerCase()
+    );
+    
+    if (item) {
+      addToCart(item);
+      toast({
+        title: "Added to cart",
+        description: `${item.name} added to cart`,
+      });
+    }
+  };
+
+  // Process sale
+  const processSale = async () => {
     if (cart.length === 0) {
       toast({
         title: "Empty Cart",
-        description: "Add items to cart before processing sale",
+        description: "Please add items to cart before processing sale",
         variant: "destructive"
       });
       return;
     }
 
-    setIsProcessingSale(true);
-    try {
-      const orderNumber = `V${Date.now().toString().slice(-8)}`;
-
-      // Process each cart item as a separate sale
-      for (const cartItem of cart) {
-        const totalAmount = Number(cartItem.item.price) * cartItem.quantity;
-        
-        const saleData = {
-          orderNumber,
-          itemId: cartItem.item.id,
-          quantity: cartItem.quantity,
-          unitPrice: cartItem.item.price,
-          totalAmount: totalAmount.toFixed(2),
-          paymentMethod
-        };
-
-        const response = await fetch('/api/volunteer/sales', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-volunteer-session': session!.sessionToken
-          },
-          body: JSON.stringify(saleData)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to process sale for ${cartItem.item.name}`);
-        }
-      }
-
-      const totalAmount = cart.reduce((sum, cartItem) => 
-        sum + (Number(cartItem.item.price) * cartItem.quantity), 0
-      );
-
+    const total = calculateTotal();
+    if (total <= 0) {
       toast({
-        title: "Sale Completed",
-        description: `Order ${orderNumber} processed successfully. Total: $${totalAmount.toFixed(2)}`,
+        title: "Invalid Sale",
+        description: "Sale total must be greater than $0",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch('/api/volunteer/sales', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-volunteer-session': session!.sessionToken
+        },
+        body: JSON.stringify({
+          items: cart.map(item => ({
+            inventoryItemId: item.id,
+            quantity: item.cartQuantity,
+            priceAtSale: Number(item.price)
+          })),
+          paymentMethod,
+          customerName: customerName || undefined,
+          customerEmail: customerEmail || undefined,
+          totalAmount: total,
+          volunteerEmail: session!.email
+        })
       });
 
-      setCart([]);
-      loadInventory(); // Refresh inventory to show updated stock
-      loadRecentSales(); // Refresh recent sales
-
+      if (response.ok) {
+        const result = await response.json();
+        setReceiptToken(result.receiptToken);
+        setShowReceiptQR(true);
+        setCart([]);
+        setCustomerName("");
+        setCustomerEmail("");
+        
+        // Reload inventory to reflect updated quantities
+        await loadInventory();
+        
+        toast({
+          title: "Sale Processed",
+          description: `Sale completed successfully! Total: $${total.toFixed(2)}`,
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Sale Failed",
+          description: error.error || "Failed to process sale",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       toast({
-        title: "Sale Failed",
-        description: error instanceof Error ? error.message : "Failed to process sale",
+        title: "Error",
+        description: "Failed to process sale. Please try again.",
         variant: "destructive"
       });
     }
-    setIsProcessingSale(false);
+    setIsProcessing(false);
   };
 
-  const getTimeRemaining = () => {
-    if (!session) return '';
-    
-    const now = new Date();
-    const expires = new Date(session.expiresAt);
-    const diff = expires.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Expired';
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    return `${hours}h ${minutes}m remaining`;
-  };
-
-  // Authentication screen
+  // Authentication form
   if (!session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <UserCheck className="w-6 h-6 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Volunteer Sales Access</CardTitle>
+            <UserCheck className="mx-auto mb-4 text-blue-600" size={48} />
+            <CardTitle className="text-2xl">Volunteer Access</CardTitle>
             <CardDescription>
-              Enter your email address to access the sales system for 24 hours
+              Enter your email to access the sales terminal for 24 hours
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="your.email@example.com"
+                placeholder="volunteer@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && authenticate()}
+                disabled={isAuthenticating}
                 data-testid="input-volunteer-email"
               />
             </div>
+            <Button 
+              className="w-full" 
+              onClick={authenticate}
+              disabled={isAuthenticating}
+              data-testid="button-volunteer-login"
+            >
+              {isAuthenticating ? "Authenticating..." : "Get Access"}
+            </Button>
+            
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your session will automatically expire after 24 hours for security.
+                No password required. Just enter any valid email address to get 24-hour access.
               </AlertDescription>
             </Alert>
           </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={authenticate} 
-              disabled={isAuthenticating}
-              className="w-full"
-              data-testid="button-volunteer-auth"
-            >
-              {isAuthenticating ? 'Authenticating...' : 'Get Access'}
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     );
   }
 
-  const totalCartValue = cart.reduce((sum, cartItem) => 
-    sum + (Number(cartItem.item.price) * cartItem.quantity), 0
-  );
-
-  // Main volunteer interface
+  // Main mobile sales interface
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Volunteer Sales</h1>
-              <p className="text-sm text-gray-500">{session.email}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <Clock className="w-4 h-4" />
-                <span>{getTimeRemaining()}</span>
-              </div>
-              <Button variant="outline" onClick={logout} data-testid="button-logout">
-                Logout
-              </Button>
-            </div>
+      <div className="bg-white shadow-sm border-b p-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-semibold">Mobile Sales Terminal</h1>
+            <p className="text-sm text-gray-600">Volunteer: {session.email}</p>
           </div>
+          <Button variant="outline" size="sm" onClick={logout} data-testid="button-volunteer-logout">
+            <LogOut size={16} />
+          </Button>
+        </div>
+        
+        {/* Session timer */}
+        <div className="mt-2 flex items-center text-sm text-gray-500">
+          <Clock size={14} className="mr-1" />
+          Session expires: {new Date(session.expiresAt).toLocaleString()}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Tabs defaultValue="sales" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="sales" data-testid="tab-sales">Sales Terminal</TabsTrigger>
-            <TabsTrigger value="recent" data-testid="tab-recent">Recent Sales</TabsTrigger>
-          </TabsList>
+      <div className="p-4 space-y-6">
+        {/* SKU Input & QR Scanner */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <QrCode size={20} />
+              Add Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter SKU or scan QR"
+                value={skuInput}
+                onChange={(e) => setSkuInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addItemBySku()}
+                className="flex-1"
+                data-testid="input-sku"
+              />
+              <Button onClick={addItemBySku} disabled={!skuInput} data-testid="button-add-sku">
+                <Plus size={16} />
+              </Button>
+              <Button 
+                onClick={() => setShowScanner(true)} 
+                variant="outline"
+                data-testid="button-open-scanner"
+              >
+                <Camera size={16} />
+              </Button>
+            </div>
 
-          <TabsContent value="sales" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Inventory Search & Selection */}
-              <div className="lg:col-span-2 space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Package className="w-5 h-5" />
-                      <span>Inventory</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex space-x-2">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Search by name or SKU..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && searchInventory(searchTerm)}
-                          className="pl-10"
-                          data-testid="input-search-inventory"
-                        />
-                      </div>
-                      <Button onClick={() => searchInventory(searchTerm)} data-testid="button-search">
-                        Search
-                      </Button>
-                      <Button variant="outline" onClick={() => { setSearchTerm(''); loadInventory(); }}>
-                        Clear
-                      </Button>
+            {/* Search Results */}
+            {showResults && searchResults.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Search Results:</p>
+                {searchResults.slice(0, 5).map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-gray-600">{item.sku} - ${item.price}</p>
                     </div>
+                    <Button size="sm" onClick={() => addToCart(item)} data-testid={`button-add-${item.id}`}>
+                      Add
+                    </Button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={() => setShowResults(false)}>
+                  Hide Results
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                    <div className="max-h-96 overflow-y-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Item</TableHead>
-                            <TableHead>SKU</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Stock</TableHead>
-                            <TableHead>Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {inventory.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">{item.name}</div>
-                                  <div className="text-sm text-gray-500">
-                                    {item.category} {item.size && `• ${item.size}`} {item.color && `• ${item.color}`}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">{item.sku}</TableCell>
-                              <TableCell>${item.price}</TableCell>
-                              <TableCell>
-                                <Badge variant={item.quantity > 10 ? "default" : item.quantity > 0 ? "secondary" : "destructive"}>
-                                  {item.quantity}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  size="sm"
-                                  disabled={item.quantity === 0}
-                                  onClick={() => addToCart(item)}
-                                  data-testid={`button-add-cart-${item.sku}`}
-                                >
-                                  Add to Cart
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                      {inventory.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          No items found
-                        </div>
+        {/* Shopping Cart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart size={20} />
+                Cart ({cart.length} items)
+              </div>
+              <div className="text-lg font-bold">
+                ${calculateTotal().toFixed(2)}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cart.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">Cart is empty</p>
+            ) : (
+              <div className="space-y-3">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div className="flex-1">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-gray-600">{item.sku} - ${item.price} each</p>
+                      {(item.size || item.color) && (
+                        <p className="text-xs text-gray-500">
+                          {[item.size, item.color].filter(Boolean).join(', ')}
+                        </p>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Cart */}
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <ShoppingCart className="w-5 h-5" />
-                        <span>Cart</span>
-                      </div>
-                      <Badge variant="secondary">{cart.length}</Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {cart.length === 0 ? (
-                      <div className="text-center py-6 text-gray-500">
-                        Cart is empty
-                      </div>
-                    ) : (
-                      <>
-                        <div className="space-y-3 max-h-64 overflow-y-auto">
-                          {cart.map((cartItem) => (
-                            <div key={cartItem.item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{cartItem.item.name}</p>
-                                <p className="text-xs text-gray-500">${cartItem.item.price} each</p>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateCartQuantity(cartItem.item.id, cartItem.quantity - 1)}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  -
-                                </Button>
-                                <span className="w-8 text-center text-sm">{cartItem.quantity}</span>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateCartQuantity(cartItem.item.id, cartItem.quantity + 1)}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  +
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => removeFromCart(cartItem.item.id)}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  ×
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="pt-3 border-t">
-                          <div className="flex justify-between items-center text-lg font-semibold">
-                            <span>Total:</span>
-                            <span>${totalCartValue.toFixed(2)}</span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Button
-                            onClick={() => processSale('cash')}
-                            disabled={isProcessingSale}
-                            className="w-full"
-                            data-testid="button-pay-cash"
-                          >
-                            {isProcessingSale ? 'Processing...' : 'Pay with Cash'}
-                          </Button>
-                          <Button
-                            onClick={() => processSale('venmo')}
-                            disabled={isProcessingSale}
-                            variant="outline"
-                            className="w-full"
-                            data-testid="button-pay-venmo"
-                          >
-                            {isProcessingSale ? 'Processing...' : 'Pay with Venmo'}
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="recent">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Sales</CardTitle>
-                <CardDescription>Last 10 sales for reference</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order</TableHead>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Qty</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentSales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell className="font-mono">{sale.orderNumber}</TableCell>
-                        <TableCell>{(sale as any).item?.name || 'Unknown Item'}</TableCell>
-                        <TableCell>{sale.quantity}</TableCell>
-                        <TableCell>${sale.totalAmount}</TableCell>
-                        <TableCell>
-                          <Badge variant={sale.paymentMethod === 'cash' ? 'default' : 'secondary'}>
-                            {sale.paymentMethod}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : 'N/A'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {recentSales.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No recent sales
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateCartQuantity(item.id, item.cartQuantity - 1)}
+                        data-testid={`button-decrease-${item.id}`}
+                      >
+                        <Minus size={14} />
+                      </Button>
+                      <span className="w-8 text-center font-medium">{item.cartQuantity}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateCartQuantity(item.id, item.cartQuantity + 1)}
+                        data-testid={`button-increase-${item.id}`}
+                      >
+                        <Plus size={14} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => removeFromCart(item.id)}
+                        data-testid={`button-remove-${item.id}`}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Checkout */}
+        {cart.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard size={20} />
+                Checkout
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="payment-method">Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={(value: "cash" | "venmo") => setPaymentMethod(value)}>
+                  <SelectTrigger data-testid="select-payment-method">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="venmo">Venmo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="customer-name">Customer Name (Optional)</Label>
+                <Input
+                  id="customer-name"
+                  placeholder="Customer name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  data-testid="input-customer-name"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="customer-email">Customer Email (Optional)</Label>
+                <Input
+                  id="customer-email"
+                  type="email"
+                  placeholder="customer@example.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  data-testid="input-customer-email"
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-between items-center text-lg font-bold">
+                <span>Total:</span>
+                <span>${calculateTotal().toFixed(2)}</span>
+              </div>
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={processSale}
+                disabled={isProcessing}
+                data-testid="button-process-sale"
+              >
+                {isProcessing ? "Processing..." : "Process Sale"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleQRScan}
+      />
+
+      {/* Receipt QR Modal */}
+      <Dialog open={showReceiptQR} onOpenChange={setShowReceiptQR}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Sale Complete!</DialogTitle>
+          </DialogHeader>
+          <div className="text-center space-y-4">
+            <CheckCircle className="mx-auto text-green-600" size={64} />
+            <p>Transaction processed successfully</p>
+            {receiptToken && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">Customer receipt:</p>
+                <QRCodeDisplay value={`${window.location.origin}/receipt/${receiptToken}`} />
+                <p className="text-xs text-gray-500">Scan to view receipt</p>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button 
+              onClick={() => setShowReceiptQR(false)}
+              className="flex-1"
+              data-testid="button-close-receipt"
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowReceiptQR(false);
+                setReceiptToken(null);
+              }}
+              className="flex-1"
+              data-testid="button-done-receipt"
+            >
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
