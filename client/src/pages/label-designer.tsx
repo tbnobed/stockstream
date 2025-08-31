@@ -122,7 +122,7 @@ export default function LabelDesigner() {
     message: { x: 8, y: 75 }          // Bottom area, custom message
   };
 
-  const [layout, setLayout] = useState<LabelLayout>(() => defaultLayout);
+  const [layout, setLayout] = useState<LabelLayout | null>(null);
 
   // Simple percentage positioning - same for both preview and print/download
   const convertPercentageToPixels = (percentage: number, containerSize: number) => {
@@ -230,12 +230,17 @@ export default function LabelDesigner() {
           setLayout(savedLayout);
         } catch (error) {
           console.warn('Failed to parse saved layout positions:', error);
+          setLayout(defaultLayout);
         }
+      } else {
+        // No saved positions, use default layout
+        setLayout(defaultLayout);
       }
       
       setTemplateLoaded(true);
     } else if (!defaultTemplate && !templateLoading && !templateError && !templateLoaded) {
-      // No template found - enable auto-save for new template creation
+      // No template found - use default layout and enable auto-save for new template creation
+      setLayout(defaultLayout);
       setTemplateLoaded(true); // Enable auto-save even without existing template
     }
   }, [defaultTemplate, templateLoaded, templateLoading, templateError]);
@@ -527,6 +532,8 @@ export default function LabelDesigner() {
   };
 
   const generateLabelHTML = () => {
+    if (!layout) return '';
+    
     // Convert percentages to inches (4in width, 2in height after padding)
     const labelWidth = 3.8; // 4in - 0.2in padding
     const labelHeight = 1.8; // 2in - 0.2in padding
@@ -553,6 +560,8 @@ export default function LabelDesigner() {
   };
 
   const downloadLabelImage = async () => {
+    if (!layout) return;
+    
     try {
       // Create a temporary container with the exact same HTML and CSS as the print version
       const tempContainer = document.createElement('div');
@@ -754,10 +763,10 @@ export default function LabelDesigner() {
     const constrainedX = Math.max(0, Math.min(maxX, x));
     const constrainedY = Math.max(0, Math.min(maxY, y));
     
-    setLayout(prev => ({
+    setLayout(prev => prev ? ({
       ...prev,
       [isDragging]: { x: constrainedX, y: constrainedY }
-    }));
+    }) : null);
   };
 
   const handleMouseUp = () => {
@@ -765,6 +774,18 @@ export default function LabelDesigner() {
     setIsDragging(null);
     setDragOffset({ x: 0, y: 0 });
   };
+
+  // Show loading state until layout is initialized
+  if (!layout || templateLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Avery 94207 Label Designer</h1>
+          <p className="text-muted-foreground">Loading template...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">

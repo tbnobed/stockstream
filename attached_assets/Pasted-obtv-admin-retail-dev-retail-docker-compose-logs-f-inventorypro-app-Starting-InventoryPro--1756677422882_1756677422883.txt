@@ -1,0 +1,67 @@
+obtv-admin@retail-dev:~/retail$ docker compose logs -f
+inventorypro-app  | 🚀 Starting InventoryPro application...
+inventorypro-app  | 📋 Auto-applying production database fixes...
+inventorypro-app  | ⏳ Waiting for database connection...
+inventorypro-app  | ✅ Database connection established
+inventorypro-app  | 📊 Checking database schema...
+inventorypro-app  | ✅ Database already initialized
+inventorypro-app  | 🔄 Applying production constraint fixes...
+inventorypro-app  | NOTICE:  Ensured all inventory items have is_active set
+inventorypro-app  | NOTICE:  Fixed category display orders to be sequential
+inventorypro-app  | NOTICE:  Production constraint fixes and schema updates applied successfully
+inventorypro-app  | DO
+inventorypro-app  | ✅ Production constraints and schema configured for multi-item transactions, category fields, and QR code receipts
+inventorypro-app  | 🔍 Performing final health check...
+inventorypro-app  | ✅ Database health check passed
+inventorypro-app  | 🌐 Starting application server...
+inventorypro-app  | 9:55:26 PM [express] serving on port 5000
+inventorypro-app  | 9:55:29 PM [express] GET /api/auth/user 304 in 49ms :: {"id":"fbfe7685-2fb7-4e60-848b-910fbf8d8cda",…
+inventorypro-app  | 9:55:29 PM [express] GET /api/suppliers 304 in 9ms :: []
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/color 200 in 36ms :: [{"id":"9e5a32fc-470c-4478-999e-a663a7…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/size 200 in 11ms :: [{"id":"9ea2c435-5278-4253-b088-4540318…
+inventorypro-db   | 
+inventorypro-db   | PostgreSQL Database directory appears to contain a database; Skipping initialization
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/design 200 in 16ms :: [{"id":"d875b4ac-0c03-4e3a-9791-f35a5…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/category 200 in 26ms :: [{"id":"4e0fc54e-cc5c-4bb8-a5e0-4ea…
+inventorypro-db   | 
+inventorypro-db   | 2025-08-31 21:55:18.952 UTC [1] LOG:  starting PostgreSQL 15.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+inventorypro-db   | 2025-08-31 21:55:18.952 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+inventorypro-db   | 2025-08-31 21:55:18.952 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+inventorypro-db   | 2025-08-31 21:55:18.954 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+inventorypro-db   | 2025-08-31 21:55:18.958 UTC [29] LOG:  database system was shut down at 2025-08-31 21:52:24 UTC
+inventorypro-db   | 2025-08-31 21:55:18.967 UTC [1] LOG:  database system is ready to accept connections
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/style 200 in 48ms :: [{"id":"19b28eff-4d6e-4562-b410-545945…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/group 200 in 48ms :: [{"id":"6ea1621a-59a9-4dfb-b742-45adc3…
+inventorypro-app  | 9:55:29 PM [express] GET /api/inventory/ 200 in 16ms :: [{"id":"f77b9dc2-9659-4bdc-863b-9d98148e8c70…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/type 304 in 19ms :: []
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/size 200 in 20ms :: [{"id":"9ea2c435-5278-4253-b088-4540318…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/color 200 in 20ms :: [{"id":"9e5a32fc-470c-4478-999e-a663a7…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/design 200 in 18ms :: [{"id":"d875b4ac-0c03-4e3a-9791-f35a5…
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/groupType 304 in 34ms :: []
+inventorypro-app  | 9:55:29 PM [express] GET /api/categories/styleGroup 304 in 5ms :: []
+inventorypro-app  | 9:55:31 PM [express] GET /api/label-templates/default 200 in 17ms :: {"id":"4e2f0b17-65e7-4cf5-bb09-…
+inventorypro-app  | 9:55:31 PM [express] GET /api/inventory 200 in 11ms :: [{"id":"f77b9dc2-9659-4bdc-863b-9d98148e8c70"…
+inventorypro-app  | 9:55:31 PM [express] GET /api/media 304 in 16ms :: [{"id":"425925f8-9331-42b9-a893-01ae2a3e85d8","fi…
+inventorypro-app  | 9:55:32 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 13ms :: {"…
+inventorypro-app  | 9:55:33 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 9ms :: {"i…
+inventorypro-app  | 9:55:34 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | 9:55:34 PM [express] GET /api/auth/user 304 in 4ms :: {"id":"fbfe7685-2fb7-4e60-848b-910fbf8d8cda","…
+inventorypro-app  | 9:55:35 PM [express] GET /api/label-templates/default 200 in 9ms :: {"id":"4e2f0b17-65e7-4cf5-bb09-5…
+inventorypro-app  | 9:55:35 PM [express] GET /api/inventory 304 in 12ms :: [{"id":"f77b9dc2-9659-4bdc-863b-9d98148e8c70"…
+inventorypro-app  | 9:55:35 PM [express] GET /api/media 304 in 7ms :: [{"id":"425925f8-9331-42b9-a893-01ae2a3e85d8","fil…
+inventorypro-app  | 9:55:37 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | 9:55:42 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 11ms :: {"…
+inventorypro-app  | 9:55:44 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | 9:55:50 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 10ms :: {"…
+inventorypro-app  | 9:55:53 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | 9:55:56 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 10ms :: {"…
+inventorypro-app  | 9:56:05 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | 9:56:34 PM [express] GET /api/label-templates/default 200 in 6ms :: {"id":"4e2f0b17-65e7-4cf5-bb09-5…
+inventorypro-app  | 9:56:38 PM [express] GET /api/auth/user 304 in 4ms :: {"id":"fbfe7685-2fb7-4e60-848b-910fbf8d8cda","…
+inventorypro-app  | 9:56:38 PM [express] GET /api/label-templates/default 200 in 6ms :: {"id":"4e2f0b17-65e7-4cf5-bb09-5…
+inventorypro-app  | 9:56:38 PM [express] GET /api/inventory 304 in 8ms :: [{"id":"f77b9dc2-9659-4bdc-863b-9d98148e8c70",…
+inventorypro-app  | 9:56:38 PM [express] GET /api/media 304 in 8ms :: [{"id":"425925f8-9331-42b9-a893-01ae2a3e85d8","fil…
+inventorypro-app  | 9:56:39 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | 9:56:40 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 9ms :: {"i…
+inventorypro-app  | 9:56:42 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 9ms :: {"i…
+inventorypro-app  | 9:56:47 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
