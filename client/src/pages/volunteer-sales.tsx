@@ -735,7 +735,7 @@ export default function VolunteerSales() {
             {receiptToken && (
               <div className="space-y-2">
                 <p className="text-sm text-gray-600">Customer receipt:</p>
-                <QRCodeDisplay data={`${window.location.origin}/receipt/${receiptToken}`} />
+                <QRCodeDisplay url={`${window.location.origin}/receipt/${receiptToken}`} />
                 <p className="text-xs text-gray-500">Scan to view receipt</p>
               </div>
             )}

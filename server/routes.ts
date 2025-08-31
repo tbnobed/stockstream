@@ -415,6 +415,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return sale data with QR code URL for the receipt
       const receiptUrl = `${req.protocol}://${req.get('host')}/receipt/${receiptToken}`;
       
+      // Optional: Send receipt email if customer email is provided in the request
+      if (customerEmail && emailService.isConfigured()) {
+        try {
+          await emailService.sendReceiptEmail(
+            customerEmail,
+            orderNumber,
+            receiptUrl,
+            customerName
+          );
+          console.log(`📧 Receipt email sent to ${customerEmail} for volunteer order ${orderNumber}`);
+        } catch (emailError) {
+          console.error(`📧 Failed to send receipt email to ${customerEmail}:`, emailError);
+          // Don't fail the sale if email fails
+        }
+      }
+      
       res.status(201).json({
         ...firstSale,
         receiptUrl,
