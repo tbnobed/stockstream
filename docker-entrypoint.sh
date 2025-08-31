@@ -37,47 +37,19 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     echo "🔍 Verifying created tables..."
     psql "$DATABASE_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;" 2>/dev/null | head -20
     
-    # Ensure sessions table exists (for authentication)
-    echo "🔐 Ensuring sessions table exists..."
-    psql "$DATABASE_URL" -c "
-    CREATE TABLE IF NOT EXISTS sessions (
-        sid VARCHAR PRIMARY KEY,
-        sess JSONB NOT NULL,
-        expire TIMESTAMP NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions(expire);
-    " >/dev/null 2>&1 && echo "✅ Sessions table verified" || echo "⚠️  Sessions table creation warning"
-    
-    # Ensure categories table exists with complete schema
+    # Ensure categories table exists
     echo "📂 Ensuring categories table exists..."
     psql "$DATABASE_URL" -c "
     CREATE TABLE IF NOT EXISTS categories (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         type VARCHAR NOT NULL,
         value VARCHAR NOT NULL,
-        abbreviation VARCHAR(10),
-        parent_category VARCHAR,
         display_order INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
     );
     " >/dev/null 2>&1 && echo "✅ Categories table verified" || echo "⚠️  Categories table creation warning"
-    
-    # Ensure inventory_transactions table exists
-    echo "📦 Ensuring inventory_transactions table exists..."
-    psql "$DATABASE_URL" -c "
-    CREATE TABLE IF NOT EXISTS inventory_transactions (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        item_id UUID NOT NULL REFERENCES inventory_items(id),
-        transaction_type TEXT NOT NULL,
-        quantity INTEGER NOT NULL,
-        reason TEXT,
-        notes TEXT,
-        user_id UUID REFERENCES users(id),
-        created_at TIMESTAMP DEFAULT NOW()
-    );
-    " >/dev/null 2>&1 && echo "✅ Inventory transactions table verified" || echo "⚠️  Inventory transactions table creation warning"
     
     # Ensure media_files table exists (for logo library)
     echo "🖼️  Ensuring media_files table exists..."
@@ -174,22 +146,7 @@ echo "🔄 Applying production constraint fixes..."
 psql "$DATABASE_URL" -c "
 DO \$\$
 BEGIN
-    -- 0. Ensure sessions table exists (for authentication)
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_name = 'sessions' 
-        AND table_schema = 'public'
-    ) THEN
-        CREATE TABLE sessions (
-            sid VARCHAR PRIMARY KEY,
-            sess JSONB NOT NULL,
-            expire TIMESTAMP NOT NULL
-        );
-        CREATE INDEX IDX_session_expire ON sessions(expire);
-        RAISE NOTICE 'Created missing sessions table';
-    END IF;
-    
-    -- 0a. Ensure categories table exists with complete schema
+    -- 0. Ensure categories table exists (for existing databases that don't have it)
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'categories' 
@@ -199,54 +156,12 @@ BEGIN
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             type VARCHAR NOT NULL,
             value VARCHAR NOT NULL,
-            abbreviation VARCHAR(10),
-            parent_category VARCHAR,
             display_order INTEGER DEFAULT 0,
             is_active BOOLEAN DEFAULT true,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         );
         RAISE NOTICE 'Created missing categories table';
-    END IF;
-    
-    -- 0b. Add new category fields if they don't exist
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'categories' 
-        AND column_name = 'abbreviation' 
-        AND table_schema = 'public'
-    ) THEN
-        ALTER TABLE categories ADD COLUMN abbreviation VARCHAR(10);
-        RAISE NOTICE 'Added abbreviation column to categories';
-    END IF;
-    
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'categories' 
-        AND column_name = 'parent_category' 
-        AND table_schema = 'public'
-    ) THEN
-        ALTER TABLE categories ADD COLUMN parent_category VARCHAR;
-        RAISE NOTICE 'Added parent_category column to categories';
-    END IF;
-    
-    -- 0c. Ensure inventory_transactions table exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_name = 'inventory_transactions' 
-        AND table_schema = 'public'
-    ) THEN
-        CREATE TABLE inventory_transactions (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            item_id UUID NOT NULL REFERENCES inventory_items(id),
-            transaction_type TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            reason TEXT,
-            notes TEXT,
-            user_id UUID REFERENCES users(id),
-            created_at TIMESTAMP DEFAULT NOW()
-        );
-        RAISE NOTICE 'Created missing inventory_transactions table';
     END IF;
     
     -- 0a. Ensure media_files table exists (for logo library functionality)
@@ -370,47 +285,24 @@ BEGIN
         RAISE NOTICE 'Added design column to inventory_items';
     END IF;
     
-    -- Updated field names: group and style instead of group_type and style_group
-    -- NOTE: "group" is a PostgreSQL reserved keyword and MUST be quoted
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'inventory_items' 
-        AND column_name = 'group' 
-        AND table_schema = 'public'
-    ) THEN
-        ALTER TABLE inventory_items ADD COLUMN "group" TEXT;
-        RAISE NOTICE 'Added group column to inventory_items';
-    END IF;
-    
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'inventory_items' 
-        AND column_name = 'style' 
-        AND table_schema = 'public'
-    ) THEN
-        ALTER TABLE inventory_items ADD COLUMN style TEXT;
-        RAISE NOTICE 'Added style column to inventory_items';
-    END IF;
-    
-    -- Migrate data from old field names to new ones if old columns exist
-    IF EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'inventory_items' 
         AND column_name = 'group_type' 
         AND table_schema = 'public'
     ) THEN
-        UPDATE inventory_items SET "group" = group_type WHERE "group" IS NULL AND group_type IS NOT NULL;
-        RAISE NOTICE 'Migrated group_type data to group column';
+        ALTER TABLE inventory_items ADD COLUMN group_type TEXT;
+        RAISE NOTICE 'Added group_type column to inventory_items';
     END IF;
     
-    IF EXISTS (
+    IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'inventory_items' 
         AND column_name = 'style_group' 
         AND table_schema = 'public'
     ) THEN
-        UPDATE inventory_items SET style = style_group WHERE style IS NULL AND style_group IS NOT NULL;
-        RAISE NOTICE 'Migrated style_group data to style column';
+        ALTER TABLE inventory_items ADD COLUMN style_group TEXT;
+        RAISE NOTICE 'Added style_group column to inventory_items';
     END IF;
     
     -- 4. Add is_active field for archive functionality
@@ -432,28 +324,7 @@ BEGIN
         RAISE NOTICE 'Ensured all inventory items have is_active set';
     END IF;
     
-    -- 5. Add customer email fields to sales table for email receipts
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'sales' 
-        AND column_name = 'customer_name' 
-        AND table_schema = 'public'
-    ) THEN
-        ALTER TABLE sales ADD COLUMN customer_name TEXT;
-        RAISE NOTICE 'Added customer_name column to sales table';
-    END IF;
-    
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'sales' 
-        AND column_name = 'customer_email' 
-        AND table_schema = 'public'
-    ) THEN
-        ALTER TABLE sales ADD COLUMN customer_email TEXT;
-        RAISE NOTICE 'Added customer_email column to sales table';
-    END IF;
-    
-    -- 6. Add receipt fields to sales table for QR code receipt functionality
+    -- 5. Add receipt fields to sales table for QR code receipt functionality
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'sales' 
@@ -474,7 +345,7 @@ BEGIN
         RAISE NOTICE 'Added receipt_expires_at column to sales table';
     END IF;
     
-    -- 7. Fix category display orders to be sequential (only if categories table exists)
+    -- 6. Fix category display orders to be sequential (only if categories table exists)
     IF EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'categories' 
