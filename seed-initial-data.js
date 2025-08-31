@@ -3,11 +3,12 @@
 // InventoryPro Initial Data Seeding Script
 // Creates default admin user and essential data for fresh deployments
 
-const { drizzle } = require('drizzle-orm/postgres-js');
-const postgres = require('postgres');
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
+import postgres from 'postgres';
 
 // Import schema
-const schema = require('./dist/shared/schema.js');
+import * as schema from './dist/shared/schema.js';
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL environment variable is required");
@@ -55,7 +56,7 @@ async function seedInitialData() {
     const [adminUserRecord] = await db
       .select()
       .from(schema.users)
-      .where(schema.eq(schema.users.username, 'admin'));
+      .where(eq(schema.users.username, 'admin'));
 
     if (adminUserRecord) {
       const salesAssociate = {
