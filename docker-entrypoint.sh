@@ -384,6 +384,25 @@ BEGIN
         RAISE NOTICE 'Added volunteer_email column to sales table';
     END IF;
     
+    -- 6a. Make sales_associate_id nullable for volunteer sales support
+    -- Check if sales_associate_id is currently NOT NULL and make it nullable
+    DECLARE
+        is_nullable TEXT;
+    BEGIN
+        SELECT is_nullable INTO is_nullable
+        FROM information_schema.columns 
+        WHERE table_name = 'sales' 
+        AND column_name = 'sales_associate_id' 
+        AND table_schema = 'public';
+        
+        IF is_nullable = 'NO' THEN
+            ALTER TABLE sales ALTER COLUMN sales_associate_id DROP NOT NULL;
+            RAISE NOTICE 'Made sales_associate_id column nullable for volunteer system';
+        ELSE
+            RAISE NOTICE 'sales_associate_id column is already nullable';
+        END IF;
+    END;
+    
     -- 7. Fix category display orders to be sequential (only if categories table exists)
     IF EXISTS (
         SELECT 1 FROM information_schema.tables 
