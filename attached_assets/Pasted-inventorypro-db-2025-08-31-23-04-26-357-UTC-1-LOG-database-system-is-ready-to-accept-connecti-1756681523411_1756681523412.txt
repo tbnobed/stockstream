@@ -1,0 +1,60 @@
+inventorypro-db  | 2025-08-31 23:04:26.357 UTC [1] LOG:  database system is ready to accept connections
+inventorypro-app  | 🚀 Starting InventoryPro application...
+inventorypro-app  | 📋 Auto-applying production database fixes...
+inventorypro-app  | ⏳ Waiting for database connection...
+inventorypro-app  | ✅ Database connection established
+inventorypro-app  | 📊 Checking database schema...
+inventorypro-app  | ✅ Database already initialized
+inventorypro-app  | 🔄 Applying production constraint fixes...
+inventorypro-app  | NOTICE:  Ensured all inventory items have is_active set
+inventorypro-app  | NOTICE:  Fixed category display orders to be sequential
+inventorypro-app  | NOTICE:  Production constraint fixes and schema updates applied successfully
+inventorypro-app  | DO
+inventorypro-app  | ✅ Production constraints and schema configured for multi-item transactions, category fields, volunteer system, and QR code receipts
+inventorypro-app  | 🔍 Performing final health check...
+inventorypro-app  | ✅ Database health check passed
+inventorypro-app  | 🌐 Starting application server...
+inventorypro-app  | 11:04:33 PM [express] serving on port 5000
+inventorypro-app  | 11:04:36 PM [express] GET /api/label-templates/default 200 in 65ms :: {"id":"4e2f0b17-65e7-4cf5-bb09-…
+inventorypro-app  | 11:04:40 PM [express] GET /api/auth/user 304 in 11ms :: {"id":"fbfe7685-2fb7-4e60-848b-910fbf8d8cda",…
+inventorypro-app  | 11:04:40 PM [express] GET /api/label-templates/default 200 in 7ms :: {"id":"4e2f0b17-65e7-4cf5-bb09-5…
+inventorypro-app  | 11:04:40 PM [express] GET /api/inventory 304 in 14ms :: [{"id":"f77b9dc2-9659-4bdc-863b-9d98148e8c70"…
+inventorypro-app  | 11:04:40 PM [express] GET /api/media 304 in 10ms :: [{"id":"425925f8-9331-42b9-a893-01ae2a3e85d8","fi…
+inventorypro-app  | 11:04:41 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 11ms :: {"…
+inventorypro-app  | 11:04:42 PM [express] PUT /api/label-templates/4e2f0b17-65e7-4cf5-bb09-510a93f4620c 200 in 8ms :: {"i…
+inventorypro-app  | Session validation error: TypeError: value.toISOString is not a function
+inventorypro-app  |     at PgTimestamp.mapToDriverValue (file:///app/node_modules/drizzle-orm/pg-core/columns/timestamp.js:34:18)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:131:73
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  | 11:04:44 PM [express] GET /api/volunteer/session 500 in 5ms :: {"error":"Session validation failed"}
+inventorypro-app  | Volunteer auth error: TypeError: value.toISOString is not a function
+inventorypro-app  |     at PgTimestamp.mapToDriverValue (file:///app/node_modules/drizzle-orm/pg-core/columns/timestamp.js:34:18)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:131:73
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  | 11:04:53 PM [express] POST /api/volunteer/auth 500 in 2ms :: {"error":"Authentication failed"}
+inventorypro-app  | Volunteer auth error: TypeError: value.toISOString is not a function
+inventorypro-app  |     at PgTimestamp.mapToDriverValue (file:///app/node_modules/drizzle-orm/pg-core/columns/timestamp.js:34:18)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:131:73
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  |     at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+inventorypro-app  |     at Array.map (<anonymous>)
+inventorypro-app  |     at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+inventorypro-app  | 11:05:05 PM [express] POST /api/volunteer/auth 500 in 2ms :: {"error":"Authentication failed"}

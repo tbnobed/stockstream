@@ -815,20 +815,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVolunteerSession(sessionToken: string): Promise<VolunteerSession | undefined> {
+    const now = new Date();
     const [session] = await db
       .select()
       .from(volunteerSessions)
       .where(and(
         eq(volunteerSessions.sessionToken, sessionToken),
-        gt(volunteerSessions.expiresAt, new Date().toISOString())
+        gt(volunteerSessions.expiresAt, now)
       ));
     return session || undefined;
   }
 
   async cleanupExpiredVolunteerSessions(): Promise<void> {
+    const now = new Date();
     await db
       .delete(volunteerSessions)
-      .where(lt(volunteerSessions.expiresAt, new Date().toISOString()));
+      .where(lt(volunteerSessions.expiresAt, now));
   }
 }
 
