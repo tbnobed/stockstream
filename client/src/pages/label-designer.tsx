@@ -750,21 +750,21 @@ export default function LabelDesigner() {
     let maxX = 85;
     let maxY = 85;
     
-    // Adjust constraints to allow right-side placement while preventing edge overflow
+    // Much more permissive constraints - allow moving to far right while preventing overflow
     if (isDragging === 'logo') {
-      maxX = 70; // Logo 1.2" wide - allow up to 70% (leaves 30% = 144px for element)
-      maxY = 75; // Logo height constraint
+      maxX = 85; // Allow logo to go to far right (85% of 480px = 408px start, logo is 64px)
+      maxY = 85; // Allow bottom placement
     } else if (isDragging === 'qrCode') {
-      maxX = 62; // QR 1.5" wide - allow up to 62% (leaves 38% = 219px for element)
-      maxY = 62; // QR height constraint  
+      maxX = 83; // Allow QR to go to far right (83% of 480px = 398px start, QR is 80px)
+      maxY = 83; // Allow bottom placement  
     } else if (isDragging === 'sizeIndicator') {
-      maxX = 80; // Size 0.8" wide - allow up to 80% (leaves 20% = 115px for element)
-      maxY = 80; // Size height constraint
+      maxX = 90; // Size indicator can go very far right (90% of 480px = 432px start, size is 43px)
+      maxY = 85; // Allow bottom placement
     } else if (isDragging === 'productInfo') {
-      maxX = 75; // Product info text block - allow most of width
-      maxY = 40; // Keep product info in top area
+      maxX = 85; // Product info can use most width
+      maxY = 70; // Allow lower placement
     } else if (isDragging === 'message') {
-      maxX = 70; // Message text - allow good width
+      maxX = 85; // Message can use most width
       maxY = 90; // Message can go to bottom
     }
     
