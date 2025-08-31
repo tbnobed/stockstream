@@ -97,7 +97,9 @@ export const sales = pgTable("sales", {
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(), // "cash" or "venmo"
-  salesAssociateId: uuid("sales_associate_id").notNull().references(() => salesAssociates.id),
+  salesAssociateId: uuid("sales_associate_id").references(() => salesAssociates.id), // Made optional for volunteers
+  // Volunteer support - either salesAssociateId OR volunteerEmail should be set
+  volunteerEmail: text("volunteer_email"),
   // Customer information for email receipts
   customerName: text("customer_name"),
   customerEmail: text("customer_email"),
@@ -144,6 +146,15 @@ export const labelTemplates = pgTable("label_templates", {
   layoutPositions: text("layout_positions"), // JSON string of layout positions
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Volunteer sessions table for temporary access
+export const volunteerSessions = pgTable("volunteer_sessions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  sessionToken: varchar("session_token", { length: 128 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Relations
@@ -250,6 +261,11 @@ export const insertLabelTemplateSchema = createInsertSchema(labelTemplates).omit
   updatedAt: true,
 });
 
+export const insertVolunteerSessionSchema = createInsertSchema(volunteerSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // User insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -302,3 +318,6 @@ export type SaleWithDetails = Sale & {
 export type MediaFileWithUploader = MediaFile & {
   uploadedBy: User | null;
 };
+
+export type VolunteerSession = typeof volunteerSessions.$inferSelect;
+export type InsertVolunteerSession = z.infer<typeof insertVolunteerSessionSchema>;

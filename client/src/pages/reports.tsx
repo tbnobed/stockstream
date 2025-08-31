@@ -53,6 +53,21 @@ export default function Reports() {
     };
   });
 
+  // Add volunteer sales data
+  const volunteerSales = sales.filter((sale: any) => sale.volunteerEmail && !sale.salesAssociateId);
+  const volunteerSalesByEmail = volunteerSales.reduce((acc: any, sale: any) => {
+    const email = sale.volunteerEmail;
+    if (!acc[email]) {
+      acc[email] = { name: `Volunteer (${email})`, sales: 0, revenue: 0 };
+    }
+    acc[email].sales += 1;
+    acc[email].revenue += Number(sale.totalAmount);
+    return acc;
+  }, {});
+
+  // Combine associate and volunteer sales data
+  const allSalesData = [...salesByAssociate, ...Object.values(volunteerSalesByEmail)];
+
   const inventoryByType = inventory.reduce((acc: any, item: any) => {
     const type = item.type || 'Unknown';
     if (!acc[type]) {
@@ -120,11 +135,11 @@ export default function Reports() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Sales by Associate */}
+          {/* Sales by Associate & Volunteers */}
           <Card className="border-border">
             <div className="px-6 py-4 border-b border-border">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-secondary">Sales by Associate</h3>
+                <h3 className="text-lg font-semibold text-secondary">Sales by Associate & Volunteers</h3>
                 <Button variant="outline" size="sm" data-testid="export-associate-report">
                   <Download className="mr-2" size={14} />
                   Export
@@ -133,7 +148,7 @@ export default function Reports() {
             </div>
             <div className="p-6">
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={salesByAssociate}>
+                <BarChart data={allSalesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />

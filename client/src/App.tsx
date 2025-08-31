@@ -17,6 +17,7 @@ import LabelDesigner from "@/pages/label-designer";
 import Login from "@/pages/login";
 import MobileSales from "@/pages/mobile-sales";
 import Receipt from "@/pages/receipt";
+import VolunteerSales from "@/pages/volunteer-sales";
 import Sidebar from "@/components/layout/sidebar";
 
 // Mobile detection utility
@@ -131,6 +132,7 @@ function AppContent() {
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/receipt/:token" component={Receipt} />
+        <Route path="/volunteer-sales" component={VolunteerSales} />
         <Route>
           <Login />
         </Route>

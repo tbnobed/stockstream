@@ -274,8 +274,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Volunteer authentication system
+  app.post('/api/volunteer/auth', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email address required' });
+      }
+
+      // Generate secure session token
+      const sessionToken = require('crypto').randomBytes(64).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+
+      // Clean up expired sessions first
+      await storage.cleanupExpiredVolunteerSessions();
+
+      // Create new session
+      const session = await storage.createVolunteerSession({
+        email: email.toLowerCase().trim(),
+        sessionToken,
+        expiresAt
+      });
+
+      res.json({
+        success: true,
+        sessionToken,
+        expiresAt: session.expiresAt,
+        email: session.email
+      });
+
+    } catch (error) {
+      console.error('Volunteer auth error:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
+  // Volunteer session validation middleware
+  const validateVolunteerSession = async (req: any, res: any, next: any) => {
+    try {
+      const sessionToken = req.headers['x-volunteer-session'];
+      
+      if (!sessionToken) {
+        return res.status(401).json({ error: 'Session token required' });
+      }
+
+      const session = await storage.getVolunteerSession(sessionToken);
+      
+      if (!session) {
+        return res.status(401).json({ error: 'Invalid or expired session' });
+      }
+
+      // Add session info to request
+      req.volunteerSession = session;
+      next();
+
+    } catch (error) {
+      console.error('Session validation error:', error);
+      res.status(500).json({ error: 'Session validation failed' });
+    }
+  };
+
+  // Volunteer session check endpoint
+  app.get('/api/volunteer/session', validateVolunteerSession, async (req: any, res) => {
+    res.json({
+      valid: true,
+      email: req.volunteerSession.email,
+      expiresAt: req.volunteerSession.expiresAt
+    });
+  });
+
   // Setup authentication routes
   await setupAuth(app);
+
+  // Volunteer routes - limited permissions
+  // Volunteers can view inventory (read-only)
+  app.get("/api/volunteer/inventory", validateVolunteerSession, async (req, res) => {
+    try {
+      const items = await storage.getInventoryItems(); // Active items only
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+  });
+
+  // Volunteers can search inventory by SKU/name
+  app.get("/api/volunteer/inventory/search/:term", validateVolunteerSession, async (req, res) => {
+    try {
+      const searchTerm = req.params.term.trim();
+      const items = await storage.searchInventoryItems(searchTerm);
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search inventory" });
+    }
+  });
+
+  // Volunteers can create sales but with their email instead of associate ID
+  app.post("/api/volunteer/sales", validateVolunteerSession, async (req: any, res) => {
+    try {
+      const saleData = req.body;
+      const volunteerEmail = req.volunteerSession.email;
+      
+      // Override any salesAssociateId with null and set volunteerEmail
+      const volunteerSale = {
+        ...saleData,
+        salesAssociateId: null, // No associate ID for volunteers
+        volunteerEmail: volunteerEmail // Track volunteer sales by email
+      };
+
+      const sale = await storage.createSale(volunteerSale);
+      res.status(201).json(sale);
+    } catch (error) {
+      console.error("Volunteer sale creation error:", error);
+      res.status(500).json({ message: "Failed to create sale" });
+    }
+  });
+
+  // Volunteers can view existing sales (for reference)
+  app.get("/api/volunteer/sales", validateVolunteerSession, async (req, res) => {
+    try {
+      const salesData = await storage.getSales();
+      res.json(salesData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch sales" });
+    }
+  });
   
   // Dashboard Stats
   app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {

@@ -8,6 +8,7 @@ import {
   categories,
   mediaFiles,
   labelTemplates,
+  volunteerSessions,
   type User,
   type InsertUser,
   type SalesAssociate,
@@ -28,6 +29,8 @@ import {
   type InsertMediaFile,
   type LabelTemplate,
   type InsertLabelTemplate,
+  type VolunteerSession,
+  type InsertVolunteerSession,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, lt, and, like, or, ilike } from "drizzle-orm";
@@ -108,6 +111,11 @@ export interface IStorage {
   createLabelTemplate(templateData: InsertLabelTemplate): Promise<LabelTemplate>;
   updateLabelTemplate(id: string, userId: string, updates: Partial<LabelTemplate>): Promise<LabelTemplate | undefined>;
   deleteLabelTemplate(id: string, userId: string): Promise<boolean>;
+
+  // Volunteer Sessions
+  createVolunteerSession(sessionData: InsertVolunteerSession): Promise<VolunteerSession>;
+  getVolunteerSession(sessionToken: string): Promise<VolunteerSession | undefined>;
+  cleanupExpiredVolunteerSessions(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -795,6 +803,32 @@ export class DatabaseStorage implements IStorage {
       console.error('Error deleting label template:', error);
       return false;
     }
+  }
+
+  // Volunteer Sessions
+  async createVolunteerSession(sessionData: InsertVolunteerSession): Promise<VolunteerSession> {
+    const [session] = await db
+      .insert(volunteerSessions)
+      .values(sessionData)
+      .returning();
+    return session;
+  }
+
+  async getVolunteerSession(sessionToken: string): Promise<VolunteerSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(volunteerSessions)
+      .where(and(
+        eq(volunteerSessions.sessionToken, sessionToken),
+        lt(new Date(), volunteerSessions.expiresAt)
+      ));
+    return session || undefined;
+  }
+
+  async cleanupExpiredVolunteerSessions(): Promise<void> {
+    await db
+      .delete(volunteerSessions)
+      .where(lt(volunteerSessions.expiresAt, new Date()));
   }
 }
 
