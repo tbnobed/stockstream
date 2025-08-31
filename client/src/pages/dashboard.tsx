@@ -315,7 +315,7 @@ export default function Dashboard() {
                 <Button
                   variant="ghost"
                   className="w-full justify-between p-3 h-auto hover:bg-muted"
-                  onClick={() => navigate('/label-designer')}
+                  onClick={() => navigate('/labels')}
                   data-testid="quick-action-print"
                 >
                   <div className="flex items-center">
