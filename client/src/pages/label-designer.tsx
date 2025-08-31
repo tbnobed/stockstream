@@ -124,27 +124,9 @@ export default function LabelDesigner() {
 
   const [layout, setLayout] = useState<LabelLayout>(defaultLayout);
 
-  // Shared positioning logic between preview and print/download
-  const convertPosition = (percentage: number, dimension: number, elementSize: number = 0) => {
-    const availableSpace = Math.max(dimension - elementSize, 0);
-    return (percentage / 100) * availableSpace;
-  };
-  
-  // Consistent element sizes (scaled for preview vs print)
-  const previewSizes = {
-    qrCode: { width: 80, height: 80 },      // 80px in preview = 180px in print
-    logo: { width: 64, height: 48 },        // 64x48px in preview = 144x108px in print  
-    sizeIndicator: { width: 43, height: 43 }, // 43px in preview = 96px in print
-    productInfo: { width: 205, height: 60 }, // Text blocks stay same
-    message: { width: 365, height: 30 }
-  };
-  
-  const printSizes = {
-    qrCode: { width: 180, height: 180 },
-    logo: { width: 144, height: 108 },  
-    sizeIndicator: { width: 96, height: 96 },
-    productInfo: { width: 205, height: 60 },
-    message: { width: 365, height: 30 }
+  // Simple percentage positioning - same for both preview and print/download
+  const convertPercentageToPixels = (percentage: number, containerSize: number) => {
+    return (percentage / 100) * containerSize;
   };
 
   // Fetch inventory items
@@ -652,28 +634,23 @@ export default function LabelDesigner() {
       const labelWidth = 456; // 480px - 24px padding (3.8in at 120 DPI)
       const labelHeight = 216; // 240px - 24px padding (1.8in at 120 DPI)
       
-      // Convert position accounting for element size to prevent overlaps
-      const convertPosition = (percentage: number, dimension: number, elementSize: number = 0) => {
-        // Calculate available space for positioning (canvas - element size)
-        const availableSpace = Math.max(dimension - elementSize, 0);
-        return (percentage / 100) * availableSpace;
+      // Simple percentage to pixel conversion for print canvas
+      const convertPosition = (percentage: number, dimension: number) => {
+        return (percentage / 100) * dimension;
       };
-      
-      // Use consistent print sizes
-      const sizes = printSizes;
       
       tempContainer.innerHTML = `
         <div class="temp-label">
           <div class="temp-label-content">
-            <div class="temp-product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth, sizes.productInfo.width)}px; top: ${convertPosition(layout.productInfo.y, labelHeight, sizes.productInfo.height)}px;">
+            <div class="temp-product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}px; top: ${convertPosition(layout.productInfo.y, labelHeight)}px;">
               <div class="temp-product-name">${labelData.productName}</div>
               <div class="temp-product-code">${labelData.productCode}</div>
               ${labelData.showPrice ? `<div class="temp-price">$${labelData.price}</div>` : ''}
             </div>
-            ${labelData.showQR ? `<div class="temp-qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth, sizes.qrCode.width)}px; top: ${convertPosition(layout.qrCode.y, labelHeight, sizes.qrCode.height)}px;"><img src="${qrCodeUrl}" /></div>` : ''}
-            ${labelData.showLogo && labelData.logoUrl ? `<div class="temp-logo" style="left: ${convertPosition(layout.logo.x, labelWidth, sizes.logo.width)}px; top: ${convertPosition(layout.logo.y, labelHeight, sizes.logo.height)}px;"><img src="${labelData.logoUrl}" /></div>` : ''}
-            ${labelData.showSize ? `<div class="temp-size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth, sizes.sizeIndicator.width)}px; top: ${convertPosition(layout.sizeIndicator.y, labelHeight, sizes.sizeIndicator.height)}px;">${labelData.sizeIndicator}</div>` : ''}
-            ${labelData.showMessage ? `<div class="temp-message" style="left: ${convertPosition(layout.message.x, labelWidth, sizes.message.width)}px; top: ${convertPosition(layout.message.y, labelHeight, sizes.message.height)}px;">${labelData.customMessage}</div>` : ''}
+            ${labelData.showQR ? `<div class="temp-qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}px; top: ${convertPosition(layout.qrCode.y, labelHeight)}px;"><img src="${qrCodeUrl}" /></div>` : ''}
+            ${labelData.showLogo && labelData.logoUrl ? `<div class="temp-logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}px; top: ${convertPosition(layout.logo.y, labelHeight)}px;"><img src="${labelData.logoUrl}" /></div>` : ''}
+            ${labelData.showSize ? `<div class="temp-size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;">${labelData.sizeIndicator}</div>` : ''}
+            ${labelData.showMessage ? `<div class="temp-message" style="left: ${convertPosition(layout.message.x, labelWidth)}px; top: ${convertPosition(layout.message.y, labelHeight)}px;">${labelData.customMessage}</div>` : ''}
           </div>
         </div>
       `;
@@ -750,23 +727,9 @@ export default function LabelDesigner() {
     let maxX = 85;
     let maxY = 85;
     
-    // Much more permissive constraints - allow moving to far right while preventing overflow
-    if (isDragging === 'logo') {
-      maxX = 85; // Allow logo to go to far right (85% of 480px = 408px start, logo is 64px)
-      maxY = 85; // Allow bottom placement
-    } else if (isDragging === 'qrCode') {
-      maxX = 83; // Allow QR to go to far right (83% of 480px = 398px start, QR is 80px)
-      maxY = 83; // Allow bottom placement  
-    } else if (isDragging === 'sizeIndicator') {
-      maxX = 90; // Size indicator can go very far right (90% of 480px = 432px start, size is 43px)
-      maxY = 85; // Allow bottom placement
-    } else if (isDragging === 'productInfo') {
-      maxX = 85; // Product info can use most width
-      maxY = 70; // Allow lower placement
-    } else if (isDragging === 'message') {
-      maxX = 85; // Message can use most width
-      maxY = 90; // Message can go to bottom
-    }
+    // Liberal constraints - elements can move nearly anywhere on the label
+    maxX = 95; // Allow all elements to move to 95% across (almost to the right edge)
+    maxY = 95; // Allow all elements to move to 95% down (almost to the bottom)
     
     const constrainedX = Math.max(0, Math.min(maxX, x));
     const constrainedY = Math.max(0, Math.min(maxY, y));
@@ -822,8 +785,8 @@ export default function LabelDesigner() {
                     isDragging === 'productInfo' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                   }`}
                   style={{
-                    left: `${convertPosition(layout.productInfo.x, 456, previewSizes.productInfo.width) * (480/456)}px`,
-                    top: `${convertPosition(layout.productInfo.y, 216, previewSizes.productInfo.height) * (240/216)}px`,
+                    left: `${layout.productInfo.x}%`,
+                    top: `${layout.productInfo.y}%`,
                     maxWidth: '45%'
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
@@ -842,8 +805,8 @@ export default function LabelDesigner() {
                       isDragging === 'qrCode' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
-                      left: `${convertPosition(layout.qrCode.x, 456, previewSizes.qrCode.width) * (480/456)}px`,
-                      top: `${convertPosition(layout.qrCode.y, 216, previewSizes.qrCode.height) * (240/216)}px`
+                      left: `${layout.qrCode.x}%`,
+                      top: `${layout.qrCode.y}%`
                     }}
                     onMouseDown={(e) => handleMouseDown('qrCode', e)}
                   >
@@ -858,8 +821,8 @@ export default function LabelDesigner() {
                       isDragging === 'logo' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
-                      left: `${convertPosition(layout.logo.x, 456, previewSizes.logo.width) * (480/456)}px`,
-                      top: `${convertPosition(layout.logo.y, 216, previewSizes.logo.height) * (240/216)}px`,
+                      left: `${layout.logo.x}%`,
+                      top: `${layout.logo.y}%`,
                       width: '64px',
                       height: '48px'
                     }}
@@ -876,8 +839,8 @@ export default function LabelDesigner() {
                       isDragging === 'sizeIndicator' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
-                      left: `${convertPosition(layout.sizeIndicator.x, 456, previewSizes.sizeIndicator.width) * (480/456)}px`,
-                      top: `${convertPosition(layout.sizeIndicator.y, 216, previewSizes.sizeIndicator.height) * (240/216)}px`,
+                      left: `${layout.sizeIndicator.x}%`,
+                      top: `${layout.sizeIndicator.y}%`,
                       minWidth: '43px',
                       minHeight: '43px'
                     }}
@@ -894,8 +857,8 @@ export default function LabelDesigner() {
                       isDragging === 'message' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
-                      left: `${convertPosition(layout.message.x, 456, previewSizes.message.width) * (480/456)}px`,
-                      top: `${convertPosition(layout.message.y, 216, previewSizes.message.height) * (240/216)}px`,
+                      left: `${layout.message.x}%`,
+                      top: `${layout.message.y}%`,
                       maxWidth: '80%',
                       whiteSpace: 'pre-wrap'
                     }}
