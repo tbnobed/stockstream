@@ -113,27 +113,16 @@ export default function LabelDesigner() {
   });
 
   // Load saved layout or use defaults with error handling
-  const [layout, setLayout] = useState<LabelLayout>(() => {
-    try {
-      const saved = localStorage.getItem('labelDesignerLayout');
-      return saved ? JSON.parse(saved) : {
-        productInfo: { x: 5, y: 10 },
-        qrCode: { x: 75, y: 2 }, // Moved further right and higher to avoid overlap
-        logo: { x: 35, y: 45 }, // Moved to center-left to avoid QR code  
-        sizeIndicator: { x: 80, y: 65 }, // Adjusted to make room
-        message: { x: 10, y: 80 }
-      };
-    } catch (error) {
-      console.warn('Failed to load saved layout:', error);
-      return {
-        productInfo: { x: 5, y: 10 },
-        qrCode: { x: 75, y: 2 }, // Moved further right and higher to avoid overlap
-        logo: { x: 35, y: 45 }, // Moved to center-left to avoid QR code
-        sizeIndicator: { x: 80, y: 65 }, // Adjusted to make room
-        message: { x: 10, y: 80 }
-      };
-    }
-  });
+  // Force the new default layout to fix overlap issues
+  const defaultLayout: LabelLayout = {
+    productInfo: { x: 5, y: 10 },
+    qrCode: { x: 75, y: 2 }, // Moved further right and higher to avoid overlap
+    logo: { x: 35, y: 45 }, // Moved to center-left to avoid QR code  
+    sizeIndicator: { x: 80, y: 65 }, // Adjusted to make room
+    message: { x: 10, y: 80 }
+  };
+
+  const [layout, setLayout] = useState<LabelLayout>(defaultLayout);
 
   // Fetch inventory items
   const { data: inventoryItems } = useQuery({
