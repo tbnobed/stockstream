@@ -436,18 +436,18 @@ export default function LabelDesigner() {
               max-width: 45%;
             }
             .product-name {
-              font-size: 14px;
+              font-size: 18px; /* Larger product name for print */
               font-weight: bold;
               margin: 0 0 2px 0;
               line-height: 1.1;
             }
             .product-code {
-              font-size: 10px;
+              font-size: 12px; /* Larger product code for print */
               margin: 0 0 4px 0;
               color: #666;
             }
             .price {
-              font-size: 18px;
+              font-size: 24px; /* Larger price for print */
               font-weight: bold;
               margin: 0;
             }
@@ -458,16 +458,16 @@ export default function LabelDesigner() {
               justify-content: center;
             }
             .qr-code img {
-              max-width: 1in;
-              max-height: 1in;
+              max-width: 1.5in; /* Larger QR code for print */
+              max-height: 1.5in; /* Larger QR code for print */
             }
             .logo {
               position: absolute;
               display: flex;
               align-items: center;
               justify-content: center;
-              width: 0.8in;
-              height: 0.6in;
+              width: 1.2in; /* Much larger logo for print */
+              height: 0.9in; /* Much larger logo for print */
             }
             .logo img {
               max-width: 100%;
@@ -479,14 +479,14 @@ export default function LabelDesigner() {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 24px;
+              font-size: 36px; /* Larger font for print */
               font-weight: bold;
-              min-width: 0.6in;
-              min-height: 0.6in;
+              min-width: 0.8in; /* Larger size indicator for print */
+              min-height: 0.8in; /* Larger size indicator for print */
             }
             .message {
               position: absolute;
-              font-size: 8px;
+              font-size: 11px; /* Larger message font for print */
               text-align: center;
               display: flex;
               align-items: center;
@@ -574,18 +574,18 @@ export default function LabelDesigner() {
           max-width: 45%;
         }
         .temp-product-name {
-          font-size: 14px;
+          font-size: 18px; /* Larger product name font */
           font-weight: bold;
           margin: 0 0 2px 0;
           line-height: 1.1;
         }
         .temp-product-code {
-          font-size: 10px;
+          font-size: 12px; /* Larger product code font */
           margin: 0 0 4px 0;
           color: #666;
         }
         .temp-price {
-          font-size: 18px;
+          font-size: 24px; /* Larger price font */
           font-weight: bold;
           margin: 0;
         }
@@ -596,16 +596,16 @@ export default function LabelDesigner() {
           justify-content: center;
         }
         .temp-qr-code img {
-          max-width: 120px; /* 1in at 120 DPI */
-          max-height: 120px; /* 1in at 120 DPI */
+          max-width: 180px; /* 1.5in at 120 DPI - Larger QR code */
+          max-height: 180px; /* 1.5in at 120 DPI - Larger QR code */
         }
         .temp-logo {
           position: absolute;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 96px; /* 0.8in at 120 DPI */
-          height: 72px; /* 0.6in at 120 DPI */
+          width: 144px; /* 1.2in at 120 DPI - Much larger logo */
+          height: 108px; /* 0.9in at 120 DPI - Much larger logo */
         }
         .temp-logo img {
           max-width: 100%;
@@ -617,14 +617,14 @@ export default function LabelDesigner() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 24px;
+          font-size: 36px; /* Larger font for size indicator */
           font-weight: bold;
-          min-width: 72px; /* 0.6in at 120 DPI */
-          min-height: 72px; /* 0.6in at 120 DPI */
+          min-width: 96px; /* 0.8in at 120 DPI - Larger size indicator */
+          min-height: 96px; /* 0.8in at 120 DPI - Larger size indicator */
         }
         .temp-message {
           position: absolute;
-          font-size: 8px;
+          font-size: 11px; /* Larger message font */
           text-align: center;
           display: flex;
           align-items: center;
