@@ -7,6 +7,7 @@ This deployment guide covers the enhanced InventoryPro system with:
 - QR code scanning integration for inventory management
 - Digital receipt system with QR code access for customers
 - Advanced category management with dynamic fields
+- Volunteer sales system with email-only authentication and mobile interface
 
 ## Prerequisites
 
@@ -96,6 +97,28 @@ The QR code receipt functionality is automatically included in new deployments. 
 - Public receipt viewing without authentication
 - Complete transaction details and customer information
 - Mobile-friendly receipt format
+
+### Volunteer Sales System
+
+The volunteer system provides a simplified, mobile-optimized sales interface for temporary volunteers:
+
+**Features:**
+- Email-only authentication (no passwords required)
+- 24-hour session expiration for security
+- Mobile-optimized interface with QR code scanning
+- Limited permissions (sales and inventory view only)
+- Automatic receipt emails to customers
+- Real-time inventory updates
+
+**Access:**
+- **URL**: http://localhost:5000/volunteer-sales
+- **Authentication**: Enter any valid email address to create session
+- **Capabilities**: QR scanning, cart management, payment processing
+
+**Database Changes:**
+- `volunteer_sessions` table for temporary access management
+- `volunteer_email` field in sales table for attribution
+- Automatic session cleanup after 24 hours
 
 ## Architecture Overview
 

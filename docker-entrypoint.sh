@@ -95,6 +95,18 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     );
     " >/dev/null 2>&1 && echo "✅ Label templates table verified" || echo "⚠️  Label templates table creation warning"
     
+    # Ensure volunteer_sessions table exists (for volunteer system)
+    echo "🎯 Ensuring volunteer_sessions table exists..."
+    psql "$DATABASE_URL" -c "
+    CREATE TABLE IF NOT EXISTS volunteer_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL,
+        session_token VARCHAR(128) NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    " >/dev/null 2>&1 && echo "✅ Volunteer sessions table verified" || echo "⚠️  Volunteer sessions table creation warning"
+    
     # Verify multi-item transaction schema
     echo "🛒 Verifying multi-item transaction schema..."
     UNIQUE_CONSTRAINT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_name = 'sales' AND constraint_type = 'UNIQUE' AND constraint_name LIKE '%order_number%';" 2>/dev/null | tr -d ' \n' || echo "0")
@@ -214,6 +226,22 @@ BEGIN
             updated_at TIMESTAMP DEFAULT NOW()
         );
         RAISE NOTICE 'Created missing label_templates table';
+    END IF;
+    
+    -- 0c. Ensure volunteer_sessions table exists (for volunteer system)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'volunteer_sessions' 
+        AND table_schema = 'public'
+    ) THEN
+        CREATE TABLE volunteer_sessions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            email TEXT NOT NULL,
+            session_token VARCHAR(128) NOT NULL UNIQUE,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        RAISE NOTICE 'Created missing volunteer_sessions table';
     END IF;
     
     -- 1. Ensure all users have corresponding sales_associate records
@@ -345,7 +373,18 @@ BEGIN
         RAISE NOTICE 'Added receipt_expires_at column to sales table';
     END IF;
     
-    -- 6. Fix category display orders to be sequential (only if categories table exists)
+    -- 6. Add volunteer email field to sales table for volunteer system support
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'sales' 
+        AND column_name = 'volunteer_email' 
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE sales ADD COLUMN volunteer_email TEXT;
+        RAISE NOTICE 'Added volunteer_email column to sales table';
+    END IF;
+    
+    -- 7. Fix category display orders to be sequential (only if categories table exists)
     IF EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'categories' 
@@ -371,7 +410,7 @@ BEGIN
     
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
-" && echo "✅ Production constraints and schema configured for multi-item transactions, category fields, and QR code receipts" || echo "⚠️  Constraint and schema configuration completed with warnings"
+" && echo "✅ Production constraints and schema configured for multi-item transactions, category fields, volunteer system, and QR code receipts" || echo "⚠️  Constraint and schema configuration completed with warnings"
 
 # Final health check
 echo "🔍 Performing final health check..."
