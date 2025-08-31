@@ -201,7 +201,8 @@ export default function LabelDesigner() {
   // Load default template data when available
   useEffect(() => {
     if (defaultTemplate && !templateLoaded) {
-      console.log('Loading saved label data:', defaultTemplate);
+      console.log('🔧 PRODUCTION DEBUG: Loading saved label data:', defaultTemplate);
+      console.log('🔧 PRODUCTION DEBUG: Template loaded state:', templateLoaded);
       const templateData: LabelData = {
         selectedInventoryId: defaultTemplate.selectedInventoryId || "",
         productName: defaultTemplate.productName || "Product Name",
@@ -222,24 +223,30 @@ export default function LabelDesigner() {
       
       // Load saved layout positions from template to prevent reset
       if (defaultTemplate.layoutPositions) {
-        console.log('Loading saved layout positions:', defaultTemplate.layoutPositions);
+        console.log('🔧 PRODUCTION DEBUG: Loading saved layout positions:', defaultTemplate.layoutPositions);
+        console.log('🔧 PRODUCTION DEBUG: Layout positions type:', typeof defaultTemplate.layoutPositions);
         try {
           const savedLayout = typeof defaultTemplate.layoutPositions === 'string' 
             ? JSON.parse(defaultTemplate.layoutPositions)
             : defaultTemplate.layoutPositions;
+          console.log('🔧 PRODUCTION DEBUG: Parsed layout:', savedLayout);
           setLayout(savedLayout);
+          console.log('🔧 PRODUCTION DEBUG: Layout state set successfully');
         } catch (error) {
-          console.warn('Failed to parse saved layout positions:', error);
+          console.error('🔧 PRODUCTION DEBUG: Failed to parse saved layout positions:', error);
+          console.log('🔧 PRODUCTION DEBUG: Using default layout due to parsing error');
           setLayout(defaultLayout);
         }
       } else {
         // No saved positions, use default layout
+        console.log('🔧 PRODUCTION DEBUG: No saved positions found, using default layout');
         setLayout(defaultLayout);
       }
       
       setTemplateLoaded(true);
     } else if (!defaultTemplate && !templateLoading && !templateError && !templateLoaded) {
       // No template found - use default layout and enable auto-save for new template creation
+      console.log('🔧 PRODUCTION DEBUG: No template found, using default layout');
       setLayout(defaultLayout);
       setTemplateLoaded(true); // Enable auto-save even without existing template
     }
@@ -777,6 +784,7 @@ export default function LabelDesigner() {
 
   // Show loading state until layout is initialized
   if (!layout || templateLoading) {
+    console.log('🔧 PRODUCTION DEBUG: Showing loading state - layout:', !!layout, 'templateLoading:', templateLoading);
     return (
       <div className="container mx-auto p-6">
         <div className="mb-6">
