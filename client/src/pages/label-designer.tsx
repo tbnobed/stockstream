@@ -113,13 +113,14 @@ export default function LabelDesigner() {
   });
 
   // Load saved layout or use defaults with error handling
-  // Force the new default layout to fix overlap issues
+  // Carefully calculated layout to prevent overlaps in print/download
+  // Based on 288px × 576px canvas (2" × 4" at 144 DPI)
   const defaultLayout: LabelLayout = {
-    productInfo: { x: 5, y: 10 },
-    qrCode: { x: 75, y: 2 }, // Moved further right and higher to avoid overlap
-    logo: { x: 35, y: 45 }, // Moved to center-left to avoid QR code  
-    sizeIndicator: { x: 80, y: 65 }, // Adjusted to make room
-    message: { x: 10, y: 80 }
+    productInfo: { x: 3, y: 5 },      // Top-left, small text block
+    qrCode: { x: 60, y: 3 },          // Top-right, 1.5"×1.5" = 216px needs 60% to fit in 288px width
+    logo: { x: 5, y: 48 },            // Mid-left, 1.2"×0.9" = 172px×129px 
+    sizeIndicator: { x: 65, y: 55 },  // Mid-right, 0.8"×0.8" = 115px×115px
+    message: { x: 8, y: 75 }          // Bottom area, custom message
   };
 
   const [layout, setLayout] = useState<LabelLayout>(defaultLayout);
@@ -717,20 +718,26 @@ export default function LabelDesigner() {
     const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
     const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
     
-    // Constrain to container bounds with better element size consideration
+    // Strict constraints to prevent overlaps in 288px × 576px canvas
     let maxX = 85;
     let maxY = 85;
     
-    // Adjust constraints based on element type and larger sizes
+    // Adjust constraints based on actual element sizes to prevent overlaps
     if (isDragging === 'logo') {
-      maxX = 70; // Logo is now 1.2" wide, needs more space
-      maxY = 75; // Logo is now 0.9" tall
+      maxX = 40; // Logo 1.2"×0.9" (172px×129px) needs room - max 40% = 115px start
+      maxY = 65; // Logo height constraint
     } else if (isDragging === 'qrCode') {
-      maxX = 70; // QR code is now 1.5" square, needs more space
-      maxY = 70;
+      maxX = 25; // QR 1.5"×1.5" (216px×216px) needs lots of room - max 25% = 72px start  
+      maxY = 60; // QR height constraint
     } else if (isDragging === 'sizeIndicator') {
-      maxX = 80; // Size indicator is 0.8" square
-      maxY = 75;
+      maxX = 60; // Size 0.8"×0.8" (115px×115px) - max 60% = 173px start
+      maxY = 70; // Size height constraint
+    } else if (isDragging === 'productInfo') {
+      maxX = 50; // Product info text block constraint
+      maxY = 35; // Keep product info in top area
+    } else if (isDragging === 'message') {
+      maxX = 60; // Message text constraint
+      maxY = 90; // Message can go to bottom
     }
     
     const constrainedX = Math.max(0, Math.min(maxX, x));
