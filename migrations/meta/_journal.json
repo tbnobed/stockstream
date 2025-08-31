@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1756630200260,
+      "tag": "0000_wooden_penance",
+      "breakpoints": true
+    }
+  ]
+}

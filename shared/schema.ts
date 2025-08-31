@@ -66,7 +66,7 @@ export const inventoryItems = pgTable("inventory_items", {
   size: text("size"), // e.g., "S/M", "L/XL", "OSFA"
   color: text("color"), // e.g., "Black", "White", "Red"
   design: text("design"), // e.g., "Lipstick", "Cancer", "Arizona"
-  group: text(`"group"`), // Was "groupType" - e.g., "Supporter", "Ladies", "Member" (quoted for PostgreSQL reserved keyword)
+  "group": text("group"), // Was "groupType" - e.g., "Supporter", "Ladies", "Member" (quoted at JS level for PostgreSQL reserved keyword)
   style: text("style"), // Was "styleGroup" - e.g., "Flex Fit", "Snap Back", "Trucker"
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Selling price
   cost: decimal("cost", { precision: 10, scale: 2 }), // Landed cost (what you paid)
