@@ -268,10 +268,11 @@ export default function LabelDesigner() {
     if (!templateLoaded || !defaultTemplate?.id) return;
     
     const timeoutId = setTimeout(() => {
-      // Save layout to database immediately when it changes
+      // Save layout to database immediately when it changes - JSON.stringify the layout object
+      console.log('🔧 PRODUCTION DEBUG: Saving layout to database:', layout);
       autoSaveMutation.mutate({
         ...labelData,
-        layoutPositions: layout
+        layoutPositions: JSON.stringify(layout) // ✅ Convert object to JSON string
       } as any);
     }, 1000); // 1 second debounce
 
