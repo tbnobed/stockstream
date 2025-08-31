@@ -799,12 +799,11 @@ export default function LabelDesigner() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Avery 94207 Label Designer</h1>
+        <h1 className="text-3xl font-bold mb-2">Label Designer</h1>
         <p className="text-muted-foreground">
           Design and print custom labels (2" × 4") with QR codes, logos, and custom text
         </p>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Label Preview */}
         <Card>
