@@ -189,6 +189,29 @@ export default function VolunteerSales() {
     }
   };
 
+  // Search items as user types
+  const searchItems = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    const results = inventory.filter((i: InventoryItem) =>
+      i.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      i.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    setSearchResults(results.slice(0, 8)); // Limit to 8 results
+    setShowResults(results.length > 0);
+  };
+
+  // Handle SKU input change with real-time search
+  const handleSkuInputChange = (value: string) => {
+    setSkuInput(value);
+    searchItems(value);
+  };
+
   // Add item to cart by SKU
   const addItemBySku = () => {
     const item = inventory.find((i: InventoryItem) => 
@@ -204,23 +227,23 @@ export default function VolunteerSales() {
         title: "Added to cart",
         description: `${item.name} added to cart`,
       });
+    } else if (searchResults.length > 0) {
+      // If no exact match but have search results, add the first result
+      const firstResult = searchResults[0];
+      addToCart(firstResult);
+      setSkuInput("");
+      setSearchResults([]);
+      setShowResults(false);
+      toast({
+        title: "Added to cart",
+        description: `${firstResult.name} added to cart`,
+      });
     } else {
-      // Show search results if no exact match
-      const results = inventory.filter((i: InventoryItem) =>
-        i.sku.toLowerCase().includes(skuInput.toLowerCase()) ||
-        i.name.toLowerCase().includes(skuInput.toLowerCase())
-      );
-      
-      if (results.length > 0) {
-        setSearchResults(results);
-        setShowResults(true);
-      } else {
-        toast({
-          title: "Item not found",
-          description: `No item found with SKU: ${skuInput}`,
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Item not found",
+        description: `No item found matching: ${skuInput}`,
+        variant: "destructive"
+      });
     }
   };
 
@@ -254,7 +277,14 @@ export default function VolunteerSales() {
       ));
     } else {
       setCart([...cart, {
-        ...item,
+        id: item.id,
+        name: item.name,
+        sku: item.sku,
+        price: item.price,
+        quantity: item.quantity,
+        type: item.category || 'Unknown',
+        size: item.size || undefined,
+        color: item.color || undefined,
         cartQuantity: 1
       }]);
     }
@@ -473,7 +503,7 @@ export default function VolunteerSales() {
               <Input
                 placeholder="Enter SKU or scan QR"
                 value={skuInput}
-                onChange={(e) => setSkuInput(e.target.value)}
+                onChange={(e) => handleSkuInputChange(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addItemBySku()}
                 className="flex-1"
                 data-testid="input-sku"
@@ -490,24 +520,67 @@ export default function VolunteerSales() {
               </Button>
             </div>
 
-            {/* Search Results */}
+            {/* Live Search Results */}
             {showResults && searchResults.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Search Results:</p>
-                {searchResults.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-600">{item.sku} - ${item.price}</p>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                <p className="text-sm font-medium">
+                  Found {searchResults.length} item{searchResults.length !== 1 ? 's' : ''}:
+                </p>
+                {searchResults.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{item.name}</p>
+                      <p className="text-xs text-gray-600">{item.sku}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm font-semibold text-green-600">${item.price}</span>
+                        <Badge variant={item.quantity > 0 ? "default" : "destructive"} className="text-xs">
+                          {item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock"}
+                        </Badge>
+                      </div>
+                      {(item.size || item.color) && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {[item.size, item.color].filter(Boolean).join(' • ')}
+                        </p>
+                      )}
                     </div>
-                    <Button size="sm" onClick={() => addToCart(item)} data-testid={`button-add-${item.id}`}>
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        addToCart(item);
+                        setSkuInput("");
+                        setSearchResults([]);
+                        setShowResults(false);
+                      }}
+                      disabled={item.quantity <= 0}
+                      data-testid={`button-add-${item.id}`}
+                      className="ml-3 shrink-0"
+                    >
                       Add
                     </Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => setShowResults(false)}>
-                  Hide Results
-                </Button>
+                {skuInput && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setSkuInput("");
+                      setSearchResults([]);
+                      setShowResults(false);
+                    }}
+                    className="w-full"
+                  >
+                    Clear Search
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* No results message */}
+            {skuInput.trim() && showResults && searchResults.length === 0 && (
+              <div className="text-center py-4 text-gray-500">
+                <p className="text-sm">No items found matching "{skuInput}"</p>
+                <p className="text-xs mt-1">Try searching by SKU or product name</p>
               </div>
             )}
           </CardContent>
@@ -662,7 +735,7 @@ export default function VolunteerSales() {
             {receiptToken && (
               <div className="space-y-2">
                 <p className="text-sm text-gray-600">Customer receipt:</p>
-                <QRCodeDisplay value={`${window.location.origin}/receipt/${receiptToken}`} />
+                <QRCodeDisplay data={`${window.location.origin}/receipt/${receiptToken}`} />
                 <p className="text-xs text-gray-500">Scan to view receipt</p>
               </div>
             )}
