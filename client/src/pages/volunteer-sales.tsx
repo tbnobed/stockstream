@@ -725,38 +725,52 @@ export default function VolunteerSales() {
 
       {/* Receipt QR Modal */}
       <Dialog open={showReceiptQR} onOpenChange={setShowReceiptQR}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-sm w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-center">Sale Complete!</DialogTitle>
+            <DialogTitle className="text-center text-lg">Sale Complete!</DialogTitle>
           </DialogHeader>
-          <div className="text-center space-y-4">
-            <CheckCircle className="mx-auto text-green-600" size={64} />
-            <p>Transaction processed successfully</p>
+          <div className="text-center space-y-4 py-2">
+            <CheckCircle className="mx-auto text-green-600" size={48} />
+            <p className="text-sm">Transaction processed successfully</p>
             {receiptToken && (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">Customer receipt:</p>
-                <QRCodeDisplay url={`${window.location.origin}/receipt/${receiptToken}`} />
-                <p className="text-xs text-gray-500">Scan to view receipt</p>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 font-medium">Customer Receipt:</p>
+                {/* Mobile-optimized QR display */}
+                <div className="flex justify-center p-2">
+                  <div className="bg-white p-3 rounded-lg border shadow-sm">
+                    <QRCodeDisplay 
+                      url={`${window.location.origin}/receipt/${receiptToken}`}
+                      title=""
+                      showUrl={false}
+                      className="border-0 shadow-none"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 px-2">
+                  Customer can scan this QR code to view their digital receipt
+                </p>
               </div>
             )}
           </div>
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col gap-2 pt-2">
             <Button 
+              className="w-full" 
+              onClick={() => {
+                setShowReceiptQR(false);
+                // Reset for next sale
+                setReceiptToken(null);
+              }}
+              data-testid="button-new-sale"
+            >
+              Continue Shopping
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
               onClick={() => setShowReceiptQR(false)}
-              className="flex-1"
               data-testid="button-close-receipt"
             >
               Close
-            </Button>
-            <Button 
-              onClick={() => {
-                setShowReceiptQR(false);
-                setReceiptToken(null);
-              }}
-              className="flex-1"
-              data-testid="button-done-receipt"
-            >
-              Done
             </Button>
           </div>
         </DialogContent>
