@@ -604,8 +604,8 @@ export default function LabelDesigner() {
           justify-content: center;
         }
         .temp-qr-code img {
-          max-width: 180px; /* 1.5in at 120 DPI - Larger QR code */
-          max-height: 180px; /* 1.5in at 120 DPI - Larger QR code */
+          max-width: 120px; /* 1in at 120 DPI - Match generated QR size */
+          max-height: 120px; /* 1in at 120 DPI - Match generated QR size */
         }
         .temp-logo {
           position: absolute;
@@ -831,7 +831,7 @@ export default function LabelDesigner() {
                     }}
                     onMouseDown={(e) => handleMouseDown('qrCode', e)}
                   >
-                    <img src={qrCodeUrl} style={{ width: '180px', height: '180px' }} />
+                    <img src={qrCodeUrl} style={{ width: '120px', height: '120px' }} />
                   </div>
                 )}
 
