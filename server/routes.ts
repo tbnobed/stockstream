@@ -22,6 +22,7 @@ import * as XLSX from "xlsx";
 import path from "path";
 import fs from "fs";
 import { emailService } from "./emailService";
+import crypto from "crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
@@ -284,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate secure session token
-      const sessionToken = require('crypto').randomBytes(64).toString('hex');
+      const sessionToken = crypto.randomBytes(64).toString('hex');
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
 
