@@ -33,7 +33,7 @@ import {
   type InsertVolunteerSession,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, desc, lt, and, like, or, ilike } from "drizzle-orm";
+import { eq, sql, desc, lt, gt, and, like, or, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -820,7 +820,7 @@ export class DatabaseStorage implements IStorage {
       .from(volunteerSessions)
       .where(and(
         eq(volunteerSessions.sessionToken, sessionToken),
-        lt(new Date(), volunteerSessions.expiresAt)
+        gt(volunteerSessions.expiresAt, new Date().toISOString())
       ));
     return session || undefined;
   }
@@ -828,7 +828,7 @@ export class DatabaseStorage implements IStorage {
   async cleanupExpiredVolunteerSessions(): Promise<void> {
     await db
       .delete(volunteerSessions)
-      .where(lt(volunteerSessions.expiresAt, new Date()));
+      .where(lt(volunteerSessions.expiresAt, new Date().toISOString()));
   }
 }
 
