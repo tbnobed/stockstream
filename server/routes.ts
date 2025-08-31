@@ -377,15 +377,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const saleData = req.body;
       const volunteerEmail = req.volunteerSession.email;
       
-      // Override any salesAssociateId with null and set volunteerEmail
+      // Generate order number using the same pattern as frontend
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+      
+      // Generate receipt token and expiration (90 days from now)
+      const receiptToken = `RCT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const receiptExpiresAt = new Date();
+      receiptExpiresAt.setDate(receiptExpiresAt.getDate() + 90);
+      
+      // Override any salesAssociateId with null and set volunteer info
       const volunteerSale = {
         ...saleData,
+        orderNumber: orderNumber, // Add generated order number
         salesAssociateId: null, // No associate ID for volunteers
-        volunteerEmail: volunteerEmail // Track volunteer sales by email
+        volunteerEmail: volunteerEmail, // Track volunteer sales by email
+        receiptToken: receiptToken,
+        receiptExpiresAt: receiptExpiresAt
       };
 
       const sale = await storage.createSale(volunteerSale);
-      res.status(201).json(sale);
+      
+      // Return sale data with QR code URL for the receipt
+      const receiptUrl = `${req.protocol}://${req.get('host')}/receipt/${receiptToken}`;
+      
+      res.status(201).json({
+        ...sale,
+        receiptUrl,
+        qrCodeData: receiptUrl, // Frontend can use this to generate QR code
+      });
     } catch (error) {
       console.error("Volunteer sale creation error:", error);
       res.status(500).json({ message: "Failed to create sale" });
