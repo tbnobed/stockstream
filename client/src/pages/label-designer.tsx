@@ -219,6 +219,20 @@ export default function LabelDesigner() {
       };
       console.log('Merged label data:', templateData);
       setLabelData(templateData);
+      
+      // Load saved layout positions from template to prevent reset
+      if (defaultTemplate.layoutPositions) {
+        console.log('Loading saved layout positions:', defaultTemplate.layoutPositions);
+        try {
+          const savedLayout = typeof defaultTemplate.layoutPositions === 'string' 
+            ? JSON.parse(defaultTemplate.layoutPositions)
+            : defaultTemplate.layoutPositions;
+          setLayout(savedLayout);
+        } catch (error) {
+          console.warn('Failed to parse saved layout positions:', error);
+        }
+      }
+      
       setTemplateLoaded(true);
     } else if (!defaultTemplate && !templateLoading && !templateError && !templateLoaded) {
       // No template found - enable auto-save for new template creation
@@ -741,6 +755,13 @@ export default function LabelDesigner() {
   };
 
   const handleMouseUp = () => {
+    if (isDragging && defaultTemplate?.id) {
+      // Save layout immediately when dragging ends to prevent reset
+      autoSaveMutation.mutate({
+        ...labelData,
+        layoutPositions: layout
+      } as any);
+    }
     setIsDragging(null);
     setDragOffset({ x: 0, y: 0 });
   };
@@ -791,10 +812,10 @@ export default function LabelDesigner() {
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
-                  <div className="text-lg font-bold leading-tight mb-1">{labelData.productName}</div>
-                  <div className="text-sm text-gray-600 mb-1">{labelData.productCode}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px', lineHeight: '1.1' }}>{labelData.productName}</div>
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>{labelData.productCode}</div>
                   {labelData.showPrice && (
-                    <div className="text-2xl font-bold">${labelData.price}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '0' }}>${labelData.price}</div>
                   )}
                 </div>
 
@@ -810,7 +831,7 @@ export default function LabelDesigner() {
                     }}
                     onMouseDown={(e) => handleMouseDown('qrCode', e)}
                   >
-                    <img src={qrCodeUrl} className="w-20 h-20" />
+                    <img src={qrCodeUrl} style={{ width: '180px', height: '180px' }} />
                   </div>
                 )}
 
@@ -823,8 +844,8 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.logo.x}%`,
                       top: `${layout.logo.y}%`,
-                      width: '64px',
-                      height: '48px'
+                      width: '144px',
+                      height: '108px'
                     }}
                     onMouseDown={(e) => handleMouseDown('logo', e)}
                   >
@@ -835,14 +856,15 @@ export default function LabelDesigner() {
                 {/* Size Indicator */}
                 {labelData.showSize && (
                   <div 
-                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center text-3xl font-bold ${
+                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center font-bold ${
                       isDragging === 'sizeIndicator' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
                       left: `${layout.sizeIndicator.x}%`,
                       top: `${layout.sizeIndicator.y}%`,
-                      minWidth: '43px',
-                      minHeight: '43px'
+                      minWidth: '96px',
+                      minHeight: '96px',
+                      fontSize: '36px'
                     }}
                     onMouseDown={(e) => handleMouseDown('sizeIndicator', e)}
                   >
@@ -853,14 +875,16 @@ export default function LabelDesigner() {
                 {/* Message */}
                 {labelData.showMessage && (
                   <div 
-                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center text-sm text-center italic ${
+                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center text-center ${
                       isDragging === 'message' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
                       left: `${layout.message.x}%`,
                       top: `${layout.message.y}%`,
                       maxWidth: '80%',
-                      whiteSpace: 'pre-wrap'
+                      whiteSpace: 'pre-wrap',
+                      fontSize: '11px',
+                      fontStyle: 'italic'
                     }}
                     onMouseDown={(e) => handleMouseDown('message', e)}
                   >
