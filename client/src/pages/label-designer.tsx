@@ -434,22 +434,31 @@ export default function LabelDesigner() {
 
     const labelsPerSheet = Math.min(labelCount, 10); // Max 10 per Avery 94207 sheet
     
-    // Use simpler label generation with inline styles only
+    // Use exact same styling as download function
     const generateSimpleLabelHTML = () => {
       const convertPosition = (percentage: number, dimension: number) => {
         return (percentage / 100) * dimension;
       };
       
       return `<div class="label"><div class="label-content">
-        <div style="position: absolute; left: ${convertPosition(layout.productInfo.x, 3.8)}in; top: ${convertPosition(layout.productInfo.y, 1.8)}in; width: 2.5in;">
-          <div style="font-size: 18px; font-weight: bold; margin: 0 0 2px 0; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${labelData.productName}</div>
-          <div style="font-size: 12px; margin: 0 0 4px 0; color: #666;">${labelData.productCode}</div>
+        <!-- Product Info - exact same styling as download -->
+        <div style="position: absolute; left: ${convertPosition(layout.productInfo.x, 3.8)}in; top: ${convertPosition(layout.productInfo.y, 1.8)}in; display: flex; flex-direction: column; justify-content: flex-start; padding: 8px;">
+          <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap;">${labelData.productName}</div>
+          <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${labelData.productCode}</div>
           ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
         </div>
-        ${labelData.showQR ? `<div style="position: absolute; left: ${convertPosition(layout.qrCode.x, 3.8)}in; top: ${convertPosition(layout.qrCode.y, 1.8)}in;"><img src="${qrCodeUrl}" style="max-width: 1.5in; max-height: 1.5in;" /></div>` : ''}
-        ${labelData.showLogo && labelData.logoUrl ? `<div style="position: absolute; left: ${convertPosition(layout.logo.x, 3.8)}in; top: ${convertPosition(layout.logo.y, 1.8)}in; width: 0.8in; height: 0.6in; display: flex; align-items: center; justify-content: center;"><img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" /></div>` : ''}
-        ${labelData.showSize ? `<div style="position: absolute; left: ${convertPosition(layout.sizeIndicator.x, 3.8)}in; top: ${convertPosition(layout.sizeIndicator.y, 1.8)}in; border: 1px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; min-width: 0.8in; min-height: 0.8in;">${labelData.sizeIndicator}</div>` : ''}
-        ${labelData.showMessage ? `<div style="position: absolute; left: ${convertPosition(layout.message.x, 3.8)}in; top: ${convertPosition(layout.message.y, 1.8)}in; font-size: 11px; text-align: center; font-style: italic; max-width: 80%; white-space: pre-wrap;">${labelData.customMessage}</div>` : ''}
+        
+        <!-- QR Code - exact same styling as download -->
+        ${labelData.showQR ? `<div style="position: absolute; left: ${convertPosition(layout.qrCode.x, 3.8)}in; top: ${convertPosition(layout.qrCode.y, 1.8)}in; padding: 4px;"><img src="${qrCodeUrl}" style="width: 1.2in; height: 1.2in;" /></div>` : ''}
+        
+        <!-- Logo - exact same styling as download -->
+        ${labelData.showLogo && labelData.logoUrl ? `<div style="position: absolute; left: ${convertPosition(layout.logo.x, 3.8)}in; top: ${convertPosition(layout.logo.y, 1.8)}in; display: flex; align-items: center; justify-content: center; width: 144px; height: 108px; padding: 4px;"><img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" /></div>` : ''}
+        
+        <!-- Size Indicator - exact same styling as download -->
+        ${labelData.showSize ? `<div style="position: absolute; left: ${convertPosition(layout.sizeIndicator.x, 3.8)}in; top: ${convertPosition(layout.sizeIndicator.y, 1.8)}in; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; border: 2px solid #333; border-radius: 50%; font-size: 36px; font-weight: bold;">${labelData.sizeIndicator}</div>` : ''}
+        
+        <!-- Message - exact same styling as download -->
+        ${labelData.showMessage ? `<div style="position: absolute; left: ${convertPosition(layout.message.x, 3.8)}in; top: ${convertPosition(layout.message.y, 1.8)}in; font-size: 11px; text-align: center; font-style: italic; white-space: pre-wrap; max-width: 240px;">${labelData.customMessage}</div>` : ''}
       </div></div>`;
     };
     
