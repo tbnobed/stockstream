@@ -403,12 +403,115 @@ BEGIN
         END IF;
     END;
     
-    -- 7. Fix category display orders to be sequential (only if categories table exists)
+    -- 7. Seed default categories if table is empty
     IF EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'categories' 
         AND table_schema = 'public'
     ) THEN
+        -- Check if categories table is empty and seed with defaults
+        DECLARE
+            category_count INTEGER;
+        BEGIN
+            SELECT COUNT(*) INTO category_count FROM categories WHERE is_active = true;
+            
+            IF category_count = 0 THEN
+                RAISE NOTICE 'Categories table is empty, seeding with default categories...';
+                
+                -- Insert default categories from the application
+                INSERT INTO categories (type, value, display_order, is_active) VALUES
+                -- Item Types (categories)
+                ('category', 'Shirt', 0, true),
+                ('category', 'Hat', 1, true),
+                ('category', 'Coin', 2, true),
+                ('category', 'Pants', 3, true),
+                ('category', 'Shoes', 4, true),
+                ('category', 'Jacket', 5, true),
+                ('category', 'Accessory', 6, true),
+                ('category', 'Bag', 7, true),
+                ('category', 'Other', 8, true),
+                
+                -- Colors
+                ('color', 'Red', 0, true),
+                ('color', 'Blue', 1, true),
+                ('color', 'Black', 2, true),
+                ('color', 'White', 3, true),
+                ('color', 'Green', 4, true),
+                ('color', 'Yellow', 5, true),
+                ('color', 'Orange', 6, true),
+                ('color', 'Purple', 7, true),
+                ('color', 'Pink', 8, true),
+                ('color', 'Gray', 9, true),
+                ('color', 'Brown', 10, true),
+                ('color', 'Navy', 11, true),
+                ('color', 'Maroon', 12, true),
+                ('color', 'Teal', 13, true),
+                ('color', 'Multi-Color', 14, true),
+                
+                -- Sizes
+                ('size', 'XS', 0, true),
+                ('size', 'S', 1, true),
+                ('size', 'M', 2, true),
+                ('size', 'L', 3, true),
+                ('size', 'XL', 4, true),
+                ('size', 'XXL', 5, true),
+                ('size', 'XXXL', 6, true),
+                ('size', 'S/M', 7, true),
+                ('size', 'L/XL', 8, true),
+                ('size', 'OSFA', 9, true),
+                ('size', 'One Size', 10, true),
+                ('size', 'N/A', 11, true),
+                
+                -- Designs
+                ('design', 'Arizona', 0, true),
+                ('design', 'Lipstick', 1, true),
+                ('design', 'Cancer', 2, true),
+                ('design', 'Event-Specific', 3, true),
+                ('design', 'Holiday', 4, true),
+                ('design', 'Seasonal', 5, true),
+                ('design', 'Logo', 6, true),
+                ('design', 'Plain', 7, true),
+                ('design', 'Graphic', 8, true),
+                ('design', 'Text', 9, true),
+                ('design', 'Pattern', 10, true),
+                ('design', 'Floral', 11, true),
+                ('design', 'Stripe', 12, true),
+                ('design', 'Solid', 13, true),
+                
+                -- Groups
+                ('group', 'Supporter', 0, true),
+                ('group', 'Ladies', 1, true),
+                ('group', 'Member', 2, true),
+                ('group', 'Kids', 3, true),
+                ('group', 'Youth', 4, true),
+                ('group', 'Adult', 5, true),
+                ('group', 'Senior', 6, true),
+                ('group', 'VIP', 7, true),
+                ('group', 'Staff', 8, true),
+                ('group', 'Volunteer', 9, true),
+                ('group', 'General', 10, true),
+                
+                -- Styles
+                ('style', 'T-Shirt', 0, true),
+                ('style', 'V-Neck', 1, true),
+                ('style', 'Tank Top', 2, true),
+                ('style', 'Long Sleeve', 3, true),
+                ('style', 'Polo', 4, true),
+                ('style', 'Button-Up', 5, true),
+                ('style', 'Hoodie', 6, true),
+                ('style', 'Sweatshirt', 7, true),
+                ('style', 'Flex Fit', 8, true),
+                ('style', 'Snap Back', 9, true),
+                ('style', 'Beanie', 10, true),
+                ('style', 'Other', 11, true);
+                
+                RAISE NOTICE 'Successfully seeded categories with default values';
+            ELSE
+                RAISE NOTICE 'Categories table already has % entries, skipping seeding', category_count;
+            END IF;
+        END;
+        
+        -- Fix category display orders to be sequential
         WITH ordered_categories AS (
             SELECT 
                 id,
@@ -424,7 +527,7 @@ BEGIN
         WHERE categories.id = ordered_categories.id;
         RAISE NOTICE 'Fixed category display orders to be sequential';
     ELSE
-        RAISE NOTICE 'Categories table does not exist yet, skipping display order fix';
+        RAISE NOTICE 'Categories table does not exist yet, skipping category operations';
     END IF;
     
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
