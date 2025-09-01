@@ -434,7 +434,7 @@ export default function LabelDesigner() {
 
     const labelsPerSheet = Math.min(labelCount, 10);
     
-    // Create simple label HTML
+    // Use EXACT same positioning system as preview - percentage on 480px x 240px scaled for print
     const createLabelHTML = () => {
       return `
         <div style="
@@ -442,84 +442,103 @@ export default function LabelDesigner() {
           height: 2in; 
           border: 1px solid #ddd;
           margin: 0.0625in;
-          padding: 0.1in;
+          padding: 0;
           position: relative;
           box-sizing: border-box;
           font-family: Arial, sans-serif;
           background: white;
         ">
-          <!-- Product Name & Code -->
+          <!-- Product Info - EXACT same as preview -->
           <div style="
             position: absolute;
-            left: ${(layout.productInfo.x / 100) * 3.8}in;
-            top: ${(layout.productInfo.y / 100) * 1.8}in;
+            left: ${layout.productInfo.x}%;
+            top: ${layout.productInfo.y}%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 8px;
           ">
             <div style="
-              font-size: 14px;
+              font-size: 18px;
               font-weight: bold;
               margin-bottom: 2px;
+              line-height: 1.1;
               white-space: nowrap;
             ">${labelData.productName}</div>
             <div style="
-              font-size: 10px;
+              font-size: 12px;
               color: #666;
               margin-bottom: 4px;
             ">${labelData.productCode}</div>
             ${labelData.showPrice ? `<div style="
-              font-size: 18px;
+              font-size: 24px;
               font-weight: bold;
+              margin: 0;
             ">$${labelData.price}</div>` : ''}
           </div>
           
           ${labelData.showQR ? `
-          <!-- QR Code -->
-          <img src="${qrCodeUrl}" style="
-            position: absolute;
-            left: ${(layout.qrCode.x / 100) * 3.8}in;
-            top: ${(layout.qrCode.y / 100) * 1.8}in;
-            width: 1.2in;
-            height: 1.2in;
-          " />` : ''}
-          
-          ${labelData.showLogo && labelData.logoUrl ? `
-          <!-- Logo -->
-          <img src="${labelData.logoUrl}" style="
-            position: absolute;
-            left: ${(layout.logo.x / 100) * 3.8}in;
-            top: ${(layout.logo.y / 100) * 1.8}in;
-            width: 0.6in;
-            height: 0.5in;
-            object-fit: contain;
-          " />` : ''}
-          
-          ${labelData.showSize ? `
-          <!-- Size Circle -->
+          <!-- QR Code - EXACT same as preview -->
           <div style="
             position: absolute;
-            left: ${(layout.sizeIndicator.x / 100) * 3.8}in;
-            top: ${(layout.sizeIndicator.y / 100) * 1.8}in;
-            width: 0.6in;
-            height: 0.6in;
-            border: 1px solid #333;
-            border-radius: 50%;
+            left: ${layout.qrCode.x}%;
+            top: ${layout.qrCode.y}%;
+            padding: 4px;
+          ">
+            <img src="${qrCodeUrl}" style="width: 120px; height: 120px;" />
+          </div>` : ''}
+          
+          ${labelData.showLogo && labelData.logoUrl ? `
+          <!-- Logo - EXACT same as preview -->
+          <div style="
+            position: absolute;
+            left: ${layout.logo.x}%;
+            top: ${layout.logo.y}%;
+            width: 144px;
+            height: 108px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            padding: 4px;
+          ">
+            <img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+          </div>` : ''}
+          
+          ${labelData.showSize ? `
+          <!-- Size Indicator - EXACT same as preview -->
+          <div style="
+            position: absolute;
+            left: ${layout.sizeIndicator.x}%;
+            top: ${layout.sizeIndicator.y}%;
+            min-width: 96px;
+            min-height: 96px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            padding: 8px;
+            border: 2px solid #333;
+            border-radius: 50%;
+            font-size: ${calculateSizeFontSize(labelData.sizeIndicator, 96)}px;
           ">${labelData.sizeIndicator}</div>` : ''}
           
           ${labelData.showMessage ? `
-          <!-- Message -->
+          <!-- Message - EXACT same as preview -->
           <div style="
             position: absolute;
-            left: ${(layout.message.x / 100) * 3.8}in;
-            top: ${(layout.message.y / 100) * 1.8}in;
-            max-width: 2in;
-            font-size: 8px;
-            text-align: center;
-            font-style: italic;
+            left: ${layout.message.x}%;
+            top: ${layout.message.y}%;
+            max-width: 80%;
             white-space: pre-wrap;
+            font-size: 11px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
           ">${labelData.customMessage}</div>` : ''}
         </div>
       `;
