@@ -432,162 +432,130 @@ export default function LabelDesigner() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const labelsPerSheet = Math.min(labelCount, 10); // Max 10 per Avery 94207 sheet
+    const labelsPerSheet = Math.min(labelCount, 10);
     
-    // Use exact same styling as download function
-    const generateSimpleLabelHTML = () => {
-      const convertPosition = (percentage: number, dimension: number) => {
-        return (percentage / 100) * dimension;
-      };
-      
-      return `<div class="label"><div class="label-content">
-        <!-- Product Info - exact same styling as download -->
-        <div style="position: absolute; left: ${convertPosition(layout.productInfo.x, 3.8)}in; top: ${convertPosition(layout.productInfo.y, 1.8)}in; display: flex; flex-direction: column; justify-content: flex-start; padding: 8px;">
-          <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap;">${labelData.productName}</div>
-          <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${labelData.productCode}</div>
-          ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
+    // Create simple label HTML
+    const createLabelHTML = () => {
+      return `
+        <div style="
+          width: 4in; 
+          height: 2in; 
+          border: 1px solid #ddd;
+          margin: 0.0625in;
+          padding: 0.1in;
+          position: relative;
+          box-sizing: border-box;
+          font-family: Arial, sans-serif;
+          background: white;
+        ">
+          <!-- Product Name & Code -->
+          <div style="
+            position: absolute;
+            left: ${(layout.productInfo.x / 100) * 3.8}in;
+            top: ${(layout.productInfo.y / 100) * 1.8}in;
+          ">
+            <div style="
+              font-size: 14px;
+              font-weight: bold;
+              margin-bottom: 2px;
+              white-space: nowrap;
+            ">${labelData.productName}</div>
+            <div style="
+              font-size: 10px;
+              color: #666;
+              margin-bottom: 4px;
+            ">${labelData.productCode}</div>
+            ${labelData.showPrice ? `<div style="
+              font-size: 18px;
+              font-weight: bold;
+            ">$${labelData.price}</div>` : ''}
+          </div>
+          
+          ${labelData.showQR ? `
+          <!-- QR Code -->
+          <img src="${qrCodeUrl}" style="
+            position: absolute;
+            left: ${(layout.qrCode.x / 100) * 3.8}in;
+            top: ${(layout.qrCode.y / 100) * 1.8}in;
+            width: 1.2in;
+            height: 1.2in;
+          " />` : ''}
+          
+          ${labelData.showLogo && labelData.logoUrl ? `
+          <!-- Logo -->
+          <img src="${labelData.logoUrl}" style="
+            position: absolute;
+            left: ${(layout.logo.x / 100) * 3.8}in;
+            top: ${(layout.logo.y / 100) * 1.8}in;
+            width: 0.6in;
+            height: 0.5in;
+            object-fit: contain;
+          " />` : ''}
+          
+          ${labelData.showSize ? `
+          <!-- Size Circle -->
+          <div style="
+            position: absolute;
+            left: ${(layout.sizeIndicator.x / 100) * 3.8}in;
+            top: ${(layout.sizeIndicator.y / 100) * 1.8}in;
+            width: 0.6in;
+            height: 0.6in;
+            border: 1px solid #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+          ">${labelData.sizeIndicator}</div>` : ''}
+          
+          ${labelData.showMessage ? `
+          <!-- Message -->
+          <div style="
+            position: absolute;
+            left: ${(layout.message.x / 100) * 3.8}in;
+            top: ${(layout.message.y / 100) * 1.8}in;
+            max-width: 2in;
+            font-size: 8px;
+            text-align: center;
+            font-style: italic;
+            white-space: pre-wrap;
+          ">${labelData.customMessage}</div>` : ''}
         </div>
-        
-        <!-- QR Code - exact same styling as download -->
-        ${labelData.showQR ? `<div style="position: absolute; left: ${convertPosition(layout.qrCode.x, 3.8)}in; top: ${convertPosition(layout.qrCode.y, 1.8)}in; padding: 4px;"><img src="${qrCodeUrl}" style="width: 1.2in; height: 1.2in;" /></div>` : ''}
-        
-        <!-- Logo - exact same styling as download -->
-        ${labelData.showLogo && labelData.logoUrl ? `<div style="position: absolute; left: ${convertPosition(layout.logo.x, 3.8)}in; top: ${convertPosition(layout.logo.y, 1.8)}in; display: flex; align-items: center; justify-content: center; width: 144px; height: 108px; padding: 4px;"><img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" /></div>` : ''}
-        
-        <!-- Size Indicator - exact same styling as download -->
-        ${labelData.showSize ? `<div style="position: absolute; left: ${convertPosition(layout.sizeIndicator.x, 3.8)}in; top: ${convertPosition(layout.sizeIndicator.y, 1.8)}in; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; border: 2px solid #333; border-radius: 50%; font-size: 36px; font-weight: bold;">${labelData.sizeIndicator}</div>` : ''}
-        
-        <!-- Message - exact same styling as download -->
-        ${labelData.showMessage ? `<div style="position: absolute; left: ${convertPosition(layout.message.x, 3.8)}in; top: ${convertPosition(layout.message.y, 1.8)}in; font-size: 11px; text-align: center; font-style: italic; white-space: pre-wrap; max-width: 240px;">${labelData.customMessage}</div>` : ''}
-      </div></div>`;
+      `;
     };
-    
-    const labels = Array.from({ length: labelsPerSheet }, () => generateSimpleLabelHTML()).join('');
+
+    const allLabels = Array.from({ length: labelsPerSheet }, () => createLabelHTML()).join('');
 
     printWindow.document.write(`
+      <!DOCTYPE html>
       <html>
         <head>
-          <title>Avery 94207 Labels</title>
+          <title>Label Print</title>
           <style>
-            @page {
-              size: 8.5in 11in;
-              margin: 0.5in;
+            @page { size: 8.5in 11in; margin: 0.5in; }
+            body { 
+              margin: 0; 
+              padding: 0; 
+              font-family: Arial, sans-serif; 
             }
-            @media print {
-              body { margin: 0; }
-              .label-sheet { page-break-after: always; }
-            }
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 0;
-            }
-            .label-sheet {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              grid-template-rows: repeat(5, 1fr);
-              gap: 0.125in;
-              width: 7.5in;
-              height: 10in;
-              margin: 0 auto;
-            }
-            .label {
-              width: 4in;
-              height: 2in;
-              position: relative;
-              padding: 0.1in;
-              box-sizing: border-box;
-              page-break-inside: avoid;
-            }
-            .label-content {
-              width: 100%;
-              height: 100%;
-              position: relative;
-            }
-            .product-info {
-              position: absolute;
-              display: flex;
-              flex-direction: column;
-              justify-content: flex-start;
-              width: 2.5in !important;
-            }
-            .product-name {
-              font-size: 18px; /* Larger product name for print */
-              font-weight: bold;
-              margin: 0 0 2px 0;
-              line-height: 1.1;
-              white-space: nowrap !important;
-              overflow: hidden !important;
-              text-overflow: ellipsis !important;
-            }
-            .product-code {
-              font-size: 12px; /* Larger product code for print */
-              margin: 0 0 4px 0;
-              color: #666;
-            }
-            .price {
-              font-size: 24px; /* Larger price for print */
-              font-weight: bold;
-              margin: 0;
-            }
-            .qr-code {
-              position: absolute;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .qr-code img {
-              max-width: 1.5in; /* Larger QR code for print */
-              max-height: 1.5in; /* Larger QR code for print */
-            }
-            .logo {
-              position: absolute;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: .8in; /* Much larger logo for print */
-              height: 0.6in; /* Much larger logo for print */
-            }
-            .logo img {
-              max-width: 100%;
-              max-height: 100%;
-              object-fit: contain;
-            }
-            .size-indicator {
-              position: absolute;
-              border: 1px solid #333;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 36px; /* Larger font for print */
-              font-weight: bold;
-              min-width: 0.8in; /* Larger size indicator for print */
-              min-height: 0.8in; /* Larger size indicator for print */
-            }
-            .message {
-              position: absolute;
-              font-size: 11px; /* Larger message font for print */
-              text-align: center;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-style: italic;
-              max-width: 80%;
-              white-space: pre-wrap;
+            .sheet { 
+              display: grid; 
+              grid-template-columns: 1fr 1fr; 
+              grid-template-rows: repeat(5, 1fr); 
+              gap: 0; 
+              width: 7.5in; 
+              height: 10in; 
             }
           </style>
         </head>
         <body>
-          <div class="label-sheet">
-            ${labels}
-          </div>
+          <div class="sheet">${allLabels}</div>
         </body>
       </html>
     `);
 
     printWindow.document.close();
-    printWindow.focus();
     printWindow.print();
   };
 
