@@ -479,13 +479,16 @@ export default function LabelDesigner() {
               display: flex;
               flex-direction: column;
               justify-content: flex-start;
+              width: 2.5in !important;
             }
             .product-name {
               font-size: 18px; /* Larger product name for print */
               font-weight: bold;
               margin: 0 0 2px 0;
               line-height: 1.1;
-              white-space: nowrap;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
             }
             .product-code {
               font-size: 12px; /* Larger product code for print */
