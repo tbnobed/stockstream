@@ -573,7 +573,7 @@ export default function LabelDesigner() {
       <div class="label">
         <div class="label-content">
           <div class="product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}in; top: ${convertPosition(layout.productInfo.y, labelHeight)}in;">
-            <div class="product-name">${labelData.productName}</div>
+            <div class="product-name" style="white-space: nowrap;">${labelData.productName}</div>
             <div class="product-code">${labelData.productCode}</div>
             ${labelData.showPrice ? `<div class="price">$${labelData.price}</div>` : ''}
           </div>
