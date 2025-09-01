@@ -847,7 +847,7 @@ export default function LabelDesigner() {
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px', lineHeight: '1.1', whiteSpace: 'nowrap', overflow: 'hidden' }}>{labelData.productName}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px', lineHeight: '1.1', whiteSpace: 'nowrap' }}>{labelData.productName}</div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>{labelData.productCode}</div>
                   {labelData.showPrice && (
                     <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '0' }}>${labelData.price}</div>
