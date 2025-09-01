@@ -427,12 +427,33 @@ export default function LabelDesigner() {
   };
 
   const handlePrint = () => {
+    if (!layout) return;
+    
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const labelHTML = generateLabelHTML();
     const labelsPerSheet = Math.min(labelCount, 10); // Max 10 per Avery 94207 sheet
-    const labels = Array.from({ length: labelsPerSheet }, () => labelHTML).join('');
+    
+    // Use simpler label generation with inline styles only
+    const generateSimpleLabelHTML = () => {
+      const convertPosition = (percentage: number, dimension: number) => {
+        return (percentage / 100) * dimension;
+      };
+      
+      return `<div class="label"><div class="label-content">
+        <div style="position: absolute; left: ${convertPosition(layout.productInfo.x, 3.8)}in; top: ${convertPosition(layout.productInfo.y, 1.8)}in; width: 2.5in;">
+          <div style="font-size: 18px; font-weight: bold; margin: 0 0 2px 0; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${labelData.productName}</div>
+          <div style="font-size: 12px; margin: 0 0 4px 0; color: #666;">${labelData.productCode}</div>
+          ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
+        </div>
+        ${labelData.showQR ? `<div style="position: absolute; left: ${convertPosition(layout.qrCode.x, 3.8)}in; top: ${convertPosition(layout.qrCode.y, 1.8)}in;"><img src="${qrCodeUrl}" style="max-width: 1.5in; max-height: 1.5in;" /></div>` : ''}
+        ${labelData.showLogo && labelData.logoUrl ? `<div style="position: absolute; left: ${convertPosition(layout.logo.x, 3.8)}in; top: ${convertPosition(layout.logo.y, 1.8)}in; width: 0.8in; height: 0.6in; display: flex; align-items: center; justify-content: center;"><img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" /></div>` : ''}
+        ${labelData.showSize ? `<div style="position: absolute; left: ${convertPosition(layout.sizeIndicator.x, 3.8)}in; top: ${convertPosition(layout.sizeIndicator.y, 1.8)}in; border: 1px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; min-width: 0.8in; min-height: 0.8in;">${labelData.sizeIndicator}</div>` : ''}
+        ${labelData.showMessage ? `<div style="position: absolute; left: ${convertPosition(layout.message.x, 3.8)}in; top: ${convertPosition(layout.message.y, 1.8)}in; font-size: 11px; text-align: center; font-style: italic; max-width: 80%; white-space: pre-wrap;">${labelData.customMessage}</div>` : ''}
+      </div></div>`;
+    };
+    
+    const labels = Array.from({ length: labelsPerSheet }, () => generateSimpleLabelHTML()).join('');
 
     printWindow.document.write(`
       <html>
@@ -525,6 +546,8 @@ export default function LabelDesigner() {
             }
             .size-indicator {
               position: absolute;
+              border: 1px solid #333;
+              border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -556,9 +579,7 @@ export default function LabelDesigner() {
 
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+    printWindow.print();
   };
 
   const generateLabelHTML = () => {
