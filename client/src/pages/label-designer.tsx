@@ -627,7 +627,7 @@ export default function LabelDesigner() {
             justify-content: flex-start;
             padding: 8px;
           ">
-            <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap; overflow: hidden;">${labelData.productName}</div>
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap;">${labelData.productName}</div>
             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${labelData.productCode}</div>
             ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
           </div>
