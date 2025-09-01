@@ -625,7 +625,6 @@ export default function LabelDesigner() {
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            max-width: 45%;
             padding: 8px;
           ">
             <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap; overflow: hidden;">${labelData.productName}</div>
@@ -844,8 +843,7 @@ export default function LabelDesigner() {
                   }`}
                   style={{
                     left: `${layout.productInfo.x}%`,
-                    top: `${layout.productInfo.y}%`,
-                    maxWidth: '45%'
+                    top: `${layout.productInfo.y}%`
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
