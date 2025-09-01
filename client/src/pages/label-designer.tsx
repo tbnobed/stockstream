@@ -124,6 +124,25 @@ export default function LabelDesigner() {
 
   const [layout, setLayout] = useState<LabelLayout | null>(null);
 
+  // Calculate optimal font size for size indicator to fit in one line
+  const calculateSizeFontSize = (text: string, containerWidth: number = 96) => {
+    // Base font size for single characters
+    const baseFontSize = 36;
+    
+    // Adjust font size based on text length
+    if (text.length <= 2) {
+      return baseFontSize; // Full size for short text like "M", "XL"
+    } else if (text.length <= 4) {
+      return Math.max(28, baseFontSize - (text.length - 2) * 4); // Reduce for "XXXL", "OSFA"
+    } else {
+      // For longer text, calculate based on container width
+      const targetWidth = containerWidth - 16; // Account for padding
+      const approxCharWidth = baseFontSize * 0.6; // Rough character width ratio
+      const calculatedSize = Math.max(16, targetWidth / (text.length * 0.6));
+      return Math.min(baseFontSize, calculatedSize);
+    }
+  };
+
   // Simple percentage positioning - same for both preview and print/download
   const convertPercentageToPixels = (percentage: number, containerSize: number) => {
     return (percentage / 100) * containerSize;
@@ -893,7 +912,9 @@ export default function LabelDesigner() {
                       top: `${layout.sizeIndicator.y}%`,
                       minWidth: '96px',
                       minHeight: '96px',
-                      fontSize: '36px'
+                      fontSize: `${calculateSizeFontSize(labelData.sizeIndicator, 96)}px`,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden'
                     }}
                     onMouseDown={(e) => handleMouseDown('sizeIndicator', e)}
                   >
