@@ -1,0 +1,61 @@
+12The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+12The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+12The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+_app-f148da9b65a62184.js:38 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+StockStream?popupId=129ecc4a-6d93-4035-a570-b8d542de88f7:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+StockStream?popupId=129ecc4a-6d93-4035-a570-b8d542de88f7:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+StockStream?popupId=129ecc4a-6d93-4035-a570-b8d542de88f7:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+_app-f148da9b65a62184.js:38 [LaunchDarkly] LaunchDarkly client initialized
+StockStream?popupId=129ecc4a-6d93-4035-a570-b8d542de88f7:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+/@tbnapps/attached_assets/image_1756705591794.png:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+/@tbnapps/attached_assets/image_1756705597120.png:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+/@tbnapps/attached_assets/image_1756706474574.png:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+/@tbnapps/attached_assets/image_1756706520958.png:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+/@tbnapps/attached_assets/image_1756706465736.png:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+framework-d8a897d59d861365.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-d8a897d59d861365.js:1Understand this error
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'battery'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-d8a897d59d861365.js:1Understand this warning
+framework-d8a897d59d861365.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
