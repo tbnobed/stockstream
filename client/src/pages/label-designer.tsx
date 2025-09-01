@@ -590,101 +590,12 @@ export default function LabelDesigner() {
     if (!layout) return;
     
     try {
-      // Create a temporary container with the exact same HTML and CSS as the print version
+      // Create a temporary container that EXACTLY matches the preview
       const tempContainer = document.createElement('div');
       tempContainer.style.position = 'fixed';
       tempContainer.style.left = '-5000px';
       tempContainer.style.top = '-5000px';
-      tempContainer.style.width = '480px'; // 4in at 120 DPI for crisp capture
-      tempContainer.style.height = '240px'; // 2in at 120 DPI for crisp capture
       tempContainer.style.fontFamily = 'Arial, sans-serif';
-      tempContainer.style.overflow = 'visible';
-      
-      // Add print CSS styles
-      const style = document.createElement('style');
-      style.textContent = `
-        .temp-label {
-          width: 480px;
-          height: 240px;
-          position: relative;
-          padding: 0; /* No padding - match preview exactly */
-          box-sizing: border-box;
-          background: white;
-        }
-        .temp-label-content {
-          width: 100%;
-          height: 100%;
-          position: relative;
-        }
-        .temp-product-info {
-          position: absolute;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          max-width: 45%;
-        }
-        .temp-product-name {
-          font-size: 18px; /* Larger product name font */
-          font-weight: bold;
-          margin: 0 0 2px 0;
-          line-height: 1.1;
-        }
-        .temp-product-code {
-          font-size: 12px; /* Larger product code font */
-          margin: 0 0 4px 0;
-          color: #666;
-        }
-        .temp-price {
-          font-size: 24px; /* Larger price font */
-          font-weight: bold;
-          margin: 0;
-        }
-        .temp-qr-code {
-          position: absolute;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .temp-qr-code img {
-          max-width: 120px; /* 1in at 120 DPI - Match generated QR size */
-          max-height: 120px; /* 1in at 120 DPI - Match generated QR size */
-        }
-        .temp-logo {
-          position: absolute;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 144px; /* 1.2in at 120 DPI - Much larger logo */
-          height: 108px; /* 0.9in at 120 DPI - Much larger logo */
-        }
-        .temp-logo img {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain;
-        }
-        .temp-size-indicator {
-          position: absolute;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 36px; /* Larger font for size indicator */
-          font-weight: bold;
-          min-width: 96px; /* 0.8in at 120 DPI - Larger size indicator */
-          min-height: 96px; /* 0.8in at 120 DPI - Larger size indicator */
-        }
-        .temp-message {
-          position: absolute;
-          font-size: 11px; /* Larger message font */
-          text-align: center;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-style: italic;
-          max-width: 80%;
-          white-space: pre-wrap;
-        }
-      `;
-      document.head.appendChild(style);
       
       // Use same dimensions as preview canvas for exact positioning match
       const labelWidth = 480; // Match preview canvas width exactly
@@ -695,26 +606,105 @@ export default function LabelDesigner() {
         return (percentage / 100) * dimension;
       };
       
+      // Create the exact same structure as the preview using inline styles
       tempContainer.innerHTML = `
-        <div class="temp-label">
-          <div class="temp-label-content">
-            <div class="temp-product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}px; top: ${convertPosition(layout.productInfo.y, labelHeight)}px;">
-              <div class="temp-product-name">${labelData.productName}</div>
-              <div class="temp-product-code">${labelData.productCode}</div>
-              ${labelData.showPrice ? `<div class="temp-price">$${labelData.price}</div>` : ''}
-            </div>
-            ${labelData.showQR ? `<div class="temp-qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}px; top: ${convertPosition(layout.qrCode.y, labelHeight)}px;"><img src="${qrCodeUrl}" /></div>` : ''}
-            ${labelData.showLogo && labelData.logoUrl ? `<div class="temp-logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}px; top: ${convertPosition(layout.logo.y, labelHeight)}px;"><img src="${labelData.logoUrl}" /></div>` : ''}
-            ${labelData.showSize ? `<div class="temp-size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;">${labelData.sizeIndicator}</div>` : ''}
-            ${labelData.showMessage ? `<div class="temp-message" style="left: ${convertPosition(layout.message.x, labelWidth)}px; top: ${convertPosition(layout.message.y, labelHeight)}px;">${labelData.customMessage}</div>` : ''}
+        <div style="
+          width: 480px;
+          height: 240px;
+          position: relative;
+          background: white;
+          padding: 0;
+          margin: 0;
+          font-family: Arial, sans-serif;
+        ">
+          <!-- Product Info - exact same styling as preview -->
+          <div style="
+            position: absolute;
+            left: ${convertPosition(layout.productInfo.x, labelWidth)}px;
+            top: ${convertPosition(layout.productInfo.y, labelHeight)}px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            max-width: 45%;
+            padding: 8px;
+          ">
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1;">${labelData.productName}</div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${labelData.productCode}</div>
+            ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
           </div>
+          
+          <!-- QR Code - exact same styling as preview -->
+          ${labelData.showQR ? `
+          <div style="
+            position: absolute;
+            left: ${convertPosition(layout.qrCode.x, labelWidth)}px;
+            top: ${convertPosition(layout.qrCode.y, labelHeight)}px;
+            padding: 4px;
+          ">
+            <img src="${qrCodeUrl}" style="width: 120px; height: 120px;" />
+          </div>
+          ` : ''}
+          
+          <!-- Logo - exact same styling as preview -->
+          ${labelData.showLogo && labelData.logoUrl ? `
+          <div style="
+            position: absolute;
+            left: ${convertPosition(layout.logo.x, labelWidth)}px;
+            top: ${convertPosition(layout.logo.y, labelHeight)}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 144px;
+            height: 108px;
+            padding: 4px;
+          ">
+            <img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+          </div>
+          ` : ''}
+          
+          <!-- Size Indicator - exact same styling as preview -->
+          ${labelData.showSize ? `
+          <div style="
+            position: absolute;
+            left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px;
+            top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            min-width: 96px;
+            min-height: 96px;
+            font-size: ${calculateSizeFontSize(labelData.sizeIndicator, 96)}px;
+            white-space: nowrap;
+            overflow: hidden;
+            padding: 8px;
+          ">${labelData.sizeIndicator}</div>
+          ` : ''}
+          
+          <!-- Message - exact same styling as preview -->
+          ${labelData.showMessage ? `
+          <div style="
+            position: absolute;
+            left: ${convertPosition(layout.message.x, labelWidth)}px;
+            top: ${convertPosition(layout.message.y, labelHeight)}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            max-width: 80%;
+            white-space: pre-wrap;
+            font-size: 11px;
+            font-style: italic;
+            padding: 8px;
+          ">${labelData.customMessage}</div>
+          ` : ''}
         </div>
       `;
       
       document.body.appendChild(tempContainer);
       
       // Wait for images to load
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Capture the label as canvas with exact same dimensions as preview
       const canvas = await html2canvas(tempContainer.firstElementChild as HTMLElement, {
@@ -729,7 +719,6 @@ export default function LabelDesigner() {
 
       // Clean up
       document.body.removeChild(tempContainer);
-      document.head.removeChild(style);
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
@@ -746,7 +735,7 @@ export default function LabelDesigner() {
 
         toast({
           title: "Label Downloaded",
-          description: "Label image saved to your downloads (print-ready format)",
+          description: "Label image saved to your downloads (matches preview exactly)",
           duration: 2000,
         });
       }, 'image/png');
