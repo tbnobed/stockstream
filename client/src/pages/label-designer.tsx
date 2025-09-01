@@ -628,7 +628,7 @@ export default function LabelDesigner() {
             max-width: 45%;
             padding: 8px;
           ">
-            <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1;">${labelData.productName}</div>
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap; overflow: hidden;">${labelData.productName}</div>
             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${labelData.productCode}</div>
             ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
           </div>
@@ -849,7 +849,7 @@ export default function LabelDesigner() {
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px', lineHeight: '1.1' }}>{labelData.productName}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px', lineHeight: '1.1', whiteSpace: 'nowrap', overflow: 'hidden' }}>{labelData.productName}</div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>{labelData.productCode}</div>
                   {labelData.showPrice && (
                     <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '0' }}>${labelData.price}</div>
