@@ -914,7 +914,23 @@ export default function LabelDesigner() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="size-indicator">Size Indicator</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="size-indicator">Size Indicator</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        // Save current state to localStorage and navigate
+                        localStorage.setItem("category-selected-type", "size");
+                        window.location.href = "/category-management";
+                      }}
+                      data-testid="button-manage-sizes"
+                    >
+                      <Settings className="h-3 w-3 mr-1" />
+                      Manage Sizes
+                    </Button>
+                  </div>
                   <Select 
                     value={labelData.sizeIndicator || "none"} 
                     onValueChange={(value) => updateLabelData('sizeIndicator', value === "none" ? "" : value)}
