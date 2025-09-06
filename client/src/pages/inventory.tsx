@@ -544,7 +544,7 @@ export default function Inventory() {
                     const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
                     
                     return (
-                      <Card key={item.id} className="p-4 border-border bg-card min-h-[180px]">
+                      <Card key={item.id} className="p-4 border-border bg-card min-h-[180px] hover:bg-blue-50/20 dark:hover:bg-blue-950/10 transition-colors duration-150">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
                             <h4 className="font-semibold text-secondary text-base leading-tight" data-testid={`item-name-${item.id}`}>
@@ -704,7 +704,7 @@ export default function Inventory() {
                       const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
                       
                       return (
-                        <tr key={item.id} className="border-b border-border/50">
+                        <tr key={item.id} className="border-b border-border/50 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 transition-colors duration-150">
                           <td className="py-3">
                             <span className="font-mono text-sm text-secondary" data-testid={`item-sku-${item.id}`}>
                               {item.sku}

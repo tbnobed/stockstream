@@ -465,7 +465,7 @@ export default function Sales() {
                 {/* Mobile Card Layout */}
                 <div className="block md:hidden space-y-4">
                   {paginatedSales.map((sale: any) => (
-                    <Card key={sale.id} className="p-4 border-border">
+                    <Card key={sale.id} className="p-4 border-border hover:bg-blue-50/20 dark:hover:bg-blue-950/10 transition-colors duration-150">
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h4 className="font-semibold text-secondary" data-testid={`sale-order-${sale.id}`}>
@@ -554,7 +554,7 @@ export default function Sales() {
                   </thead>
                   <tbody>
                     {paginatedSales.map((sale: any) => (
-                      <tr key={sale.id} className="border-b border-border/50">
+                      <tr key={sale.id} className="border-b border-border/50 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 transition-colors duration-150">
                         <td className="py-3">
                           <span className="font-mono text-sm text-secondary" data-testid={`sale-order-${sale.id}`}>
                             #{sale.orderNumber}

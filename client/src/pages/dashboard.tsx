@@ -377,7 +377,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {lowStockItems.slice(0, 3).map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/30 rounded-xl border border-red-200/30 dark:border-red-800/30 hover:bg-gradient-to-r hover:from-blue-100/40 hover:to-blue-200/30 hover:shadow-sm transition-all duration-200">
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/30 rounded-xl border border-red-200/30 dark:border-red-800/30">
                       <div>
                         <p className="text-sm font-medium text-secondary">{item.name}</p>
                         <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
@@ -392,7 +392,7 @@ export default function Dashboard() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-blue-600 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-blue-600/10 hover:text-blue-700 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
+                      className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
                       onClick={() => navigate('/inventory?status=low-stock')}
                       data-testid="view-all-low-stock"
                     >
