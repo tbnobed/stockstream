@@ -67,14 +67,14 @@ export default function Dashboard() {
         onAddInventory={() => setShowAddInventoryModal(true)}
       />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gradient-to-br from-background via-background to-muted/20">
         {/* Stats Cards */}
         <div className={cn(
           "grid gap-4 md:gap-6 mb-6 md:mb-8",
           isAdmin ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
         )}>
           {isAdmin && (
-            <Card className="p-4 md:p-6 border-border">
+            <Card className="p-4 md:p-6 border-border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-gray-50/50 dark:from-card dark:to-muted/10">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Revenue</p>
@@ -86,7 +86,7 @@ export default function Dashboard() {
                     +12.5% from last month
                   </p>
                 </div>
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-accent/20 to-accent/10 rounded-xl flex items-center justify-center shadow-sm">
                   <DollarSign className="text-accent" size={20} />
                 </div>
               </div>
@@ -94,7 +94,7 @@ export default function Dashboard() {
           )}
 
           {isAdmin && (
-            <Card className="p-4 md:p-6 border-border">
+            <Card className="p-4 md:p-6 border-border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-emerald-50/30 dark:from-card dark:to-emerald-500/5">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Profit</p>
@@ -106,14 +106,14 @@ export default function Dashboard() {
                     Real profit from sales
                   </p>
                 </div>
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-green-600/10 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-xl flex items-center justify-center shadow-sm">
                   <TrendingUp className="text-green-600" size={20} />
                 </div>
               </div>
             </Card>
           )}
 
-          <Card className="p-4 md:p-6 border-border">
+          <Card className="p-4 md:p-6 border-border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30 dark:from-card dark:to-primary/5">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Items</p>
@@ -125,13 +125,13 @@ export default function Dashboard() {
                   +8 new items added
                 </p>
               </div>
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center shadow-sm">
                 <Package className="text-primary" size={20} />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 md:p-6 border-border">
+          <Card className="p-4 md:p-6 border-border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30 dark:from-card dark:to-orange-500/5">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-xs md:text-sm font-medium text-muted-foreground">Sales Today</p>
@@ -143,13 +143,13 @@ export default function Dashboard() {
                   +15% vs yesterday
                 </p>
               </div>
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-400/20 to-orange-500/10 rounded-xl flex items-center justify-center shadow-sm">
                 <ShoppingCart className="text-warning" size={20} />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-border">
+          <Card className="p-6 border-border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-red-50/30 dark:from-card dark:to-destructive/5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Low Stock Items</p>
@@ -161,7 +161,7 @@ export default function Dashboard() {
                   Requires attention
                 </p>
               </div>
-              <div className="w-12 h-12 bg-error/10 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-600/10 rounded-xl flex items-center justify-center shadow-sm">
                 <AlertTriangle className="text-error" size={24} />
               </div>
             </div>
@@ -171,11 +171,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Sales */}
           <div className="lg:col-span-2">
-            <Card className="border-border">
-              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border">
+            <Card className="border-border shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-gray-50/30 dark:from-card dark:to-muted/5">
+              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border/50 bg-gradient-to-r from-background to-muted/20">
                 <div className="flex justify-between items-center">
                   <h3 className="text-base md:text-lg font-semibold text-secondary">Recent Sales</h3>
-                  <Button variant="ghost" size="sm" className="text-primary text-xs md:text-sm h-8">
+                  <Button variant="ghost" size="sm" className="text-primary text-xs md:text-sm h-8 hover:bg-primary/10 transition-colors">
                     View all
                   </Button>
                 </div>
@@ -205,7 +205,7 @@ export default function Dashboard() {
                         </thead>
                         <tbody>
                           {recentSales.map((sale: any) => (
-                            <tr key={sale.id} className="border-b border-border/50">
+                            <tr key={sale.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors duration-200">
                               <td className="py-3">
                                 <span className="font-mono text-sm text-secondary" data-testid={`sale-id-${sale.id}`}>
                                   #{sale.orderNumber}
@@ -249,7 +249,7 @@ export default function Dashboard() {
                     {/* Mobile Card View */}
                     <div className="md:hidden space-y-3">
                       {recentSales.map((sale: any) => (
-                        <div key={sale.id} className="bg-muted/20 rounded-lg p-3 border border-border/50">
+                        <div key={sale.id} className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl p-3 border border-border/30 shadow-sm hover:shadow-md transition-all duration-200">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                               <h4 className="font-semibold text-secondary text-sm" data-testid={`sale-id-${sale.id}`}>
@@ -299,12 +299,12 @@ export default function Dashboard() {
           {/* Quick Actions & Low Stock Alert */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <Card className="p-6 border-border">
-              <h3 className="text-lg font-semibold text-secondary mb-4">Quick Actions</h3>
+            <Card className="p-6 border-border shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30 dark:from-card dark:to-primary/5">
+              <h3 className="text-lg font-semibold text-secondary mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Quick Actions</h3>
               <div className="space-y-3">
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-muted"
+                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-primary/20 rounded-lg"
                   onClick={() => setShowNewSaleModal(true)}
                   data-testid="quick-action-sale"
                 >
@@ -317,7 +317,7 @@ export default function Dashboard() {
                 
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-muted"
+                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-orange-500/5 hover:to-orange-400/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-orange-400/20 rounded-lg"
                   onClick={() => navigate('/labels')}
                   data-testid="quick-action-print"
                 >
@@ -330,7 +330,7 @@ export default function Dashboard() {
                 
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-muted"
+                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-green-500/5 hover:to-green-400/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-green-400/20 rounded-lg"
                   onClick={() => setShowInventoryCheckModal(true)}
                   data-testid="quick-action-inventory"
                 >
@@ -343,7 +343,7 @@ export default function Dashboard() {
                 
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-muted"
+                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-purple-500/5 hover:to-purple-400/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-purple-400/20 rounded-lg"
                   onClick={() => setShowReportsModal(true)}
                   data-testid="quick-action-report"
                 >
@@ -357,10 +357,10 @@ export default function Dashboard() {
             </Card>
 
             {/* Low Stock Alert */}
-            <Card className="p-6 border-border">
+            <Card className="p-6 border-border shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-red-50/30 dark:from-card dark:to-destructive/5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-secondary">Low Stock Alert</h3>
-                <span className="px-2 py-1 bg-error/10 text-error text-xs rounded-full">
+                <h3 className="text-lg font-semibold text-secondary bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">Low Stock Alert</h3>
+                <span className="px-2 py-1 bg-gradient-to-r from-red-500/10 to-red-600/20 text-error text-xs rounded-full border border-red-500/20 shadow-sm">
                   {stats?.lowStockCount || 0} items
                 </span>
               </div>
@@ -371,7 +371,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {lowStockItems.slice(0, 3).map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-error/5 rounded-lg">
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/30 rounded-xl border border-red-200/30 dark:border-red-800/30 hover:shadow-sm transition-all duration-200">
                       <div>
                         <p className="text-sm font-medium text-secondary">{item.name}</p>
                         <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
