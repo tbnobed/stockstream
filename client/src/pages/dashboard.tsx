@@ -310,7 +310,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-primary/20 rounded-lg"
+                  className="w-full justify-between p-3 h-auto hover:bg-blue-100 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
                   onClick={() => setShowNewSaleModal(true)}
                   data-testid="quick-action-sale"
                 >
