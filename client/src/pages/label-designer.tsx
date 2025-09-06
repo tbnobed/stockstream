@@ -501,7 +501,7 @@ export default function LabelDesigner() {
             top: ${convertPosition(layout.qrCode.y, labelHeight)}px;
             padding: 4px;
           ">
-            <img src="${qrCodeUrl}" style="width: 120px; height: 120px;" />
+            <img src="${qrCodeUrl}" style="width: 159px; height: 159px;" />
           </div>` : ''}
           
           ${labelData.showLogo && labelData.logoUrl ? `
@@ -510,8 +510,8 @@ export default function LabelDesigner() {
             position: absolute;
             left: ${convertPosition(layout.logo.x, labelWidth)}px;
             top: ${convertPosition(layout.logo.y, labelHeight)}px;
-            width: 144px;
-            height: 108px;
+            width: 191px;
+            height: 143px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -546,7 +546,7 @@ export default function LabelDesigner() {
             top: ${convertPosition(layout.message.y, labelHeight)}px;
             max-width: 80%;
             white-space: pre-wrap;
-            font-size: 11px;
+            font-size: 17px;
             font-style: italic;
             text-align: center;
           ">${labelData.customMessage}</div>` : ''}
@@ -719,7 +719,7 @@ export default function LabelDesigner() {
                     }}
                     onMouseDown={(e) => handleMouseDown('qrCode', e)}
                   >
-                    <img src={qrCodeUrl} className="w-30 h-30" style={{ width: '120px', height: '120px' }} />
+                    <img src={qrCodeUrl} className="w-30 h-30" style={{ width: '159px', height: '159px' }} />
                   </div>
                 )}
 
@@ -732,8 +732,8 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.logo.x}%`,
                       top: `${layout.logo.y}%`,
-                      width: '144px',
-                      height: '108px',
+                      width: '191px',
+                      height: '143px',
                       padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('logo', e)}
@@ -777,7 +777,7 @@ export default function LabelDesigner() {
                       top: `${layout.message.y}%`,
                       maxWidth: '80%',
                       whiteSpace: 'pre-wrap',
-                      fontSize: '11px',
+                      fontSize: '17px',
                       fontStyle: 'italic'
                     }}
                     onMouseDown={(e) => handleMouseDown('message', e)}
