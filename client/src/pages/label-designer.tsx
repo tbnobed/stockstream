@@ -80,6 +80,7 @@ const defaultLabelData: LabelData = {
 
 export default function LabelDesigner() {
   const [labelData, setLabelData] = useState<LabelData>(defaultLabelData);
+  const [logoAspectRatio, setLogoAspectRatio] = useState(1); // width/height ratio
   
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -534,8 +535,8 @@ export default function LabelDesigner() {
             position: absolute;
             left: ${convertPosition(layout.logo.x, labelWidth)}px;
             top: ${convertPosition(layout.logo.y, labelHeight)}px;
-            width: ${180 * (labelData.logoScale / 100)}px;
-            height: ${180 * (labelData.logoScale / 100)}px;
+            width: ${getLogoDimensions(labelData.logoScale).width}px;
+            height: ${getLogoDimensions(labelData.logoScale).height}px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -657,6 +658,44 @@ export default function LabelDesigner() {
     }
   }, [labelData.qrContent]);
 
+  // Calculate logo aspect ratio when logo URL changes
+  useEffect(() => {
+    if (labelData.logoUrl) {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        const aspectRatio = img.naturalWidth / img.naturalHeight
+        setLogoAspectRatio(aspectRatio)
+      }
+      img.onerror = () => {
+        setLogoAspectRatio(1) // Default to square if image fails to load
+      }
+      img.src = labelData.logoUrl
+    } else {
+      setLogoAspectRatio(1)
+    }
+  }, [labelData.logoUrl])
+
+  // Calculate logo dimensions based on aspect ratio
+  const getLogoDimensions = (scale: number) => {
+    const baseSize = 180 // Base size in pixels
+    const scaledSize = baseSize * (scale / 100)
+    
+    if (logoAspectRatio >= 1) {
+      // Wider or square logo
+      return {
+        width: scaledSize,
+        height: scaledSize / logoAspectRatio
+      }
+    } else {
+      // Taller logo
+      return {
+        width: scaledSize * logoAspectRatio,
+        height: scaledSize
+      }
+    }
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-6">
@@ -771,8 +810,8 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.logo.x}%`,
                       top: `${layout.logo.y}%`,
-                      width: `${180 * (labelData.logoScale / 100)}px`,
-                      height: `${180 * (labelData.logoScale / 100)}px`,
+                      width: `${getLogoDimensions(labelData.logoScale).width}px`,
+                      height: `${getLogoDimensions(labelData.logoScale).height}px`,
                       padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('logo', e)}
