@@ -33,7 +33,7 @@ export default function Inventory() {
   const [showArchivedItems, setShowArchivedItems] = useState(false);
   
   // Filter states
-  const [selectedType, setSelectedType] = useState<string>("all-types");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all-categories");
   const [selectedColor, setSelectedColor] = useState<string>("all-colors");
   const [selectedSize, setSelectedSize] = useState<string>("all-sizes");
   const [selectedDesign, setSelectedDesign] = useState<string>("all-designs");
@@ -51,7 +51,7 @@ export default function Inventory() {
   });
 
   // Fetch dynamic categories
-  const { data: types } = useQuery({ queryKey: ["/api/categories/type"] });
+  const { data: categories } = useQuery({ queryKey: ["/api/categories/category"] });
   const { data: colors } = useQuery({ queryKey: ["/api/categories/color"] });
   const { data: sizes } = useQuery({ queryKey: ["/api/categories/size"] });
   const { data: designs } = useQuery({ queryKey: ["/api/categories/design"] });
@@ -97,7 +97,7 @@ export default function Inventory() {
   });
 
   const clearAllFilters = () => {
-    setSelectedType("all-types");
+    setSelectedCategory("all-categories");
     setSelectedColor("all-colors");
     setSelectedSize("all-sizes");
     setSelectedDesign("all-designs");
@@ -110,20 +110,20 @@ export default function Inventory() {
   const filteredItems = (inventoryItems as any[] || []).filter((item: any) => {
     const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.category || item.type)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.design?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = !selectedType || selectedType === "all-types" || item.type === selectedType;
+    const matchesCategory = !selectedCategory || selectedCategory === "all-categories" || (item.category || item.type) === selectedCategory;
     const matchesColor = !selectedColor || selectedColor === "all-colors" || item.color === selectedColor;
     const matchesSize = !selectedSize || selectedSize === "all-sizes" || item.size === selectedSize;
     const matchesDesign = !selectedDesign || selectedDesign === "all-designs" || item.design === selectedDesign;
     const matchesGroupType = !selectedGroupType || selectedGroupType === "all-groups" || item.groupType === selectedGroupType;
     const matchesStyleGroup = !selectedStyleGroup || selectedStyleGroup === "all-styles" || item.styleGroup === selectedStyleGroup;
     
-    return matchesSearch && matchesType && matchesColor && matchesSize && 
+    return matchesSearch && matchesCategory && matchesColor && matchesSize && 
            matchesDesign && matchesGroupType && matchesStyleGroup;
   });
 
@@ -287,15 +287,15 @@ export default function Inventory() {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Type</label>
-                  <Select value={selectedType} onValueChange={(value) => handleFilterChange(setSelectedType, value)}>
-                    <SelectTrigger className="h-8 text-xs" data-testid="filter-type">
-                      <SelectValue placeholder="All types" />
+                  <label className="text-xs font-medium text-muted-foreground">Categories</label>
+                  <Select value={selectedCategory} onValueChange={(value) => handleFilterChange(setSelectedCategory, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-category">
+                      <SelectValue placeholder="All categories" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all-types">All types</SelectItem>
-                      {(types as any[] || []).map((type: any) => (
-                        <SelectItem key={type.id} value={type.value}>{type.value}</SelectItem>
+                      <SelectItem value="all-categories">All categories</SelectItem>
+                      {(categories as any[] || []).map((category: any) => (
+                        <SelectItem key={category.id} value={category.value}>{category.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -378,7 +378,7 @@ export default function Inventory() {
               </div>
 
               {/* Active Filters Display */}
-              {(selectedType && selectedType !== "all-types" || 
+              {(selectedCategory && selectedCategory !== "all-categories" || 
                 selectedColor && selectedColor !== "all-colors" || 
                 selectedSize && selectedSize !== "all-sizes" || 
                 selectedDesign && selectedDesign !== "all-designs" || 
@@ -387,13 +387,13 @@ export default function Inventory() {
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex flex-wrap gap-2">
                     <span className="text-xs text-muted-foreground">Active filters:</span>
-                    {selectedType && selectedType !== "all-types" && (
+                    {selectedCategory && selectedCategory !== "all-categories" && (
                       <Badge variant="secondary" className="text-xs">
-                        Type: {selectedType}
+                        Category: {selectedCategory}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
-                          onClick={() => setSelectedType("all-types")} 
+                          onClick={() => setSelectedCategory("all-categories")} 
                         />
                       </Badge>
                     )}
@@ -528,8 +528,8 @@ export default function Inventory() {
                             <p className="font-semibold">{item.quantity}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-muted-foreground text-xs">Type</p>
-                            <p className="font-semibold capitalize truncate">{item.type}</p>
+                            <p className="text-muted-foreground text-xs">Category</p>
+                            <p className="font-semibold capitalize truncate">{item.category || item.type}</p>
                           </div>
                         </div>
                         
@@ -635,7 +635,7 @@ export default function Inventory() {
                       <tr className="text-left text-sm font-medium text-muted-foreground">
                         <th className="pb-3">SKU</th>
                         <th className="pb-3">Item</th>
-                        <th className="pb-3">Type</th>
+                        <th className="pb-3">Category</th>
                         <th className="pb-3">Size</th>
                         <th className="pb-3">Color</th>
                         <th className="pb-3">Price</th>
@@ -666,7 +666,7 @@ export default function Inventory() {
                             </div>
                           </td>
                           <td className="py-3">
-                            <span className="text-sm text-secondary capitalize">{item.type}</span>
+                            <span className="text-sm text-secondary capitalize">{item.category || item.type}</span>
                           </td>
                           <td className="py-3">
                             <span className="text-sm text-secondary">{item.size || "N/A"}</span>
