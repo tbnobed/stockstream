@@ -106,6 +106,24 @@ export default function LabelDesigner() {
   // Track template loading state to prevent auto-save until template is fully loaded
   const [templateLoaded, setTemplateLoaded] = useState(false);
 
+  // Helper function to parse product name and extract size
+  const parseProductName = (productName: string) => {
+    // Check if the product name ends with size in parentheses like "(XXL)"
+    const sizeMatch = productName.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+    if (sizeMatch) {
+      return {
+        mainName: sizeMatch[1].trim(),
+        sizePart: sizeMatch[2].trim(),
+        hasSize: true
+      };
+    }
+    return {
+      mainName: productName,
+      sizePart: '',
+      hasSize: false
+    };
+  };
+
   // Helper function for dynamic size calculation
   const calculateSizeFontSize = (text: string, containerWidth: number = 96) => {
     // Return default size for empty text
@@ -434,13 +452,31 @@ export default function LabelDesigner() {
             justify-content: flex-start;
             padding: 8px;
           ">
-            <div style="
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 2px;
-              line-height: 1.1;
-              white-space: nowrap;
-            ">${labelData.productName}</div>
+            ${(() => {
+              const parsedName = parseProductName(labelData.productName);
+              if (parsedName.hasSize) {
+                return `<div style="
+                  font-size: 20px;
+                  font-weight: bold;
+                  margin-bottom: 2px;
+                  line-height: 1.1;
+                ">${parsedName.mainName}</div>
+                <div style="
+                  font-size: 18px;
+                  font-weight: bold;
+                  color: #555;
+                  margin-bottom: 2px;
+                  line-height: 1.1;
+                ">(${parsedName.sizePart})</div>`;
+              } else {
+                return `<div style="
+                  font-size: 20px;
+                  font-weight: bold;
+                  margin-bottom: 2px;
+                  line-height: 1.1;
+                ">${labelData.productName}</div>`;
+              }
+            })()}
             <div style="
               font-size: 12px;
               color: #666;
@@ -635,9 +671,27 @@ export default function LabelDesigner() {
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
-                  <div className="text-lg font-bold leading-tight whitespace-nowrap">
-                    {labelData.productName}
-                  </div>
+                  {(() => {
+                    const parsedName = parseProductName(labelData.productName);
+                    if (parsedName.hasSize) {
+                      return (
+                        <>
+                          <div className="text-xl font-bold leading-tight">
+                            {parsedName.mainName}
+                          </div>
+                          <div className="text-lg font-bold text-gray-700 leading-tight">
+                            ({parsedName.sizePart})
+                          </div>
+                        </>
+                      );
+                    } else {
+                      return (
+                        <div className="text-xl font-bold leading-tight">
+                          {labelData.productName}
+                        </div>
+                      );
+                    }
+                  })()}
                   <div className="text-xs text-gray-600 mt-1">
                     {labelData.productCode}
                   </div>
