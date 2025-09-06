@@ -180,7 +180,10 @@ export default function Dashboard() {
                   </Button>
                 </div>
               </div>
-              <div className="p-4 md:p-6">
+              <div className={cn(
+                "p-4 md:p-6",
+                (recentSales?.length ?? 0) > 15 && "max-h-[800px] overflow-y-auto"
+              )}>
                 {salesLoading ? (
                   <div className="text-center py-8 text-muted-foreground">Loading sales...</div>
                 ) : !recentSales?.length ? (
@@ -201,7 +204,7 @@ export default function Dashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {recentSales.slice(0, 5).map((sale: any) => (
+                          {recentSales.map((sale: any) => (
                             <tr key={sale.id} className="border-b border-border/50">
                               <td className="py-3">
                                 <span className="font-mono text-sm text-secondary" data-testid={`sale-id-${sale.id}`}>
@@ -245,7 +248,7 @@ export default function Dashboard() {
                     
                     {/* Mobile Card View */}
                     <div className="md:hidden space-y-3">
-                      {recentSales.slice(0, 5).map((sale: any) => (
+                      {recentSales.map((sale: any) => (
                         <div key={sale.id} className="bg-muted/20 rounded-lg p-3 border border-border/50">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
