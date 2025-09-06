@@ -175,7 +175,13 @@ export default function Dashboard() {
               <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border/50 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
                 <div className="flex justify-between items-center">
                   <h3 className="text-base md:text-lg font-semibold text-secondary">Recent Sales</h3>
-                  <Button variant="ghost" size="sm" className="text-primary text-xs md:text-sm h-8 hover:bg-primary/10 transition-colors">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-primary text-xs md:text-sm h-8 hover:bg-primary/10 transition-colors"
+                    onClick={() => navigate('/sales')}
+                    data-testid="button-view-all-sales"
+                  >
                     View all
                   </Button>
                 </div>
@@ -387,6 +393,7 @@ export default function Dashboard() {
                       variant="ghost"
                       size="sm"
                       className="w-full text-primary hover:text-primary/80"
+                      onClick={() => navigate('/inventory')}
                       data-testid="view-all-low-stock"
                     >
                       View all low stock items
