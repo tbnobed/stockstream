@@ -521,6 +521,9 @@ export default function LabelDesigner() {
             width: ${159 * (labelData.qrCodeScale / 100)}px;
             height: ${159 * (labelData.qrCodeScale / 100)}px;
             padding: 4px;
+            border: 2px solid transparent;
+            border-radius: 0.25rem;
+            box-sizing: border-box;
           ">
             <img src="${qrCodeUrl}" style="width: 100%; height: 100%; object-fit: contain;" alt="QR Code" />
           </div>` : ''}
@@ -537,6 +540,9 @@ export default function LabelDesigner() {
             align-items: center;
             justify-content: center;
             padding: 4px;
+            border: 2px solid transparent;
+            border-radius: 0.25rem;
+            box-sizing: border-box;
           ">
             <img src="${labelData.logoUrl}" style="width: 100%; height: 100%; object-fit: contain;" alt="Logo" />
           </div>` : ''}
