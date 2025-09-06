@@ -534,8 +534,8 @@ export default function LabelDesigner() {
             position: absolute;
             left: ${convertPosition(layout.logo.x, labelWidth)}px;
             top: ${convertPosition(layout.logo.y, labelHeight)}px;
-            width: ${191 * (labelData.logoScale / 100)}px;
-            height: ${143 * (labelData.logoScale / 100)}px;
+            width: ${180 * (labelData.logoScale / 100)}px;
+            height: ${180 * (labelData.logoScale / 100)}px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -771,8 +771,8 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.logo.x}%`,
                       top: `${layout.logo.y}%`,
-                      width: `${191 * (labelData.logoScale / 100)}px`,
-                      height: `${143 * (labelData.logoScale / 100)}px`,
+                      width: `${180 * (labelData.logoScale / 100)}px`,
+                      height: `${180 * (labelData.logoScale / 100)}px`,
                       padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('logo', e)}
