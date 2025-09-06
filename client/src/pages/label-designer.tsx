@@ -637,9 +637,9 @@ export default function LabelDesigner() {
         <p className="text-muted-foreground">Design and print custom product labels</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Preview Panel */}
-        <Card>
+        <Card className="xl:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
@@ -806,7 +806,7 @@ export default function LabelDesigner() {
         </Card>
 
         {/* Customization Panel */}
-        <Card>
+        <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
