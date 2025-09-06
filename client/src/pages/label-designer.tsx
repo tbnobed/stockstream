@@ -490,8 +490,6 @@ export default function LabelDesigner() {
             white-space: nowrap;
             overflow: hidden;
             padding: 8px;
-            border: 2px solid #333;
-            border-radius: 50%;
             font-size: ${calculateSizeFontSize(labelData.sizeIndicator, 96)}px;
           ">${labelData.sizeIndicator}</div>` : ''}
           
@@ -688,7 +686,7 @@ export default function LabelDesigner() {
                 {/* Size Indicator */}
                 {labelData.showSize && (
                   <div 
-                    className={`absolute cursor-move rounded-full border-2 transition-all flex items-center justify-center font-bold whitespace-nowrap overflow-hidden ${
+                    className={`absolute cursor-move border-2 transition-all flex items-center justify-center font-bold whitespace-nowrap overflow-hidden ${
                       isDragging === 'sizeIndicator' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
@@ -697,7 +695,6 @@ export default function LabelDesigner() {
                       minWidth: '96px',
                       minHeight: '96px',
                       padding: '8px',
-                      border: '2px solid #333',
                       fontSize: `${calculateSizeFontSize(labelData.sizeIndicator, 96)}px`
                     }}
                     onMouseDown={(e) => handleMouseDown('sizeIndicator', e)}
