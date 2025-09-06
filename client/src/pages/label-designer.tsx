@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
-import { Printer, Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown, Trash2, Plus } from "lucide-react";
+import { Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown, Trash2, Plus } from "lucide-react";
 import html2canvas from "html2canvas";
 import { cn } from "@/lib/utils";
 import { ObjectUploader } from "@/components/ObjectUploader";
@@ -70,15 +70,6 @@ export default function LabelDesigner() {
   
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [labelCount, setLabelCount] = useState(() => {
-    try {
-      const saved = localStorage.getItem('labelDesignerCount');
-      return saved ? parseInt(saved) : 10;
-    } catch (error) {
-      console.warn('Failed to load saved label count:', error);
-      return 10;
-    }
-  });
   const [showInventoryDropdown, setShowInventoryDropdown] = useState(false);
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -112,120 +103,109 @@ export default function LabelDesigner() {
     },
   });
 
-  // Load saved layout or use defaults with error handling
-  // Balanced layout allowing right-side placement while preventing overlaps
-  const defaultLayout: LabelLayout = {
-    productInfo: { x: 3, y: 5 },      // Top-left, small text block
-    qrCode: { x: 60, y: 5 },          // Top-right, properly positioned
-    logo: { x: 5, y: 45 },            // Mid-left area
-    sizeIndicator: { x: 75, y: 60 },  // Bottom-right corner
-    message: { x: 8, y: 75 }          // Bottom area, custom message
-  };
+  // Track template loading state to prevent auto-save until template is fully loaded
+  const [templateLoaded, setTemplateLoaded] = useState(false);
 
-  const [layout, setLayout] = useState<LabelLayout | null>(null);
-
-  // Calculate optimal font size for size indicator to fit in one line
+  // Helper function for dynamic size calculation
   const calculateSizeFontSize = (text: string, containerWidth: number = 96) => {
     // Base font size for single characters
-    const baseFontSize = 36;
+    const baseFontSize = 48;
     
-    // Adjust font size based on text length
-    if (text.length <= 2) {
-      return baseFontSize; // Full size for short text like "M", "XL"
-    } else if (text.length <= 4) {
-      return Math.max(28, baseFontSize - (text.length - 2) * 4); // Reduce for "XXXL", "OSFA"
+    // Scale down based on text length
+    if (text.length === 1) {
+      return baseFontSize;
+    } else if (text.length === 2) {
+      return baseFontSize * 0.8;
+    } else if (text.length === 3) {
+      return baseFontSize * 0.6;
     } else {
-      // For longer text, calculate based on container width
-      const targetWidth = containerWidth - 16; // Account for padding
-      const approxCharWidth = baseFontSize * 0.6; // Rough character width ratio
-      const calculatedSize = Math.max(16, targetWidth / (text.length * 0.6));
-      return Math.min(baseFontSize, calculatedSize);
+      // For longer text, scale based on container width
+      return Math.max(20, containerWidth / (text.length * 0.6));
     }
   };
 
-  // Simple percentage positioning - same for both preview and print/download
+  // Helper function to convert percentage to pixels
   const convertPercentageToPixels = (percentage: number, containerSize: number) => {
     return (percentage / 100) * containerSize;
   };
 
-  // Fetch inventory items
+  // Default layout positions (as percentages of container dimensions)
+  const defaultLayout: LabelLayout = {
+    productInfo: { x: 2, y: 8 },
+    qrCode: { x: 72, y: 2 },
+    logo: { x: 38, y: 30 },
+    sizeIndicator: { x: 75, y: 55 },
+    message: { x: 5, y: 70 }
+  };
+
+  const [layout, setLayout] = useState<LabelLayout>(defaultLayout);
+
+  // Initialize queries
   const { data: inventoryItems } = useQuery({
-    queryKey: ["/api/inventory"],
+    queryKey: ['/api/inventory'],
   });
 
-  // Fetch media files
+  const { data: mediaFiles, refetch: refetchMedia } = useQuery({
+    queryKey: ['/api/media'],
+  });
+
   const queryClient = useQueryClient();
-  const { data: mediaFiles } = useQuery<MediaFile[]>({
-    queryKey: ["/api/media"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/media?category=logo");
-      return response.json();
-    },
-  });
 
-  // Upload media file mutation
+  // Media upload mutation
   const uploadMediaMutation = useMutation({
-    mutationFn: async (data: { fileName: string; originalName: string; fileType: string; fileSize: number; uploadURL: string }) => {
-      const response = await apiRequest("POST", "/api/media", data);
-      return response.json();
+    mutationFn: async (mediaData: any) => {
+      return apiRequest('POST', '/api/media', mediaData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      refetchMedia();
       toast({
-        title: "Success",
-        description: "Logo uploaded successfully!",
+        title: "Logo uploaded successfully",
+        description: "Your logo is now available in the media library",
       });
     },
     onError: (error) => {
+      console.error('Error uploading media:', error);
       toast({
-        title: "Error",
-        description: "Failed to upload logo",
+        title: "Upload failed",
+        description: "There was an error uploading your logo",
         variant: "destructive",
       });
     },
   });
 
-  // Delete media file mutation
+  // Delete media mutation
   const deleteMediaMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest("DELETE", `/api/media/${id}`);
-      return response.json();
+      return apiRequest('DELETE', `/api/media/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/media"] });
+      refetchMedia();
       toast({
-        title: "Success", 
-        description: "Logo deleted successfully!",
+        title: "Logo deleted",
+        description: "Logo removed from media library",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error deleting media:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete logo",
+        title: "Delete failed",
+        description: "There was an error deleting the logo",
         variant: "destructive",
       });
     },
   });
 
-  // Generate QR code when content changes
-  useEffect(() => {
-    if (labelData.showQR && labelData.qrContent) {
-      generateQRCode();
-    }
-  }, [labelData.qrContent, labelData.showQR]);
-
-  // Track if template has been loaded to prevent auto-save conflicts
-  const [templateLoaded, setTemplateLoaded] = useState(false);
-
-  // Load default template data when available
+  // Load template data when available
   useEffect(() => {
     if (defaultTemplate && !templateLoaded) {
+      console.log('🔧 PRODUCTION DEBUG: Showing loading state - layout:', !!layout, 'templateLoading:', templateLoading);
       console.log('🔧 PRODUCTION DEBUG: Loading saved label data:', defaultTemplate);
-      console.log('🔧 PRODUCTION DEBUG: Template loaded state:', templateLoaded);
-      const templateData: LabelData = {
+      setTemplateLoaded(false); // Prevent auto-save during loading
+      
+      const mergedData = {
         selectedInventoryId: defaultTemplate.selectedInventoryId || "",
         productName: defaultTemplate.productName || "Product Name",
-        productCode: defaultTemplate.productCode || "PRD-001",
+        productCode: defaultTemplate.productCode || "PRD-001", 
         price: defaultTemplate.price || "25.00",
         qrContent: defaultTemplate.qrContent || "PRD-001",
         customMessage: defaultTemplate.customMessage || "Thank you for your purchase",
@@ -235,43 +215,37 @@ export default function LabelDesigner() {
         showLogo: defaultTemplate.showLogo ?? false,
         showPrice: defaultTemplate.showPrice ?? true,
         showMessage: defaultTemplate.showMessage ?? true,
-        showSize: defaultTemplate.showSize ?? true,
+        showSize: defaultTemplate.showSize ?? true
       };
-      console.log('Merged label data:', templateData);
-      setLabelData(templateData);
       
-      // Load saved layout positions from template to prevent reset
+      console.log('Merged label data:', mergedData);
+      setLabelData(mergedData);
+      
+      // Load saved layout positions
       if (defaultTemplate.layoutPositions) {
-        console.log('🔧 PRODUCTION DEBUG: Loading saved layout positions:', defaultTemplate.layoutPositions);
-        console.log('🔧 PRODUCTION DEBUG: Layout positions type:', typeof defaultTemplate.layoutPositions);
         try {
+          console.log('🔧 PRODUCTION DEBUG: Loading saved layout positions:', defaultTemplate.layoutPositions);
+          console.log('🔧 PRODUCTION DEBUG: Layout positions type:', typeof defaultTemplate.layoutPositions);
+          
           const savedLayout = typeof defaultTemplate.layoutPositions === 'string' 
             ? JSON.parse(defaultTemplate.layoutPositions)
             : defaultTemplate.layoutPositions;
+          
           console.log('🔧 PRODUCTION DEBUG: Parsed layout:', savedLayout);
           setLayout(savedLayout);
           console.log('🔧 PRODUCTION DEBUG: Layout state set successfully');
         } catch (error) {
-          console.error('🔧 PRODUCTION DEBUG: Failed to parse saved layout positions:', error);
-          console.log('🔧 PRODUCTION DEBUG: Using default layout due to parsing error');
+          console.error('Failed to parse saved layout positions:', error);
           setLayout(defaultLayout);
         }
-      } else {
-        // No saved positions, use default layout
-        console.log('🔧 PRODUCTION DEBUG: No saved positions found, using default layout');
-        setLayout(defaultLayout);
       }
       
-      setTemplateLoaded(true);
-    } else if (!defaultTemplate && !templateLoading && !templateError && !templateLoaded) {
-      // No template found - use default layout and enable auto-save for new template creation
-      console.log('🔧 PRODUCTION DEBUG: No template found, using default layout');
-      setLayout(defaultLayout);
-      setTemplateLoaded(true); // Enable auto-save even without existing template
+      console.log('🔧 PRODUCTION DEBUG: Template loaded state:', templateLoaded);
+      setTemplateLoaded(true); // Enable auto-save after loading
     }
-  }, [defaultTemplate, templateLoaded, templateLoading, templateError]);
+  }, [defaultTemplate, templateLoaded]);
 
-  // Auto-save label data to server whenever it changes (but only after template is loaded)
+  // Auto-save label data changes after 2 seconds of inactivity
   useEffect(() => {
     if (!templateLoaded) return; // Don't auto-save until template is loaded
     
@@ -297,15 +271,6 @@ export default function LabelDesigner() {
 
     return () => clearTimeout(timeoutId);
   }, [layout, templateLoaded, defaultTemplate?.id]);
-
-  // Save label count to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('labelDesignerCount', labelCount.toString());
-    } catch (error) {
-      console.warn('Failed to save label count:', error);
-    }
-  }, [labelCount]);
 
   const generateQRCode = async () => {
     try {
@@ -372,15 +337,13 @@ export default function LabelDesigner() {
       };
       
       uploadMediaMutation.mutate(mediaData);
-    } else {
-      console.error("No successful uploads found:", result);
     }
   };
 
   const handleLogoSelect = (mediaFile: MediaFile) => {
     setLabelData(prev => ({
       ...prev,
-      logoUrl: mediaFile.objectPath, // Use the objectPath directly
+      logoUrl: mediaFile.objectPath,
       showLogo: true
     }));
   };
@@ -426,33 +389,41 @@ export default function LabelDesigner() {
     setShowInventoryDropdown(false);
   };
 
-  const handlePrint = () => {
+  const downloadLabelImage = async () => {
     if (!layout) return;
     
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const labelsPerSheet = Math.min(labelCount, 10);
-    
-    // Use EXACT same positioning system as preview - percentage on 480px x 240px scaled for print
-    const createLabelHTML = () => {
-      return `
+    try {
+      // Create a temporary container that EXACTLY matches the preview
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-5000px';
+      tempContainer.style.top = '-5000px';
+      tempContainer.style.fontFamily = 'Arial, sans-serif';
+      
+      // Use same dimensions as preview canvas for exact positioning match
+      const labelWidth = 480; // Match preview canvas width exactly
+      const labelHeight = 240; // Match preview canvas height exactly
+      
+      // Simple percentage to pixel conversion - same as preview
+      const convertPosition = (percentage: number, dimension: number) => {
+        return (percentage / 100) * dimension;
+      };
+      
+      // Create the exact same structure as the preview using inline styles
+      tempContainer.innerHTML = `
         <div style="
-          width: 4in; 
-          height: 2in; 
-          border: 1px solid #ddd;
-          margin: 0.0625in;
-          padding: 0;
+          width: ${labelWidth}px;
+          height: ${labelHeight}px;
           position: relative;
-          box-sizing: border-box;
-          font-family: Arial, sans-serif;
           background: white;
+          font-family: Arial, sans-serif;
+          border: 1px solid #ddd;
         ">
-          <!-- Product Info - EXACT same as preview -->
+          <!-- Product Info -->
           <div style="
             position: absolute;
-            left: ${layout.productInfo.x}%;
-            top: ${layout.productInfo.y}%;
+            left: ${convertPosition(layout.productInfo.x, labelWidth)}px;
+            top: ${convertPosition(layout.productInfo.y, labelHeight)}px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -477,23 +448,23 @@ export default function LabelDesigner() {
             ">$${labelData.price}</div>` : ''}
           </div>
           
-          ${labelData.showQR ? `
-          <!-- QR Code - EXACT same as preview -->
+          ${labelData.showQR && qrCodeUrl ? `
+          <!-- QR Code -->
           <div style="
             position: absolute;
-            left: ${layout.qrCode.x}%;
-            top: ${layout.qrCode.y}%;
+            left: ${convertPosition(layout.qrCode.x, labelWidth)}px;
+            top: ${convertPosition(layout.qrCode.y, labelHeight)}px;
             padding: 4px;
           ">
             <img src="${qrCodeUrl}" style="width: 120px; height: 120px;" />
           </div>` : ''}
           
           ${labelData.showLogo && labelData.logoUrl ? `
-          <!-- Logo - EXACT same as preview -->
+          <!-- Logo -->
           <div style="
             position: absolute;
-            left: ${layout.logo.x}%;
-            top: ${layout.logo.y}%;
+            left: ${convertPosition(layout.logo.x, labelWidth)}px;
+            top: ${convertPosition(layout.logo.y, labelHeight)}px;
             width: 144px;
             height: 108px;
             display: flex;
@@ -505,11 +476,11 @@ export default function LabelDesigner() {
           </div>` : ''}
           
           ${labelData.showSize ? `
-          <!-- Size Indicator - EXACT same as preview -->
+          <!-- Size Indicator -->
           <div style="
             position: absolute;
-            left: ${layout.sizeIndicator.x}%;
-            top: ${layout.sizeIndicator.y}%;
+            left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px;
+            top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;
             min-width: 96px;
             min-height: 96px;
             display: flex;
@@ -525,246 +496,48 @@ export default function LabelDesigner() {
           ">${labelData.sizeIndicator}</div>` : ''}
           
           ${labelData.showMessage ? `
-          <!-- Message - EXACT same as preview -->
-          <div style="
-            position: absolute;
-            left: ${layout.message.x}%;
-            top: ${layout.message.y}%;
-            max-width: 80%;
-            white-space: pre-wrap;
-            font-size: 11px;
-            font-style: italic;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 8px;
-          ">${labelData.customMessage}</div>` : ''}
-        </div>
-      `;
-    };
-
-    const allLabels = Array.from({ length: labelsPerSheet }, () => createLabelHTML()).join('');
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Label Print</title>
-          <style>
-            @page { size: 8.5in 11in; margin: 0.5in; }
-            body { 
-              margin: 0; 
-              padding: 0; 
-              font-family: Arial, sans-serif; 
-            }
-            .sheet { 
-              display: grid; 
-              grid-template-columns: 1fr 1fr; 
-              grid-template-rows: repeat(5, 1fr); 
-              gap: 0; 
-              width: 7.5in; 
-              height: 10in; 
-            }
-          </style>
-        </head>
-        <body>
-          <div class="sheet">${allLabels}</div>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  const generateLabelHTML = () => {
-    if (!layout) return '';
-    
-    // Convert percentages to inches (4in width, 2in height after padding)
-    const labelWidth = 3.8; // 4in - 0.2in padding
-    const labelHeight = 1.8; // 2in - 0.2in padding
-    
-    const convertPosition = (percentage: number, dimension: number) => {
-      return (percentage / 100) * dimension;
-    };
-    
-    return `
-      <div class="label">
-        <div class="label-content">
-          <div class="product-info" style="left: ${convertPosition(layout.productInfo.x, labelWidth)}in; top: ${convertPosition(layout.productInfo.y, labelHeight)}in; width: 2.5in;">
-            <div class="product-name" style="white-space: nowrap;">${labelData.productName}</div>
-            <div class="product-code">${labelData.productCode}</div>
-            ${labelData.showPrice ? `<div class="price">$${labelData.price}</div>` : ''}
-          </div>
-          ${labelData.showQR ? `<div class="qr-code" style="left: ${convertPosition(layout.qrCode.x, labelWidth)}in; top: ${convertPosition(layout.qrCode.y, labelHeight)}in;"><img src="${qrCodeUrl}" /></div>` : ''}
-          ${labelData.showLogo && labelData.logoUrl ? `<div class="logo" style="left: ${convertPosition(layout.logo.x, labelWidth)}in; top: ${convertPosition(layout.logo.y, labelHeight)}in;"><img src="${labelData.logoUrl}" /></div>` : ''}
-          ${labelData.showSize ? `<div class="size-indicator" style="left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}in; top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}in;">${labelData.sizeIndicator}</div>` : ''}
-          ${labelData.showMessage ? `<div class="message" style="left: ${convertPosition(layout.message.x, labelWidth)}in; top: ${convertPosition(layout.message.y, labelHeight)}in;">${labelData.customMessage}</div>` : ''}
-        </div>
-      </div>
-    `;
-  };
-
-  const downloadLabelImage = async () => {
-    if (!layout) return;
-    
-    try {
-      // Create a temporary container that EXACTLY matches the preview
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.left = '-5000px';
-      tempContainer.style.top = '-5000px';
-      tempContainer.style.fontFamily = 'Arial, sans-serif';
-      
-      // Use same dimensions as preview canvas for exact positioning match
-      const labelWidth = 480; // Match preview canvas width exactly
-      const labelHeight = 240; // Match preview canvas height exactly
-      
-      // Simple percentage to pixel conversion - same as preview
-      const convertPosition = (percentage: number, dimension: number) => {
-        return (percentage / 100) * dimension;
-      };
-      
-      // Create the exact same structure as the preview using inline styles
-      tempContainer.innerHTML = `
-        <div style="
-          width: 480px;
-          height: 240px;
-          position: relative;
-          background: white;
-          padding: 0;
-          margin: 0;
-          font-family: Arial, sans-serif;
-        ">
-          <!-- Product Info - exact same styling as preview -->
-          <div style="
-            position: absolute;
-            left: ${convertPosition(layout.productInfo.x, labelWidth)}px;
-            top: ${convertPosition(layout.productInfo.y, labelHeight)}px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            padding: 8px;
-          ">
-            <div style="font-size: 18px; font-weight: bold; margin-bottom: 2px; line-height: 1.1; white-space: nowrap;">${labelData.productName}</div>
-            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${labelData.productCode}</div>
-            ${labelData.showPrice ? `<div style="font-size: 24px; font-weight: bold; margin: 0;">$${labelData.price}</div>` : ''}
-          </div>
-          
-          <!-- QR Code - exact same styling as preview -->
-          ${labelData.showQR ? `
-          <div style="
-            position: absolute;
-            left: ${convertPosition(layout.qrCode.x, labelWidth)}px;
-            top: ${convertPosition(layout.qrCode.y, labelHeight)}px;
-            padding: 4px;
-          ">
-            <img src="${qrCodeUrl}" style="width: 120px; height: 120px;" />
-          </div>
-          ` : ''}
-          
-          <!-- Logo - exact same styling as preview -->
-          ${labelData.showLogo && labelData.logoUrl ? `
-          <div style="
-            position: absolute;
-            left: ${convertPosition(layout.logo.x, labelWidth)}px;
-            top: ${convertPosition(layout.logo.y, labelHeight)}px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 144px;
-            height: 108px;
-            padding: 4px;
-          ">
-            <img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-          </div>
-          ` : ''}
-          
-          <!-- Size Indicator - exact same styling as preview -->
-          ${labelData.showSize ? `
-          <div style="
-            position: absolute;
-            left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px;
-            top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            min-width: 96px;
-            min-height: 96px;
-            font-size: ${calculateSizeFontSize(labelData.sizeIndicator, 96)}px;
-            white-space: nowrap;
-            overflow: hidden;
-            padding: 8px;
-          ">${labelData.sizeIndicator}</div>
-          ` : ''}
-          
-          <!-- Message - exact same styling as preview -->
-          ${labelData.showMessage ? `
+          <!-- Message -->
           <div style="
             position: absolute;
             left: ${convertPosition(layout.message.x, labelWidth)}px;
             top: ${convertPosition(layout.message.y, labelHeight)}px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
             max-width: 80%;
             white-space: pre-wrap;
             font-size: 11px;
             font-style: italic;
-            padding: 8px;
-          ">${labelData.customMessage}</div>
-          ` : ''}
+            text-align: center;
+          ">${labelData.customMessage}</div>` : ''}
         </div>
       `;
       
       document.body.appendChild(tempContainer);
       
-      // Wait for images to load
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Capture the label as canvas with exact same dimensions as preview
       const canvas = await html2canvas(tempContainer.firstElementChild as HTMLElement, {
-        backgroundColor: 'white',
-        scale: 2, // Higher resolution for print quality
+        width: labelWidth,
+        height: labelHeight,
+        scale: 2, // Higher resolution
         useCORS: true,
-        allowTaint: true,
-        width: 480, // Match preview width exactly
-        height: 240, // Match preview height exactly
-        logging: false, // Disable console logs
+        allowTaint: true
       });
-
-      // Clean up
+      
       document.body.removeChild(tempContainer);
-
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `label-${labelData.productCode || 'design'}-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        toast({
-          title: "Label Downloaded",
-          description: "Label image saved to your downloads (matches preview exactly)",
-          duration: 2000,
-        });
-      }, 'image/png');
-    } catch (error) {
-      console.error('Error downloading label:', error);
+      
+      // Download the image
+      const link = document.createElement('a');
+      link.download = `label-${labelData.productCode || 'design'}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+      
       toast({
-        title: "Download Failed",
-        description: "Failed to download label image",
+        title: "Label downloaded",
+        description: "Label image saved to your device",
+      });
+    } catch (error) {
+      console.error('Error generating label image:', error);
+      toast({
+        title: "Download failed", 
+        description: "There was an error generating the label image",
         variant: "destructive",
-        duration: 3000,
       });
     }
   };
@@ -772,85 +545,76 @@ export default function LabelDesigner() {
   const handleMouseDown = (elementId: string, e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(elementId);
-    const rect = e.currentTarget.getBoundingClientRect();
+    
+    const rect = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+    const elementRect = e.currentTarget.getBoundingClientRect();
     setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: e.clientX - elementRect.left,
+      y: e.clientY - elementRect.top
     });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     
-    const container = e.currentTarget as HTMLElement;
-    const rect = container.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect();
+    
     const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
     const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
     
-    // Strict constraints to prevent overlaps in 288px × 576px canvas
-    let maxX = 85;
-    let maxY = 85;
+    // Constrain to container bounds
+    const constrainedX = Math.max(0, Math.min(85, x));
+    const constrainedY = Math.max(0, Math.min(85, y));
     
-    // Liberal constraints - elements can move nearly anywhere on the label
-    maxX = 95; // Allow all elements to move to 95% across (almost to the right edge)
-    maxY = 95; // Allow all elements to move to 95% down (almost to the bottom)
-    
-    const constrainedX = Math.max(0, Math.min(maxX, x));
-    const constrainedY = Math.max(0, Math.min(maxY, y));
-    
-    setLayout(prev => prev ? ({
+    setLayout(prev => ({
       ...prev,
-      [isDragging]: { x: constrainedX, y: constrainedY }
-    }) : null);
+      [isDragging]: {
+        x: constrainedX,
+        y: constrainedY
+      }
+    }));
   };
 
   const handleMouseUp = () => {
     // Layout is now automatically saved via useEffect when it changes
     setIsDragging(null);
-    setDragOffset({ x: 0, y: 0 });
   };
 
-  // Show loading state until layout is initialized
-  if (!layout || templateLoading) {
-    console.log('🔧 PRODUCTION DEBUG: Showing loading state - layout:', !!layout, 'templateLoading:', templateLoading);
-    return (
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Avery 94207 Label Designer</h1>
-          <p className="text-muted-foreground">Loading template...</p>
-        </div>
-      </div>
-    );
-  }
+  // Generate QR code whenever content changes
+  useEffect(() => {
+    if (labelData.qrContent) {
+      generateQRCode();
+    }
+  }, [labelData.qrContent]);
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Label Designer</h1>
-        <p className="text-muted-foreground">
-          Design and print custom labels (2" × 4") with QR codes, logos, and custom text
-        </p>
+        <h1 className="text-3xl font-bold">Label Designer</h1>
+        <p className="text-muted-foreground">Design and print custom product labels</p>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Label Preview */}
+        {/* Preview Panel */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
-              Label Preview
+              Live Preview
             </CardTitle>
             <CardDescription>
-              Preview of your Avery 94207 label (2" × 4")
+              Drag elements to reposition them on the label
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center mb-4">
+            <div className="space-y-4">
+              {/* Live Preview Container */}
               <div 
-                className="border-2 border-dashed border-gray-300 bg-white p-2 cursor-pointer select-none"
-                style={{
-                  width: '480px', // Larger: 6.67 inches at 72 DPI
-                  height: '240px', // Larger: 3.33 inches at 72 DPI (maintaining 2:1 ratio)
-                  position: 'relative'
+                className="relative bg-white border-2 border-dashed border-gray-300 mx-auto cursor-crosshair"
+                style={{ 
+                  width: '480px', 
+                  height: '240px',
+                  fontFamily: 'Arial, sans-serif'
                 }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -858,19 +622,26 @@ export default function LabelDesigner() {
               >
                 {/* Product Info */}
                 <div 
-                  className={`absolute flex flex-col justify-start cursor-move p-2 rounded border-2 transition-all ${
+                  className={`absolute cursor-move p-2 rounded border-2 transition-all flex flex-col justify-start ${
                     isDragging === 'productInfo' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                   }`}
                   style={{
                     left: `${layout.productInfo.x}%`,
-                    top: `${layout.productInfo.y}%`
+                    top: `${layout.productInfo.y}%`,
+                    padding: '8px'
                   }}
                   onMouseDown={(e) => handleMouseDown('productInfo', e)}
                 >
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px', lineHeight: '1.1', whiteSpace: 'nowrap' }}>{labelData.productName}</div>
-                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>{labelData.productCode}</div>
+                  <div className="text-lg font-bold leading-tight whitespace-nowrap">
+                    {labelData.productName}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {labelData.productCode}
+                  </div>
                   {labelData.showPrice && (
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '0' }}>${labelData.price}</div>
+                    <div className="text-2xl font-bold mt-1">
+                      ${labelData.price}
+                    </div>
                   )}
                 </div>
 
@@ -882,36 +653,42 @@ export default function LabelDesigner() {
                     }`}
                     style={{
                       left: `${layout.qrCode.x}%`,
-                      top: `${layout.qrCode.y}%`
+                      top: `${layout.qrCode.y}%`,
+                      padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('qrCode', e)}
                   >
-                    <img src={qrCodeUrl} style={{ width: '120px', height: '120px' }} />
+                    <img src={qrCodeUrl} className="w-30 h-30" style={{ width: '120px', height: '120px' }} />
                   </div>
                 )}
 
                 {/* Logo */}
                 {labelData.showLogo && labelData.logoUrl && (
                   <div 
-                    className={`absolute cursor-move p-1 rounded border-2 transition-all flex items-center justify-center ${
+                    className={`absolute cursor-move rounded border-2 transition-all flex items-center justify-center ${
                       isDragging === 'logo' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
                       left: `${layout.logo.x}%`,
                       top: `${layout.logo.y}%`,
                       width: '144px',
-                      height: '108px'
+                      height: '108px',
+                      padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('logo', e)}
                   >
-                    <img src={labelData.logoUrl} className="max-w-full max-h-full object-contain" />
+                    <img 
+                      src={labelData.logoUrl} 
+                      className="max-w-full max-h-full object-contain"
+                      alt="Logo"
+                    />
                   </div>
                 )}
 
                 {/* Size Indicator */}
                 {labelData.showSize && (
                   <div 
-                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center font-bold ${
+                    className={`absolute cursor-move rounded-full border-2 transition-all flex items-center justify-center font-bold whitespace-nowrap overflow-hidden ${
                       isDragging === 'sizeIndicator' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{
@@ -919,9 +696,9 @@ export default function LabelDesigner() {
                       top: `${layout.sizeIndicator.y}%`,
                       minWidth: '96px',
                       minHeight: '96px',
-                      fontSize: `${calculateSizeFontSize(labelData.sizeIndicator, 96)}px`,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden'
+                      padding: '8px',
+                      border: '2px solid #333',
+                      fontSize: `${calculateSizeFontSize(labelData.sizeIndicator, 96)}px`
                     }}
                     onMouseDown={(e) => handleMouseDown('sizeIndicator', e)}
                   >
@@ -956,26 +733,10 @@ export default function LabelDesigner() {
               </div>
             </div>
 
-            {/* Print Controls */}
+            {/* Download Controls */}
             <div className="space-y-3">
-              <div>
-                <Label htmlFor="label-count">Labels per sheet (max 10)</Label>
-                <Input
-                  id="label-count"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={labelCount}
-                  onChange={(e) => setLabelCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                  className="w-24"
-                />
-              </div>
               <div className="flex gap-2">
-                <Button onClick={handlePrint} className="flex-1">
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Labels
-                </Button>
-                <Button variant="outline" onClick={downloadLabelImage}>
+                <Button onClick={downloadLabelImage} className="flex-1" data-testid="button-download-image">
                   <Download className="h-4 w-4 mr-2" />
                   Download Image
                 </Button>
