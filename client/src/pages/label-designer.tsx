@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 import { Download, Upload, Eye, Settings, Copy, Check, ChevronsUpDown, Trash2, Plus } from "lucide-react";
@@ -34,6 +35,12 @@ interface LabelData {
   showPrice: boolean;
   showMessage: boolean;
   showSize: boolean;
+  // Element scale properties (as percentages)
+  qrCodeScale: number;
+  logoScale: number;
+  productInfoScale: number;
+  sizeIndicatorScale: number;
+  messageScale: number;
 }
 
 interface ElementPosition {
@@ -63,6 +70,12 @@ const defaultLabelData: LabelData = {
   showPrice: true,
   showMessage: true,
   showSize: true,
+  // Default scale values (100% = original size)
+  qrCodeScale: 100,
+  logoScale: 100,
+  productInfoScale: 100,
+  sizeIndicatorScale: 100,
+  messageScale: 100,
 };
 
 export default function LabelDesigner() {
@@ -242,7 +255,13 @@ export default function LabelDesigner() {
         showLogo: defaultTemplate.showLogo ?? false,
         showPrice: defaultTemplate.showPrice ?? true,
         showMessage: defaultTemplate.showMessage ?? true,
-        showSize: defaultTemplate.showSize ?? true
+        showSize: defaultTemplate.showSize ?? true,
+        // Handle scale properties with defaults for backward compatibility
+        qrCodeScale: (defaultTemplate as any).qrCodeScale ?? 100,
+        logoScale: (defaultTemplate as any).logoScale ?? 100,
+        productInfoScale: (defaultTemplate as any).productInfoScale ?? 100,
+        sizeIndicatorScale: (defaultTemplate as any).sizeIndicatorScale ?? 100,
+        messageScale: (defaultTemplate as any).messageScale ?? 100
       };
       
       console.log('Merged label data:', mergedData);
@@ -460,13 +479,13 @@ export default function LabelDesigner() {
               const parsedName = parseProductName(labelData.productName);
               if (parsedName.hasSize) {
                 return `<div style="
-                  font-size: 20px;
+                  font-size: ${20 * (labelData.productInfoScale / 100)}px;
                   font-weight: bold;
                   margin-bottom: 2px;
                   line-height: 1.1;
                 ">${parsedName.mainName}</div>
                 <div style="
-                  font-size: 18px;
+                  font-size: ${18 * (labelData.productInfoScale / 100)}px;
                   font-weight: bold;
                   color: #555;
                   margin-bottom: 2px;
@@ -474,7 +493,7 @@ export default function LabelDesigner() {
                 ">(${parsedName.sizePart})</div>`;
               } else {
                 return `<div style="
-                  font-size: 20px;
+                  font-size: ${20 * (labelData.productInfoScale / 100)}px;
                   font-weight: bold;
                   margin-bottom: 2px;
                   line-height: 1.1;
@@ -482,12 +501,12 @@ export default function LabelDesigner() {
               }
             })()}
             <div style="
-              font-size: 12px;
+              font-size: ${12 * (labelData.productInfoScale / 100)}px;
               color: #666;
               margin-bottom: 4px;
             ">${labelData.productCode}</div>
             ${labelData.showPrice ? `<div style="
-              font-size: 24px;
+              font-size: ${24 * (labelData.productInfoScale / 100)}px;
               font-weight: bold;
               margin: 0;
             ">$${labelData.price}</div>` : ''}
@@ -499,9 +518,11 @@ export default function LabelDesigner() {
             position: absolute;
             left: ${convertPosition(layout.qrCode.x, labelWidth)}px;
             top: ${convertPosition(layout.qrCode.y, labelHeight)}px;
+            width: ${159 * (labelData.qrCodeScale / 100)}px;
+            height: ${159 * (labelData.qrCodeScale / 100)}px;
             padding: 4px;
           ">
-            <img src="${qrCodeUrl}" style="width: 159px; height: 159px;" />
+            <img src="${qrCodeUrl}" style="width: 100%; height: 100%; object-fit: contain;" alt="QR Code" />
           </div>` : ''}
           
           ${labelData.showLogo && labelData.logoUrl ? `
@@ -510,14 +531,14 @@ export default function LabelDesigner() {
             position: absolute;
             left: ${convertPosition(layout.logo.x, labelWidth)}px;
             top: ${convertPosition(layout.logo.y, labelHeight)}px;
-            width: 191px;
-            height: 143px;
+            width: ${191 * (labelData.logoScale / 100)}px;
+            height: ${143 * (labelData.logoScale / 100)}px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 4px;
           ">
-            <img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+            <img src="${labelData.logoUrl}" style="width: 100%; height: 100%; object-fit: contain;" alt="Logo" />
           </div>` : ''}
           
           ${labelData.showSize && labelData.sizeIndicator && labelData.sizeIndicator.trim().length > 0 ? `
@@ -526,8 +547,8 @@ export default function LabelDesigner() {
             position: absolute;
             left: ${convertPosition(layout.sizeIndicator.x, labelWidth)}px;
             top: ${convertPosition(layout.sizeIndicator.y, labelHeight)}px;
-            min-width: 96px;
-            min-height: 96px;
+            min-width: ${96 * (labelData.sizeIndicatorScale / 100)}px;
+            min-height: ${96 * (labelData.sizeIndicatorScale / 100)}px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -535,7 +556,7 @@ export default function LabelDesigner() {
             white-space: nowrap;
             overflow: hidden;
             padding: 8px;
-            font-size: ${calculateSizeFontSize(labelData.sizeIndicator, 96)}px;
+            font-size: ${calculateSizeFontSize(labelData.sizeIndicator, 96 * (labelData.sizeIndicatorScale / 100)) * (labelData.sizeIndicatorScale / 100)}px;
           ">${labelData.sizeIndicator}</div>` : ''}
           
           ${labelData.showMessage ? `
@@ -546,7 +567,7 @@ export default function LabelDesigner() {
             top: ${convertPosition(layout.message.y, labelHeight)}px;
             max-width: 80%;
             white-space: pre-wrap;
-            font-size: 17px;
+            font-size: ${17 * (labelData.messageScale / 100)}px;
             font-style: italic;
             text-align: center;
           ">${labelData.customMessage}</div>` : ''}
@@ -677,30 +698,31 @@ export default function LabelDesigner() {
                 >
                   {(() => {
                     const parsedName = parseProductName(labelData.productName);
+                    const scale = labelData.productInfoScale / 100;
                     if (parsedName.hasSize) {
                       return (
                         <>
-                          <div className="text-xl font-bold leading-tight">
+                          <div className="font-bold leading-tight" style={{ fontSize: `${1.25 * scale}rem` }}>
                             {parsedName.mainName}
                           </div>
-                          <div className="text-lg font-bold text-gray-700 leading-tight">
+                          <div className="font-bold text-gray-700 leading-tight" style={{ fontSize: `${1.125 * scale}rem` }}>
                             ({parsedName.sizePart})
                           </div>
                         </>
                       );
                     } else {
                       return (
-                        <div className="text-xl font-bold leading-tight">
+                        <div className="font-bold leading-tight" style={{ fontSize: `${1.25 * scale}rem` }}>
                           {labelData.productName}
                         </div>
                       );
                     }
                   })()}
-                  <div className="text-xs text-gray-600 mt-1">
+                  <div className="text-gray-600 mt-1" style={{ fontSize: `${0.75 * labelData.productInfoScale / 100}rem` }}>
                     {labelData.productCode}
                   </div>
                   {labelData.showPrice && (
-                    <div className="text-2xl font-bold mt-1">
+                    <div className="font-bold mt-1" style={{ fontSize: `${1.5 * labelData.productInfoScale / 100}rem` }}>
                       ${labelData.price}
                     </div>
                   )}
@@ -715,11 +737,22 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.qrCode.x}%`,
                       top: `${layout.qrCode.y}%`,
+                      width: `${159 * (labelData.qrCodeScale / 100)}px`,
+                      height: `${159 * (labelData.qrCodeScale / 100)}px`,
                       padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('qrCode', e)}
                   >
-                    <img src={qrCodeUrl} className="w-30 h-30" style={{ width: '159px', height: '159px' }} />
+                    <img 
+                      src={qrCodeUrl} 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%',
+                        objectFit: 'contain'
+                      }} 
+                      alt="QR Code"
+                      data-testid="qr-code-preview"
+                    />
                   </div>
                 )}
 
@@ -732,16 +765,21 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.logo.x}%`,
                       top: `${layout.logo.y}%`,
-                      width: '191px',
-                      height: '143px',
+                      width: `${191 * (labelData.logoScale / 100)}px`,
+                      height: `${143 * (labelData.logoScale / 100)}px`,
                       padding: '4px'
                     }}
                     onMouseDown={(e) => handleMouseDown('logo', e)}
                   >
                     <img 
                       src={labelData.logoUrl} 
-                      className="max-w-full max-h-full object-contain"
+                      style={{ 
+                        width: '100%', 
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
                       alt="Logo"
+                      data-testid="logo-preview"
                     />
                   </div>
                 )}
@@ -755,10 +793,10 @@ export default function LabelDesigner() {
                     style={{
                       left: `${layout.sizeIndicator.x}%`,
                       top: `${layout.sizeIndicator.y}%`,
-                      minWidth: '96px',
-                      minHeight: '96px',
+                      minWidth: `${96 * (labelData.sizeIndicatorScale / 100)}px`,
+                      minHeight: `${96 * (labelData.sizeIndicatorScale / 100)}px`,
                       padding: '8px',
-                      fontSize: `${calculateSizeFontSize(labelData.sizeIndicator, 96)}px`
+                      fontSize: `${calculateSizeFontSize(labelData.sizeIndicator, 96 * (labelData.sizeIndicatorScale / 100)) * (labelData.sizeIndicatorScale / 100)}px`
                     }}
                     onMouseDown={(e) => handleMouseDown('sizeIndicator', e)}
                   >
@@ -777,7 +815,7 @@ export default function LabelDesigner() {
                       top: `${layout.message.y}%`,
                       maxWidth: '80%',
                       whiteSpace: 'pre-wrap',
-                      fontSize: '17px',
+                      fontSize: `${17 * (labelData.messageScale / 100)}px`,
                       fontStyle: 'italic'
                     }}
                     onMouseDown={(e) => handleMouseDown('message', e)}
@@ -1053,8 +1091,10 @@ export default function LabelDesigner() {
               </TabsContent>
 
               {/* Layout Tab */}
-              <TabsContent value="layout" className="space-y-4">
+              <TabsContent value="layout" className="space-y-6">
+                {/* Visibility Controls */}
                 <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-secondary">Element Visibility</h4>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="show-qr">Show QR Code</Label>
                     <Switch
@@ -1095,6 +1135,104 @@ export default function LabelDesigner() {
                       onCheckedChange={(checked) => updateLabelData('showSize', checked)}
                     />
                   </div>
+                </div>
+
+                {/* Element Size Controls */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-secondary">Element Sizes</h4>
+                  
+                  {/* Product Info Scale */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="product-info-scale">Product Info Size</Label>
+                      <span className="text-sm text-muted-foreground">{labelData.productInfoScale}%</span>
+                    </div>
+                    <Slider
+                      id="product-info-scale"
+                      min={25}
+                      max={200}
+                      step={5}
+                      value={[labelData.productInfoScale]}
+                      onValueChange={(value) => setLabelData(prev => ({ ...prev, productInfoScale: value[0] }))}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* QR Code Scale */}
+                  {labelData.showQR && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="qr-code-scale">QR Code Size</Label>
+                        <span className="text-sm text-muted-foreground">{labelData.qrCodeScale}%</span>
+                      </div>
+                      <Slider
+                        id="qr-code-scale"
+                        min={25}
+                        max={200}
+                        step={5}
+                        value={[labelData.qrCodeScale]}
+                        onValueChange={(value) => setLabelData(prev => ({ ...prev, qrCodeScale: value[0] }))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* Logo Scale */}
+                  {labelData.showLogo && labelData.logoUrl && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="logo-scale">Logo Size</Label>
+                        <span className="text-sm text-muted-foreground">{labelData.logoScale}%</span>
+                      </div>
+                      <Slider
+                        id="logo-scale"
+                        min={25}
+                        max={200}
+                        step={5}
+                        value={[labelData.logoScale]}
+                        onValueChange={(value) => setLabelData(prev => ({ ...prev, logoScale: value[0] }))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* Size Indicator Scale */}
+                  {labelData.showSize && labelData.sizeIndicator && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="size-indicator-scale">Size Indicator Size</Label>
+                        <span className="text-sm text-muted-foreground">{labelData.sizeIndicatorScale}%</span>
+                      </div>
+                      <Slider
+                        id="size-indicator-scale"
+                        min={25}
+                        max={200}
+                        step={5}
+                        value={[labelData.sizeIndicatorScale]}
+                        onValueChange={(value) => setLabelData(prev => ({ ...prev, sizeIndicatorScale: value[0] }))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* Message Scale */}
+                  {labelData.showMessage && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="message-scale">Message Size</Label>
+                        <span className="text-sm text-muted-foreground">{labelData.messageScale}%</span>
+                      </div>
+                      <Slider
+                        id="message-scale"
+                        min={25}
+                        max={200}
+                        step={5}
+                        value={[labelData.messageScale]}
+                        onValueChange={(value) => setLabelData(prev => ({ ...prev, messageScale: value[0] }))}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
