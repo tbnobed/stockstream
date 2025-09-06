@@ -74,10 +74,10 @@ export default function Dashboard() {
           isAdmin ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
         )}>
           {isAdmin && (
-            <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-white to-green-50/30 hover:shadow-xl transition-all duration-300">
+            <Card className="p-4 md:p-6 border-border">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                  <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Revenue</p>
                   <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-total-revenue">
                     {statsLoading ? "Loading..." : formatCurrency(stats?.totalRevenue || 0)}
                   </p>
@@ -86,18 +86,18 @@ export default function Dashboard() {
                     +12.5% from last month
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center shadow-sm">
-                  <DollarSign className="text-green-600" size={20} />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="text-accent" size={20} />
                 </div>
               </div>
             </Card>
           )}
 
           {isAdmin && (
-            <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30 hover:shadow-xl transition-all duration-300">
+            <Card className="p-4 md:p-6 border-border">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Total Profit</p>
+                  <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Profit</p>
                   <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-total-profit">
                     {statsLoading ? "Loading..." : formatCurrency(stats?.totalProfit || 0)}
                   </p>
@@ -106,17 +106,17 @@ export default function Dashboard() {
                     Real profit from sales
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shadow-sm">
-                  <TrendingUp className="text-blue-600" size={20} />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-green-600/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="text-green-600" size={20} />
                 </div>
               </div>
             </Card>
           )}
 
-          <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-white to-purple-50/30 hover:shadow-xl transition-all duration-300">
+          <Card className="p-4 md:p-6 border-border">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Total Items</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Items</p>
                 <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-total-items">
                   {statsLoading ? "Loading..." : (stats?.totalItems || 0).toLocaleString()}
                 </p>
@@ -125,16 +125,16 @@ export default function Dashboard() {
                   +8 new items added
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center shadow-sm">
-                <Package className="text-purple-600" size={20} />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Package className="text-primary" size={20} />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-white to-orange-50/30 hover:shadow-xl transition-all duration-300">
+          <Card className="p-4 md:p-6 border-border">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Sales Today</p>
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">Sales Today</p>
                 <p className="text-xl md:text-3xl font-bold text-secondary mt-1 md:mt-2" data-testid="stat-sales-today">
                   {statsLoading ? "Loading..." : stats?.salesToday || 0}
                 </p>
@@ -143,16 +143,16 @@ export default function Dashboard() {
                   +15% vs yesterday
                 </p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shadow-sm">
-                <ShoppingCart className="text-orange-600" size={20} />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="text-warning" size={20} />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-0 shadow-lg bg-gradient-to-br from-white to-red-50/30 hover:shadow-xl transition-all duration-300">
+          <Card className="p-6 border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
+                <p className="text-sm font-medium text-muted-foreground">Low Stock Items</p>
                 <p className="text-3xl font-bold text-secondary mt-2" data-testid="stat-low-stock">
                   {statsLoading ? "Loading..." : stats?.lowStockCount || 0}
                 </p>
@@ -161,8 +161,8 @@ export default function Dashboard() {
                   Requires attention
                 </p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center shadow-sm">
-                <AlertTriangle className="text-red-600" size={24} />
+              <div className="w-12 h-12 bg-error/10 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="text-error" size={24} />
               </div>
             </div>
           </Card>
@@ -171,11 +171,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Sales */}
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-xl bg-white rounded-2xl overflow-hidden">
-              <div className="px-6 py-4 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-100">
+            <Card className="border-border">
+              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-800">Recent Sales</h3>
-                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 text-sm h-8 hover:bg-blue-50 rounded-lg transition-all">
+                  <h3 className="text-base md:text-lg font-semibold text-secondary">Recent Sales</h3>
+                  <Button variant="ghost" size="sm" className="text-primary text-xs md:text-sm h-8">
                     View all
                   </Button>
                 </div>
@@ -300,7 +300,7 @@ export default function Dashboard() {
           <div className="space-y-6">
             {/* Quick Actions */}
             <Card className="p-6 border-border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+              <h3 className="text-lg font-semibold text-secondary mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <Button
                   variant="ghost"
@@ -359,7 +359,7 @@ export default function Dashboard() {
             {/* Low Stock Alert */}
             <Card className="p-6 border-border">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Low Stock Alert</h3>
+                <h3 className="text-lg font-semibold text-secondary">Low Stock Alert</h3>
                 <span className="px-2 py-1 bg-error/10 text-error text-xs rounded-full">
                   {stats?.lowStockCount || 0} items
                 </span>
