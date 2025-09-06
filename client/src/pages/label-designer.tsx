@@ -172,6 +172,10 @@ export default function LabelDesigner() {
     queryKey: ['/api/media'],
   });
 
+  const { data: sizeOptions, isLoading: sizesLoading, error: sizesError } = useQuery({
+    queryKey: ['/api/categories/size'],
+  });
+
   const queryClient = useQueryClient();
 
   // Media upload mutation
@@ -912,20 +916,33 @@ export default function LabelDesigner() {
                 <div>
                   <Label htmlFor="size-indicator">Size Indicator</Label>
                   <Select 
-                    value={labelData.sizeIndicator} 
-                    onValueChange={(value) => updateLabelData('sizeIndicator', value)}
+                    value={labelData.sizeIndicator || "none"} 
+                    onValueChange={(value) => updateLabelData('sizeIndicator', value === "none" ? "" : value)}
+                    disabled={sizesLoading}
                   >
-                    <SelectTrigger id="size-indicator">
-                      <SelectValue />
+                    <SelectTrigger id="size-indicator" data-testid="select-size-indicator">
+                      <SelectValue placeholder={sizesLoading ? "Loading sizes..." : sizesError ? "Failed to load sizes" : "Select size..."} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="XS">XS</SelectItem>
-                      <SelectItem value="S">S</SelectItem>
-                      <SelectItem value="M">M</SelectItem>
-                      <SelectItem value="L">L</SelectItem>
-                      <SelectItem value="XL">XL</SelectItem>
-                      <SelectItem value="XXL">XXL</SelectItem>
-                      <SelectItem value="OS">OS (One Size)</SelectItem>
+                      <SelectItem value="none" data-testid="option-size-none">None (No Size)</SelectItem>
+                      {sizesError ? (
+                        <SelectItem value="" disabled>
+                          Failed to load sizes
+                        </SelectItem>
+                      ) : (!sizeOptions || (sizeOptions as any[]).length === 0) ? (
+                        <SelectItem value="" disabled>
+                          No sizes configured
+                        </SelectItem>
+                      ) : (
+                        (sizeOptions as any[])
+                          .filter((size: any) => size.isActive !== false)
+                          .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                          .map((size: any) => (
+                            <SelectItem key={size.id} value={size.value} data-testid={`option-size-${size.id}`}>
+                              {size.value}
+                            </SelectItem>
+                          ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -960,7 +977,7 @@ export default function LabelDesigner() {
 
                   {/* Logo Gallery */}
                   <div className="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto">
-                    {(mediaFiles || []).map((mediaFile: any) => (
+                    {(mediaFiles as any[] || []).map((mediaFile: any) => (
                       <div
                         key={mediaFile.id}
                         className={cn(
