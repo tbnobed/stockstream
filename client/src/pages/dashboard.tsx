@@ -393,7 +393,7 @@ export default function Dashboard() {
                       variant="ghost"
                       size="sm"
                       className="w-full text-primary hover:text-primary/80"
-                      onClick={() => navigate('/inventory')}
+                      onClick={() => navigate('/inventory?status=low-stock')}
                       data-testid="view-all-low-stock"
                     >
                       View all low stock items

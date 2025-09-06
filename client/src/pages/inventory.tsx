@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,12 +40,24 @@ export default function Inventory() {
   const [selectedDesign, setSelectedDesign] = useState<string>("all-designs");
   const [selectedGroupType, setSelectedGroupType] = useState<string>("all-groups");
   const [selectedStyleGroup, setSelectedStyleGroup] = useState<string>("all-styles");
+  const [selectedStockStatus, setSelectedStockStatus] = useState<string>("all-status");
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [location] = useLocation();
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Handle URL parameters for filtering
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    if (status === 'low-stock') {
+      setSelectedStockStatus('low');
+      setShowFilters(true);
+    }
+  }, [location]);
 
   const { data: inventoryItems, isLoading } = useQuery({
     queryKey: ["/api/inventory", showArchivedItems ? "?includeArchived=true" : ""],
@@ -57,6 +70,14 @@ export default function Inventory() {
   const { data: designs } = useQuery({ queryKey: ["/api/categories/design"] });
   const { data: groupTypes } = useQuery({ queryKey: ["/api/categories/groupType"] });
   const { data: styleGroups } = useQuery({ queryKey: ["/api/categories/styleGroup"] });
+
+  // Helper function to determine stock status
+  const getStockStatus = (quantity: number, minLevel: number) => {
+    if (quantity <= 0) return "out-of-stock";
+    if (quantity <= minLevel) return "low";
+    if (quantity <= minLevel * 1.5) return "medium";
+    return "good";
+  };
 
   // Archive item mutation
   const archiveMutation = useMutation({
@@ -103,6 +124,7 @@ export default function Inventory() {
     setSelectedDesign("all-designs");
     setSelectedGroupType("all-groups");
     setSelectedStyleGroup("all-styles");
+    setSelectedStockStatus("all-status");
     setSearchTerm("");
     setCurrentPage(1);
   };
@@ -123,8 +145,12 @@ export default function Inventory() {
     const matchesGroupType = !selectedGroupType || selectedGroupType === "all-groups" || item.groupType === selectedGroupType;
     const matchesStyleGroup = !selectedStyleGroup || selectedStyleGroup === "all-styles" || item.styleGroup === selectedStyleGroup;
     
+    // Stock status filtering
+    const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
+    const matchesStockStatus = !selectedStockStatus || selectedStockStatus === "all-status" || stockStatus === selectedStockStatus;
+    
     return matchesSearch && matchesCategory && matchesColor && matchesSize && 
-           matchesDesign && matchesGroupType && matchesStyleGroup;
+           matchesDesign && matchesGroupType && matchesStyleGroup && matchesStockStatus;
   });
 
   // Pagination logic
@@ -155,12 +181,6 @@ export default function Inventory() {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
-  };
-
-  const getStockStatus = (quantity: number, minLevel: number) => {
-    if (quantity <= minLevel) return "low";
-    if (quantity <= minLevel * 1.5) return "medium";
-    return "good";
   };
 
   const handleQRScan = (result: string) => {
@@ -375,6 +395,22 @@ export default function Inventory() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stock Status</label>
+                  <Select value={selectedStockStatus} onValueChange={(value) => handleFilterChange(setSelectedStockStatus, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-stock-status">
+                      <SelectValue placeholder="All stock levels" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-status">All stock levels</SelectItem>
+                      <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                      <SelectItem value="low">Low Stock</SelectItem>
+                      <SelectItem value="medium">Medium Stock</SelectItem>
+                      <SelectItem value="good">Good Stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Active Filters Display */}
@@ -383,7 +419,8 @@ export default function Inventory() {
                 selectedSize && selectedSize !== "all-sizes" || 
                 selectedDesign && selectedDesign !== "all-designs" || 
                 selectedGroupType && selectedGroupType !== "all-groups" || 
-                selectedStyleGroup && selectedStyleGroup !== "all-styles") && (
+                selectedStyleGroup && selectedStyleGroup !== "all-styles" ||
+                selectedStockStatus && selectedStockStatus !== "all-status") && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex flex-wrap gap-2">
                     <span className="text-xs text-muted-foreground">Active filters:</span>
@@ -444,6 +481,16 @@ export default function Inventory() {
                           size={12} 
                           className="ml-1 cursor-pointer" 
                           onClick={() => setSelectedStyleGroup("all-styles")} 
+                        />
+                      </Badge>
+                    )}
+                    {selectedStockStatus && selectedStockStatus !== "all-status" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Stock: {selectedStockStatus === "out-of-stock" ? "Out of Stock" : selectedStockStatus === "low" ? "Low Stock" : selectedStockStatus === "medium" ? "Medium Stock" : "Good Stock"}
+                        <X 
+                          size={12} 
+                          className="ml-1 cursor-pointer" 
+                          onClick={() => setSelectedStockStatus("all-status")} 
                         />
                       </Badge>
                     )}
