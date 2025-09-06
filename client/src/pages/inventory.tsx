@@ -68,8 +68,8 @@ export default function Inventory() {
   const { data: colors } = useQuery({ queryKey: ["/api/categories/color"] });
   const { data: sizes } = useQuery({ queryKey: ["/api/categories/size"] });
   const { data: designs } = useQuery({ queryKey: ["/api/categories/design"] });
-  const { data: groupTypes } = useQuery({ queryKey: ["/api/categories/groupType"] });
-  const { data: styleGroups } = useQuery({ queryKey: ["/api/categories/styleGroup"] });
+  const { data: groupTypes } = useQuery({ queryKey: ["/api/categories/group"] });
+  const { data: styleGroups } = useQuery({ queryKey: ["/api/categories/style"] });
 
   // Helper function to determine stock status
   const getStockStatus = (quantity: number, minLevel: number) => {
@@ -135,15 +135,15 @@ export default function Inventory() {
       (item.category || item.type)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.design?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.groupType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.styleGroup?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.group?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.style?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = !selectedCategory || selectedCategory === "all-categories" || (item.category || item.type) === selectedCategory;
     const matchesColor = !selectedColor || selectedColor === "all-colors" || item.color === selectedColor;
     const matchesSize = !selectedSize || selectedSize === "all-sizes" || item.size === selectedSize;
     const matchesDesign = !selectedDesign || selectedDesign === "all-designs" || item.design === selectedDesign;
-    const matchesGroupType = !selectedGroupType || selectedGroupType === "all-groups" || item.groupType === selectedGroupType;
-    const matchesStyleGroup = !selectedStyleGroup || selectedStyleGroup === "all-styles" || item.styleGroup === selectedStyleGroup;
+    const matchesGroupType = !selectedGroupType || selectedGroupType === "all-groups" || item.group === selectedGroupType;
+    const matchesStyleGroup = !selectedStyleGroup || selectedStyleGroup === "all-styles" || item.style === selectedStyleGroup;
     
     // Stock status filtering
     const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
@@ -324,6 +324,36 @@ export default function Inventory() {
                 </div>
 
                 <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Design</label>
+                  <Select value={selectedDesign} onValueChange={(value) => handleFilterChange(setSelectedDesign, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-design">
+                      <SelectValue placeholder="All designs" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-designs">All designs</SelectItem>
+                      {(designs as any[] || []).map((design: any) => (
+                        <SelectItem key={design.id} value={design.value}>{design.value}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Style Group</label>
+                  <Select value={selectedStyleGroup} onValueChange={(value) => handleFilterChange(setSelectedStyleGroup, value)}>
+                    <SelectTrigger className="h-8 text-xs" data-testid="filter-style-group">
+                      <SelectValue placeholder="All styles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-styles">All styles</SelectItem>
+                      {(styleGroups as any[] || []).map((style: any) => (
+                        <SelectItem key={style.id} value={style.value}>{style.value}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Color</label>
                   <Select value={selectedColor} onValueChange={(value) => handleFilterChange(setSelectedColor, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-color">
@@ -354,21 +384,6 @@ export default function Inventory() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Design</label>
-                  <Select value={selectedDesign} onValueChange={(value) => handleFilterChange(setSelectedDesign, value)}>
-                    <SelectTrigger className="h-8 text-xs" data-testid="filter-design">
-                      <SelectValue placeholder="All designs" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all-designs">All designs</SelectItem>
-                      {(designs as any[] || []).map((design: any) => (
-                        <SelectItem key={design.id} value={design.value}>{design.value}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Group Type</label>
                   <Select value={selectedGroupType} onValueChange={(value) => handleFilterChange(setSelectedGroupType, value)}>
                     <SelectTrigger className="h-8 text-xs" data-testid="filter-group-type">
@@ -378,21 +393,6 @@ export default function Inventory() {
                       <SelectItem value="all-groups">All groups</SelectItem>
                       {(groupTypes as any[] || []).map((type: any) => (
                         <SelectItem key={type.id} value={type.value}>{type.value}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Style Group</label>
-                  <Select value={selectedStyleGroup} onValueChange={(value) => handleFilterChange(setSelectedStyleGroup, value)}>
-                    <SelectTrigger className="h-8 text-xs" data-testid="filter-style-group">
-                      <SelectValue placeholder="All styles" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all-styles">All styles</SelectItem>
-                      {(styleGroups as any[] || []).map((style: any) => (
-                        <SelectItem key={style.id} value={style.value}>{style.value}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
