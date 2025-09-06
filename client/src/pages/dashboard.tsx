@@ -172,7 +172,7 @@ export default function Dashboard() {
           {/* Recent Sales */}
           <div className="lg:col-span-2">
             <Card className="border-border shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-gray-50/30 dark:from-card dark:to-muted/5">
-              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border/50 bg-gradient-to-r from-background to-muted/20">
+              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border/50 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
                 <div className="flex justify-between items-center">
                   <h3 className="text-base md:text-lg font-semibold text-secondary">Recent Sales</h3>
                   <Button variant="ghost" size="sm" className="text-primary text-xs md:text-sm h-8 hover:bg-primary/10 transition-colors">
