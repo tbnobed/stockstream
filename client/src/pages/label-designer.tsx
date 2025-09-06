@@ -926,11 +926,11 @@ export default function LabelDesigner() {
                     <SelectContent>
                       <SelectItem value="none" data-testid="option-size-none">None (No Size)</SelectItem>
                       {sizesError ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="error" disabled>
                           Failed to load sizes
                         </SelectItem>
                       ) : (!sizeOptions || (sizeOptions as any[]).length === 0) ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="empty" disabled>
                           No sizes configured
                         </SelectItem>
                       ) : (
