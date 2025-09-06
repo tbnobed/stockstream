@@ -428,8 +428,8 @@ export default function LabelDesigner() {
       tempContainer.style.fontFamily = 'Arial, sans-serif';
       
       // Use same dimensions as preview canvas for exact positioning match
-      const labelWidth = 480; // Match preview canvas width exactly
-      const labelHeight = 240; // Match preview canvas height exactly
+      const labelWidth = 600; // Match preview canvas width exactly
+      const labelHeight = 300; // Match preview canvas height exactly
       
       // Simple percentage to pixel conversion - same as preview
       const convertPosition = (percentage: number, dimension: number) => {
@@ -655,8 +655,8 @@ export default function LabelDesigner() {
               <div 
                 className="relative bg-white border-2 border-dashed border-gray-300 mx-auto cursor-crosshair"
                 style={{ 
-                  width: '480px', 
-                  height: '240px',
+                  width: '600px', 
+                  height: '300px',
                   fontFamily: 'Arial, sans-serif'
                 }}
                 onMouseMove={handleMouseMove}
@@ -794,7 +794,7 @@ export default function LabelDesigner() {
             </div>
 
             {/* Download Controls */}
-            <div className="space-y-3">
+            <div className="space-y-3 mt-8">
               <div className="flex gap-2">
                 <Button onClick={downloadLabelImage} className="flex-1" data-testid="button-download-image">
                   <Download className="h-4 w-4 mr-2" />
