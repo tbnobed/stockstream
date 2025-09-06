@@ -56,7 +56,7 @@ const defaultLabelData: LabelData = {
   price: "25.00",
   qrContent: "PRD-001",
   customMessage: "Thank you for your purchase",
-  sizeIndicator: "M",
+  sizeIndicator: "",
   logoUrl: "",
   showQR: true,
   showLogo: false,
@@ -108,6 +108,11 @@ export default function LabelDesigner() {
 
   // Helper function for dynamic size calculation
   const calculateSizeFontSize = (text: string, containerWidth: number = 96) => {
+    // Return default size for empty text
+    if (!text || text.length === 0) {
+      return 20;
+    }
+    
     // Base font size for single characters
     const baseFontSize = 48;
     
@@ -209,7 +214,7 @@ export default function LabelDesigner() {
         price: defaultTemplate.price || "25.00",
         qrContent: defaultTemplate.qrContent || "PRD-001",
         customMessage: defaultTemplate.customMessage || "Thank you for your purchase",
-        sizeIndicator: defaultTemplate.sizeIndicator || "M",
+        sizeIndicator: defaultTemplate.sizeIndicator || "",
         logoUrl: defaultTemplate.logoUrl || "",
         showQR: defaultTemplate.showQR ?? true,
         showLogo: defaultTemplate.showLogo ?? false,
@@ -363,7 +368,7 @@ export default function LabelDesigner() {
       productCode: inventoryItem.sku,
       price: inventoryItem.price.toString(),
       qrContent: inventoryItem.sku,
-      sizeIndicator: inventoryItem.size || "M",
+      sizeIndicator: inventoryItem.size || "",
       customMessage: labelData.customMessage,
       logoUrl: labelData.logoUrl,
       showQR: labelData.showQR,
@@ -475,7 +480,7 @@ export default function LabelDesigner() {
             <img src="${labelData.logoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
           </div>` : ''}
           
-          ${labelData.showSize ? `
+          ${labelData.showSize && labelData.sizeIndicator && labelData.sizeIndicator.trim().length > 0 ? `
           <!-- Size Indicator -->
           <div style="
             position: absolute;
@@ -684,7 +689,7 @@ export default function LabelDesigner() {
                 )}
 
                 {/* Size Indicator */}
-                {labelData.showSize && (
+                {labelData.showSize && labelData.sizeIndicator && labelData.sizeIndicator.trim().length > 0 && (
                   <div 
                     className={`absolute cursor-move border-2 transition-all flex items-center justify-center font-bold whitespace-nowrap overflow-hidden ${
                       isDragging === 'sizeIndicator' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
@@ -901,7 +906,7 @@ export default function LabelDesigner() {
 
                   {/* Logo Gallery */}
                   <div className="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto">
-                    {(mediaFiles || []).map((mediaFile) => (
+                    {(mediaFiles || []).map((mediaFile: any) => (
                       <div
                         key={mediaFile.id}
                         className={cn(
@@ -944,7 +949,7 @@ export default function LabelDesigner() {
                       </div>
                     ))}
                     
-                    {(!mediaFiles || mediaFiles.length === 0) && (
+                    {(!mediaFiles || (mediaFiles as any[]).length === 0) && (
                       <div className="col-span-2 text-center py-8 text-muted-foreground">
                         <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">No logos uploaded yet</p>
