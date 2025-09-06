@@ -54,7 +54,7 @@ export default function Inventory() {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
     if (status === 'low-stock') {
-      setSelectedStockStatus('low');
+      setSelectedStockStatus('low-and-out');
       setShowFilters(true);
     }
   }, [location]);
@@ -147,7 +147,9 @@ export default function Inventory() {
     
     // Stock status filtering
     const stockStatus = getStockStatus(item.quantity, item.minStockLevel);
-    const matchesStockStatus = !selectedStockStatus || selectedStockStatus === "all-status" || stockStatus === selectedStockStatus;
+    const matchesStockStatus = !selectedStockStatus || selectedStockStatus === "all-status" || 
+      (selectedStockStatus === "low-and-out" && (stockStatus === "low" || stockStatus === "out-of-stock")) ||
+      stockStatus === selectedStockStatus;
     
     return matchesSearch && matchesCategory && matchesColor && matchesSize && 
            matchesDesign && matchesGroupType && matchesStyleGroup && matchesStockStatus;
@@ -404,6 +406,7 @@ export default function Inventory() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-status">All stock levels</SelectItem>
+                      <SelectItem value="low-and-out">Critical Stock (Low & Out)</SelectItem>
                       <SelectItem value="out-of-stock">Out of Stock</SelectItem>
                       <SelectItem value="low">Low Stock</SelectItem>
                       <SelectItem value="medium">Medium Stock</SelectItem>
@@ -486,7 +489,7 @@ export default function Inventory() {
                     )}
                     {selectedStockStatus && selectedStockStatus !== "all-status" && (
                       <Badge variant="secondary" className="text-xs">
-                        Stock: {selectedStockStatus === "out-of-stock" ? "Out of Stock" : selectedStockStatus === "low" ? "Low Stock" : selectedStockStatus === "medium" ? "Medium Stock" : "Good Stock"}
+                        Stock: {selectedStockStatus === "low-and-out" ? "Critical Stock (Low & Out)" : selectedStockStatus === "out-of-stock" ? "Out of Stock" : selectedStockStatus === "low" ? "Low Stock" : selectedStockStatus === "medium" ? "Medium Stock" : "Good Stock"}
                         <X 
                           size={12} 
                           className="ml-1 cursor-pointer" 
@@ -555,11 +558,14 @@ export default function Inventory() {
                             )}
                           </div>
                           <Badge variant={
+                            stockStatus === "out-of-stock" ? "destructive" :
                             stockStatus === "low" ? "destructive" :
                             stockStatus === "medium" ? "secondary" : "default"
                           } className="ml-2 flex-shrink-0">
+                            {stockStatus === "out-of-stock" && <AlertTriangle className="mr-1" size={12} />}
                             {stockStatus === "low" && <AlertTriangle className="mr-1" size={12} />}
-                            {stockStatus === "low" ? "Low Stock" :
+                            {stockStatus === "out-of-stock" ? "Out of Stock" :
+                             stockStatus === "low" ? "Low Stock" :
                              stockStatus === "medium" ? "Medium" : "In Stock"}
                           </Badge>
                         </div>
@@ -747,11 +753,14 @@ export default function Inventory() {
                           </td>
                           <td className="py-3">
                             <Badge variant={
+                              stockStatus === "out-of-stock" ? "destructive" :
                               stockStatus === "low" ? "destructive" :
                               stockStatus === "medium" ? "secondary" : "default"
                             }>
+                              {stockStatus === "out-of-stock" && <AlertTriangle className="mr-1" size={12} />}
                               {stockStatus === "low" && <AlertTriangle className="mr-1" size={12} />}
-                              {stockStatus === "low" ? "Low Stock" :
+                              {stockStatus === "out-of-stock" ? "Out of Stock" :
+                               stockStatus === "low" ? "Low Stock" :
                                stockStatus === "medium" ? "Medium" : "In Stock"}
                             </Badge>
                           </td>

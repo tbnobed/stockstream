@@ -211,7 +211,7 @@ export default function Dashboard() {
                         </thead>
                         <tbody>
                           {recentSales.map((sale: any) => (
-                            <tr key={sale.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors duration-200">
+                            <tr key={sale.id} className="border-b border-border/30 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-blue-100/20 transition-all duration-200">
                               <td className="py-3">
                                 <span className="font-mono text-sm text-secondary" data-testid={`sale-id-${sale.id}`}>
                                   #{sale.orderNumber}
@@ -255,7 +255,7 @@ export default function Dashboard() {
                     {/* Mobile Card View */}
                     <div className="md:hidden space-y-3">
                       {recentSales.map((sale: any) => (
-                        <div key={sale.id} className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl p-3 border border-border/30 shadow-sm hover:shadow-md transition-all duration-200">
+                        <div key={sale.id} className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl p-3 border border-border/30 shadow-sm hover:bg-gradient-to-br hover:from-blue-50/20 hover:to-blue-100/30 hover:shadow-md transition-all duration-200">
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                               <h4 className="font-semibold text-secondary text-sm" data-testid={`sale-id-${sale.id}`}>
@@ -323,7 +323,7 @@ export default function Dashboard() {
                 
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-orange-500/5 hover:to-orange-400/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-orange-400/20 rounded-lg"
+                  className="w-full justify-between p-3 h-auto hover:bg-blue-100 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
                   onClick={() => navigate('/labels')}
                   data-testid="quick-action-print"
                 >
@@ -336,7 +336,7 @@ export default function Dashboard() {
                 
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-green-500/5 hover:to-green-400/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-green-400/20 rounded-lg"
+                  className="w-full justify-between p-3 h-auto hover:bg-blue-100 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
                   onClick={() => setShowInventoryCheckModal(true)}
                   data-testid="quick-action-inventory"
                 >
@@ -349,7 +349,7 @@ export default function Dashboard() {
                 
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-3 h-auto hover:bg-gradient-to-r hover:from-purple-500/5 hover:to-purple-400/10 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-purple-400/20 rounded-lg"
+                  className="w-full justify-between p-3 h-auto hover:bg-blue-100 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
                   onClick={() => setShowReportsModal(true)}
                   data-testid="quick-action-report"
                 >
@@ -377,7 +377,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {lowStockItems.slice(0, 3).map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/30 rounded-xl border border-red-200/30 dark:border-red-800/30 hover:shadow-sm transition-all duration-200">
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-red-50/50 to-red-100/30 dark:from-red-950/20 dark:to-red-900/30 rounded-xl border border-red-200/30 dark:border-red-800/30 hover:bg-gradient-to-r hover:from-blue-100/40 hover:to-blue-200/30 hover:shadow-sm transition-all duration-200">
                       <div>
                         <p className="text-sm font-medium text-secondary">{item.name}</p>
                         <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
@@ -392,7 +392,7 @@ export default function Dashboard() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-primary hover:text-primary/80"
+                      className="w-full text-blue-600 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-blue-600/10 hover:text-blue-700 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-blue-500/20 rounded-lg"
                       onClick={() => navigate('/inventory?status=low-stock')}
                       data-testid="view-all-low-stock"
                     >
