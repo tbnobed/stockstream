@@ -83,6 +83,9 @@ MAX_CART_ITEMS=50
 QR_SCANNER_TIMEOUT=8000
 MOBILE_DEVICE_SUPPORT=true
 REPLIT_IFRAME_SUPPORT=true
+
+# Payment Configuration
+VENMO_USERNAME=AxemenMCAZ
 EOF
         
         print_success "Environment file created: $ENV_FILE"

@@ -64,6 +64,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
+  // Configuration endpoint (before auth middleware)
+  app.get('/api/config', async (req, res) => {
+    try {
+      const config = {
+        venmoUsername: process.env.VENMO_USERNAME || 'AxemenMCAZ',
+      };
+      res.json(config);
+    } catch (error) {
+      console.error('Config endpoint error:', error);
+      res.status(500).json({ message: 'Failed to fetch configuration' });
+    }
+  });
+
   // Health check endpoint (before auth middleware)
   app.get('/api/health', async (req, res) => {
     try {

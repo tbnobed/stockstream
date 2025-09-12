@@ -53,6 +53,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const [showScanner, setShowScanner] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [venmoQRCode, setVenmoQRCode] = useState<string>("");
+  const [venmoUsername, setVenmoUsername] = useState<string>("");
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
@@ -60,6 +61,11 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const { data: associates = [] } = useQuery({
     queryKey: ["/api/associates"],
     enabled: isAdmin, // Only fetch associates if user is admin
+  });
+
+  // Fetch application configuration
+  const { data: config } = useQuery({
+    queryKey: ["/api/config"],
   });
 
   const form = useForm<TransactionFormData>({
@@ -72,13 +78,14 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     },
   });
 
-  // Generate Venmo QR code when payment method changes to Venmo
+  // Generate Venmo QR code when payment method changes to Venmo or config loads
   useEffect(() => {
     const generateVenmoQR = async () => {
-      if (form.watch("paymentMethod") === "venmo") {
+      const username = config?.venmoUsername;
+      if (form.watch("paymentMethod") === "venmo" && username) {
         try {
-          // Create Venmo URL with the club's username
-          const venmoUrl = `https://venmo.com/u/AxemenMCAZ`;
+          // Create Venmo URL with the configured username
+          const venmoUrl = `https://venmo.com/u/${username}`;
           const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
             width: 200,
             margin: 2,
@@ -88,17 +95,19 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
             }
           });
           setVenmoQRCode(qrDataUrl);
+          setVenmoUsername(username);
         } catch (error) {
           console.error('Error generating Venmo QR code:', error);
           setVenmoQRCode("");
         }
       } else {
         setVenmoQRCode("");
+        setVenmoUsername("");
       }
     };
 
     generateVenmoQR();
-  }, [form.watch("paymentMethod")]);
+  }, [form.watch("paymentMethod"), config?.venmoUsername]);
 
   // Auto-populate the logged-in associate
   useEffect(() => {
@@ -577,7 +586,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                     )}
                     <div className="text-center">
                       <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-venmo-code">
-                        @AxemenMCAZ
+                        @{venmoUsername || 'AxemenMCAZ'}
                       </div>
                       <p className="text-xs text-blue-600">
                         Or search this username
