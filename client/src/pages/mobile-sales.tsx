@@ -25,6 +25,7 @@ import {
 import QRScanner from "@/components/qr-scanner";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import QRCode from "qrcode";
 
 interface InventoryItem {
   id: string;
@@ -54,12 +55,50 @@ export default function MobileSales() {
   const [showResults, setShowResults] = useState(false);
   const [receiptToken, setReceiptToken] = useState<string | null>(null);
   const [showReceiptQR, setShowReceiptQR] = useState(false);
+  const [venmoQRCode, setVenmoQRCode] = useState<string>("");
+  const [venmoUsername, setVenmoUsername] = useState<string>("");
   const { toast } = useToast();
 
   // Fetch inventory items
   const { data: inventory = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
   });
+
+  // Fetch application configuration
+  const { data: config } = useQuery<{ venmoUsername: string }>({
+    queryKey: ["/api/config"],
+  });
+
+  // Generate Venmo QR code when payment method changes to Venmo or config loads
+  useEffect(() => {
+    const generateVenmoQR = async () => {
+      const username = config?.venmoUsername;
+      if (paymentMethod === "venmo" && username) {
+        try {
+          // Create Venmo URL with the configured username
+          const venmoUrl = `https://venmo.com/u/${username}`;
+          const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
+            width: 200,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          });
+          setVenmoQRCode(qrDataUrl);
+          setVenmoUsername(username);
+        } catch (error) {
+          console.error('Error generating Venmo QR code:', error);
+          setVenmoQRCode("");
+        }
+      } else {
+        setVenmoQRCode("");
+        setVenmoUsername("");
+      }
+    };
+
+    generateVenmoQR();
+  }, [paymentMethod, config?.venmoUsername]);
 
   // Add item to cart by SKU
   const addItemBySku = () => {
@@ -560,6 +599,35 @@ export default function MobileSales() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Venmo Code Display */}
+            {paymentMethod === "venmo" && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <Label className="text-sm font-medium text-blue-800">Venmo Payment</Label>
+                <div className="flex items-center justify-center space-x-4 mt-3">
+                  {venmoQRCode && (
+                    <div className="text-center">
+                      <img 
+                        src={venmoQRCode} 
+                        alt="Venmo QR Code"
+                        className="mx-auto mb-2"
+                        style={{ width: '120px', height: '120px' }}
+                        data-testid="img-venmo-qr-mobile"
+                      />
+                      <p className="text-xs text-blue-600">Scan to pay</p>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-venmo-code-mobile">
+                      @{venmoUsername || 'AxemenMCAZ'}
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      Or search this username
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Customer Information */}
             <div className="space-y-3">
