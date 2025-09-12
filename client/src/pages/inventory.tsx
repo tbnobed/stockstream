@@ -155,12 +155,48 @@ export default function Inventory() {
            matchesDesign && matchesGroupType && matchesStyleGroup && matchesStockStatus;
   });
 
+  // Helper function to extract base item name (without size)
+  const getBaseItemName = (itemName: string): string => {
+    // Remove size indicators like (XL), (Large), etc. from the end of the name
+    return itemName.replace(/\s*\([^)]*\)\s*$/, '').trim();
+  };
+
+  // Define size order for proper sorting
+  const sizeOrder = ['XS', 'S', 'M', 'L', 'LA', 'Large', 'XL', 'XLarge', 'XX', 'XXL', 'XXLarge', '3X', 'XXXL', '4X', 'XXXXL', '5X'];
+  
+  const getSizeOrderIndex = (size: string): number => {
+    const index = sizeOrder.indexOf(size);
+    return index === -1 ? 999 : index; // Unknown sizes go to the end
+  };
+
+  // Sort and group filtered items by base name and size
+  const sortedItems = filteredItems.sort((a: any, b: any) => {
+    const baseNameA = getBaseItemName(a.name || '');
+    const baseNameB = getBaseItemName(b.name || '');
+    
+    // First sort by base item name
+    if (baseNameA !== baseNameB) {
+      return baseNameA.localeCompare(baseNameB);
+    }
+    
+    // Within same base name, sort by size order
+    const sizeOrderA = getSizeOrderIndex(a.size || '');
+    const sizeOrderB = getSizeOrderIndex(b.size || '');
+    
+    if (sizeOrderA !== sizeOrderB) {
+      return sizeOrderA - sizeOrderB;
+    }
+    
+    // If sizes are the same or unknown, sort by SKU as fallback
+    return (a.sku || '').localeCompare(b.sku || '');
+  });
+
   // Pagination logic
-  const totalItems = filteredItems.length;
+  const totalItems = sortedItems.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedItems = filteredItems.slice(startIndex, endIndex);
+  const paginatedItems = sortedItems.slice(startIndex, endIndex);
 
   // Reset to first page when search or filters change
   const handleSearchChange = (value: string) => {
