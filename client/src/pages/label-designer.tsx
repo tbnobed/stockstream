@@ -499,6 +499,7 @@ export default function LabelDesigner() {
                   font-weight: bold;
                   margin-bottom: 2px;
                   line-height: 1.1;
+                  white-space: pre-wrap;
                 ">${parsedName.mainName}</div>
                 <div style="
                   font-size: ${18 * (labelData.productInfoScale / 100)}px;
@@ -513,6 +514,7 @@ export default function LabelDesigner() {
                   font-weight: bold;
                   margin-bottom: 2px;
                   line-height: 1.1;
+                  white-space: pre-wrap;
                 ">${labelData.productName}</div>`;
               }
             })()}
