@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { QrCode, X, Plus, Minus, ShoppingCart, Trash2 } from "lucide-react";
+import QRCode from "qrcode";
 import QRScanner from "@/components/qr-scanner";
 import { insertSaleSchema, type InsertSale } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
@@ -51,6 +52,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showScanner, setShowScanner] = useState(false);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [venmoQRCode, setVenmoQRCode] = useState<string>("");
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
@@ -69,6 +71,34 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       customerEmail: "",
     },
   });
+
+  // Generate Venmo QR code when payment method changes to Venmo
+  useEffect(() => {
+    const generateVenmoQR = async () => {
+      if (form.watch("paymentMethod") === "venmo") {
+        try {
+          // Create Venmo URL with the club's username
+          const venmoUrl = `https://venmo.com/u/AxemenMCAZ`;
+          const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
+            width: 200,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          });
+          setVenmoQRCode(qrDataUrl);
+        } catch (error) {
+          console.error('Error generating Venmo QR code:', error);
+          setVenmoQRCode("");
+        }
+      } else {
+        setVenmoQRCode("");
+      }
+    };
+
+    generateVenmoQR();
+  }, [form.watch("paymentMethod")]);
 
   // Auto-populate the logged-in associate
   useEffect(() => {
@@ -531,13 +561,29 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
               {/* Venmo Code Display */}
               {form.watch("paymentMethod") === "venmo" && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <Label className="text-sm font-medium text-blue-800">Venmo Payment Code</Label>
-                  <div className="mt-2 text-2xl font-bold text-blue-900" data-testid="text-venmo-code">
-                    @AxemenMCAZ
+                  <Label className="text-sm font-medium text-blue-800">Venmo Payment</Label>
+                  <div className="flex items-center justify-center space-x-4 mt-3">
+                    {venmoQRCode && (
+                      <div className="text-center">
+                        <img 
+                          src={venmoQRCode} 
+                          alt="Venmo QR Code"
+                          className="mx-auto mb-2"
+                          style={{ width: '120px', height: '120px' }}
+                          data-testid="img-venmo-qr"
+                        />
+                        <p className="text-xs text-blue-600">Scan to pay</p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-venmo-code">
+                        @AxemenMCAZ
+                      </div>
+                      <p className="text-xs text-blue-600">
+                        Or search this username
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-blue-600 mt-1">
-                    Show this code to the customer for Venmo payment
-                  </p>
                 </div>
               )}
 
