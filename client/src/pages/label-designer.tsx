@@ -998,11 +998,13 @@ export default function LabelDesigner() {
                 </div>
                 <div>
                   <Label htmlFor="product-name">Product Name</Label>
-                  <Input
+                  <Textarea
                     id="product-name"
                     value={labelData.productName}
                     onChange={(e) => updateLabelData('productName', e.target.value)}
-                    placeholder="Enter product name"
+                    placeholder="Enter product name (press Enter for line breaks)"
+                    rows={2}
+                    data-testid="textarea-product-name"
                   />
                 </div>
                 <div>
