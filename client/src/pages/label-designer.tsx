@@ -762,7 +762,7 @@ export default function LabelDesigner() {
                     if (parsedName.hasSize) {
                       return (
                         <>
-                          <div className="font-bold leading-tight" style={{ fontSize: `${1.25 * scale}rem` }}>
+                          <div className="font-bold leading-tight" style={{ fontSize: `${1.25 * scale}rem`, whiteSpace: 'pre-wrap' }}>
                             {parsedName.mainName}
                           </div>
                           <div className="font-bold text-gray-700 leading-tight" style={{ fontSize: `${1.125 * scale}rem` }}>
@@ -772,7 +772,7 @@ export default function LabelDesigner() {
                       );
                     } else {
                       return (
-                        <div className="font-bold leading-tight" style={{ fontSize: `${1.25 * scale}rem` }}>
+                        <div className="font-bold leading-tight" style={{ fontSize: `${1.25 * scale}rem`, whiteSpace: 'pre-wrap' }}>
                           {labelData.productName}
                         </div>
                       );
