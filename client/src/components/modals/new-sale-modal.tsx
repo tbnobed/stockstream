@@ -64,7 +64,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   });
 
   // Fetch application configuration
-  const { data: config } = useQuery({
+  const { data: config } = useQuery<{ venmoUsername: string }>({
     queryKey: ["/api/config"],
   });
 

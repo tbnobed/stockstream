@@ -408,7 +408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           itemId: item.inventoryItemId, // Map from frontend format
           quantity: item.quantity,
           unitPrice: item.priceAtSale,
-          totalAmount: item.priceAtSale * item.quantity,
+          totalAmount: (item.priceAtSale * item.quantity).toString(),
           paymentMethod: paymentMethod,
           orderNumber: orderNumber,
           salesAssociateId: null, // No associate ID for volunteers

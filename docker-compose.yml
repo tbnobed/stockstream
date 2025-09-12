@@ -45,6 +45,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM_NAME: ${SMTP_FROM_NAME:-InventoryPro}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      # Payment Configuration
+      VENMO_USERNAME: ${VENMO_USERNAME:-AxemenMCAZ}
       # Note: Object storage removed - using local file storage in /app/uploads
       PORT: 5000
     ports:
