@@ -287,7 +287,14 @@ export default function LabelDesigner() {
             : defaultTemplate.layoutPositions;
           
           console.log('🔧 PRODUCTION DEBUG: Parsed layout:', savedLayout);
-          setLayout(savedLayout);
+          
+          // Merge saved layout with default layout to ensure all properties exist
+          const mergedLayout = {
+            ...defaultLayout,
+            ...savedLayout
+          };
+          
+          setLayout(mergedLayout);
           console.log('🔧 PRODUCTION DEBUG: Layout state set successfully');
         } catch (error) {
           console.error('Failed to parse saved layout positions:', error);
