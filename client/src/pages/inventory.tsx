@@ -162,7 +162,7 @@ export default function Inventory() {
   };
 
   // Define size order for proper sorting
-  const sizeOrder = ['XS', 'S', 'M', 'L', 'LA', 'Large', 'XL', 'XLarge', 'XX', 'XXL', 'XXLarge', '3X', 'XXXL', '4X', 'XXXXL', '5X'];
+  const sizeOrder = ['XS', 'S', 'M', 'Medium', 'L', 'LA', 'Large', 'XL', 'XLarge', 'XX', 'XXL', 'XXLarge', '3X', 'XXXL', '4X', 'XXXXL', '5X'];
   
   const getSizeOrderIndex = (size: string): number => {
     const index = sizeOrder.indexOf(size);
