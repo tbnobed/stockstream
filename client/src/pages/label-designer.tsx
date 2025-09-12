@@ -35,12 +35,14 @@ interface LabelData {
   showPrice: boolean;
   showMessage: boolean;
   showSize: boolean;
+  showMember: boolean;
   // Element scale properties (as percentages)
   qrCodeScale: number;
   logoScale: number;
   productInfoScale: number;
   sizeIndicatorScale: number;
   messageScale: number;
+  memberScale: number;
 }
 
 interface ElementPosition {
@@ -54,6 +56,7 @@ interface LabelLayout {
   logo: ElementPosition;
   sizeIndicator: ElementPosition;
   message: ElementPosition;
+  member: ElementPosition;
 }
 
 const defaultLabelData: LabelData = {
@@ -70,12 +73,14 @@ const defaultLabelData: LabelData = {
   showPrice: true,
   showMessage: true,
   showSize: true,
+  showMember: false,
   // Default scale values (100% = original size)
   qrCodeScale: 100,
   logoScale: 100,
   productInfoScale: 100,
   sizeIndicatorScale: 100,
   messageScale: 100,
+  memberScale: 100,
 };
 
 export default function LabelDesigner() {
@@ -172,7 +177,8 @@ export default function LabelDesigner() {
     qrCode: { x: 72, y: 2 },
     logo: { x: 38, y: 30 },
     sizeIndicator: { x: 75, y: 55 },
-    message: { x: 5, y: 70 }
+    message: { x: 5, y: 70 },
+    member: { x: 5, y: 40 }
   };
 
   const [layout, setLayout] = useState<LabelLayout>(defaultLayout);
@@ -257,12 +263,14 @@ export default function LabelDesigner() {
         showPrice: defaultTemplate.showPrice ?? true,
         showMessage: defaultTemplate.showMessage ?? true,
         showSize: defaultTemplate.showSize ?? true,
+        showMember: (defaultTemplate as any).showMember ?? false,
         // Handle scale properties with defaults for backward compatibility
         qrCodeScale: (defaultTemplate as any).qrCodeScale ?? 100,
         logoScale: (defaultTemplate as any).logoScale ?? 100,
         productInfoScale: (defaultTemplate as any).productInfoScale ?? 100,
         sizeIndicatorScale: (defaultTemplate as any).sizeIndicatorScale ?? 100,
-        messageScale: (defaultTemplate as any).messageScale ?? 100
+        messageScale: (defaultTemplate as any).messageScale ?? 100,
+        memberScale: (defaultTemplate as any).memberScale ?? 100
       };
       
       console.log('Merged label data:', mergedData);
@@ -869,6 +877,27 @@ export default function LabelDesigner() {
                   </div>
                 )}
 
+                {/* Member Text */}
+                {labelData.showMember && (
+                  <div 
+                    className={`absolute cursor-move p-2 rounded border-2 transition-all flex items-center justify-center font-bold ${
+                      isDragging === 'member' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-400'
+                    }`}
+                    style={{
+                      left: `${layout.member.x}%`,
+                      top: `${layout.member.y}%`,
+                      fontSize: `${24 * (labelData.memberScale / 100)}px`,
+                      color: 'red',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase'
+                    }}
+                    onMouseDown={(e) => handleMouseDown('member', e)}
+                    data-testid="member-text-preview"
+                  >
+                    MEMBER
+                  </div>
+                )}
+
                 {/* Helper text */}
                 <div className="absolute bottom-2 right-2 text-xs text-gray-400 pointer-events-none">
                   Drag elements to reposition
@@ -1180,6 +1209,15 @@ export default function LabelDesigner() {
                       onCheckedChange={(checked) => updateLabelData('showSize', checked)}
                     />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="show-member">Show MEMBER</Label>
+                    <Switch
+                      id="show-member"
+                      checked={labelData.showMember}
+                      onCheckedChange={(checked) => updateLabelData('showMember', checked)}
+                      data-testid="switch-show-member"
+                    />
+                  </div>
                 </div>
 
                 {/* Element Size Controls */}
@@ -1275,6 +1313,26 @@ export default function LabelDesigner() {
                         value={[labelData.messageScale]}
                         onValueChange={(value) => setLabelData(prev => ({ ...prev, messageScale: value[0] }))}
                         className="w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* Member Scale */}
+                  {labelData.showMember && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="member-scale">MEMBER Size</Label>
+                        <span className="text-sm text-muted-foreground">{labelData.memberScale}%</span>
+                      </div>
+                      <Slider
+                        id="member-scale"
+                        min={25}
+                        max={200}
+                        step={5}
+                        value={[labelData.memberScale]}
+                        onValueChange={(value) => setLabelData(prev => ({ ...prev, memberScale: value[0] }))}
+                        className="w-full"
+                        data-testid="slider-member-scale"
                       />
                     </div>
                   )}
