@@ -528,6 +528,19 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                 )}
               />
 
+              {/* Venmo Code Display */}
+              {form.watch("paymentMethod") === "venmo" && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Label className="text-sm font-medium text-blue-800">Venmo Payment Code</Label>
+                  <div className="mt-2 text-2xl font-bold text-blue-900" data-testid="text-venmo-code">
+                    @AxemenMCAZ
+                  </div>
+                  <p className="text-sm text-blue-600 mt-1">
+                    Show this code to the customer for Venmo payment
+                  </p>
+                </div>
+              )}
+
               {/* Customer Information Fields */}
               <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
                 <Label className="text-sm font-medium">Customer Information (Optional - for Email Receipt)</Label>
