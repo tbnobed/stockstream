@@ -766,11 +766,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/inventory/:id", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteInventoryItem(id);
-      if (deleted) {
+      const result = await storage.deleteInventoryItem(id);
+      if (result.success) {
         res.json({ message: "Inventory item deleted successfully" });
       } else {
-        res.status(404).json({ message: "Inventory item not found" });
+        res.status(400).json({ message: result.error || "Failed to delete inventory item" });
       }
     } catch (error) {
       console.error("Error deleting inventory item:", error);

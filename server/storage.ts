@@ -65,7 +65,7 @@ export interface IStorage {
   updateInventoryItem(id: string, item: Partial<InventoryItem>): Promise<InventoryItem>;
   archiveInventoryItem(id: string): Promise<InventoryItem>;
   restoreInventoryItem(id: string): Promise<InventoryItem>;
-  deleteInventoryItem(id: string): Promise<boolean>;
+  deleteInventoryItem(id: string): Promise<{ success: boolean; error?: string }>;
   addStockToItem(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItemWithSupplier[]>;
   
@@ -330,15 +330,31 @@ export class DatabaseStorage implements IStorage {
     return restoredItem;
   }
 
-  async deleteInventoryItem(id: string): Promise<boolean> {
+  async deleteInventoryItem(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const result = await db
+      // First check if this item has any sales associated with it
+      const salesCount = await db
+        .select({ count: sql`count(*)` })
+        .from(sales)
+        .where(eq(sales.itemId, id));
+      
+      if (salesCount[0]?.count > 0) {
+        return {
+          success: false,
+          error: "Cannot delete this item because it has sales history. Consider archiving it instead."
+        };
+      }
+
+      await db
         .delete(inventoryItems)
         .where(eq(inventoryItems.id, id));
-      return true; // If no error occurred, deletion was successful
+      return { success: true };
     } catch (error) {
       console.error('Error deleting inventory item:', error);
-      return false;
+      return {
+        success: false,
+        error: "Failed to delete the item. Please try again."
+      };
     }
   }
 
