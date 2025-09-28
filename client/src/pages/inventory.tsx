@@ -49,7 +49,7 @@ export default function Inventory() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: User | null };
 
   // Handle URL parameters for filtering
   useEffect(() => {
@@ -266,7 +266,7 @@ export default function Inventory() {
       <Header
         title="Inventory Management"
         subtitle="Track and manage your inventory items"
-        onAddInventory={user?.role === 'admin' ? () => setShowAddModal(true) : undefined}
+        onAddInventory={user && user.role === 'admin' ? () => setShowAddModal(true) : undefined}
       />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
