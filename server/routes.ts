@@ -713,7 +713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory", isAuthenticated, async (req, res) => {
+  app.post("/api/inventory", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const item = insertInventoryItemSchema.parse(req.body);
       const newItem = await storage.createInventoryItem(item);
