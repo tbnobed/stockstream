@@ -69,6 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const config = {
         venmoUsername: process.env.VENMO_USERNAME || 'AxemenMCAZ',
+        paypalUsername: process.env.PAYPAL_USERNAME || 'AxemenMCAZ',
       };
       res.json(config);
     } catch (error) {
