@@ -54,6 +54,8 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [venmoQRCode, setVenmoQRCode] = useState<string>("");
   const [venmoUsername, setVenmoUsername] = useState<string>("");
+  const [paypalQRCode, setPaypalQRCode] = useState<string>("");
+  const [paypalUsername, setPaypalUsername] = useState<string>("");
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
@@ -64,7 +66,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
   });
 
   // Fetch application configuration
-  const { data: config } = useQuery<{ venmoUsername: string }>({
+  const { data: config } = useQuery<{ venmoUsername: string; paypalUsername: string }>({
     queryKey: ["/api/config"],
   });
 
@@ -78,14 +80,17 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
     },
   });
 
-  // Generate Venmo QR code when payment method changes to Venmo or config loads
+  // Generate payment QR codes when payment method changes or config loads
   useEffect(() => {
-    const generateVenmoQR = async () => {
-      const username = config?.venmoUsername;
-      if (form.watch("paymentMethod") === "venmo" && username) {
+    const generatePaymentQRs = async () => {
+      const venmoUser = config?.venmoUsername;
+      const paypalUser = config?.paypalUsername;
+      const paymentMethod = form.watch("paymentMethod");
+      
+      // Generate Venmo QR code
+      if (paymentMethod === "venmo" && venmoUser) {
         try {
-          // Create Venmo URL with the configured username
-          const venmoUrl = `https://venmo.com/u/${username}`;
+          const venmoUrl = `https://venmo.com/u/${venmoUser}`;
           const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
             width: 200,
             margin: 2,
@@ -95,7 +100,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
             }
           });
           setVenmoQRCode(qrDataUrl);
-          setVenmoUsername(username);
+          setVenmoUsername(venmoUser);
         } catch (error) {
           console.error('Error generating Venmo QR code:', error);
           setVenmoQRCode("");
@@ -104,10 +109,33 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
         setVenmoQRCode("");
         setVenmoUsername("");
       }
+
+      // Generate PayPal QR code
+      if (paymentMethod === "paypal" && paypalUser) {
+        try {
+          const paypalUrl = `https://paypal.me/${paypalUser}`;
+          const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
+            width: 200,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          });
+          setPaypalQRCode(qrDataUrl);
+          setPaypalUsername(paypalUser);
+        } catch (error) {
+          console.error('Error generating PayPal QR code:', error);
+          setPaypalQRCode("");
+        }
+      } else {
+        setPaypalQRCode("");
+        setPaypalUsername("");
+      }
     };
 
-    generateVenmoQR();
-  }, [form.watch("paymentMethod"), config?.venmoUsername]);
+    generatePaymentQRs();
+  }, [form.watch("paymentMethod"), config?.venmoUsername, config?.paypalUsername]);
 
   // Auto-populate the logged-in associate
   useEffect(() => {
@@ -560,6 +588,10 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                           <RadioGroupItem value="venmo" id="venmo" />
                           <Label htmlFor="venmo">Venmo</Label>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="paypal" id="paypal" />
+                          <Label htmlFor="paypal">PayPal</Label>
+                        </div>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -590,6 +622,35 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                       </div>
                       <p className="text-xs text-blue-600">
                         Or search this username
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PayPal Code Display */}
+              {form.watch("paymentMethod") === "paypal" && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Label className="text-sm font-medium text-blue-800">PayPal Payment</Label>
+                  <div className="flex items-center justify-center space-x-4 mt-3">
+                    {paypalQRCode && (
+                      <div className="text-center">
+                        <img 
+                          src={paypalQRCode} 
+                          alt="PayPal QR Code"
+                          className="mx-auto mb-2"
+                          style={{ width: '120px', height: '120px' }}
+                          data-testid="img-paypal-qr"
+                        />
+                        <p className="text-xs text-blue-600">Scan to pay</p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-paypal-code">
+                        paypal.me/{paypalUsername || 'AxemenMCAZ'}
+                      </div>
+                      <p className="text-xs text-blue-600">
+                        Or visit this link
                       </p>
                     </div>
                   </div>
