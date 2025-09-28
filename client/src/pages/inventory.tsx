@@ -17,7 +17,7 @@ import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Arc
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, User } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Inventory() {
@@ -266,7 +266,7 @@ export default function Inventory() {
       <Header
         title="Inventory Management"
         subtitle="Track and manage your inventory items"
-        {...(user?.role === 'admin' && { onAddInventory: () => setShowAddModal(true) })}
+        onAddInventory={user?.role === 'admin' ? () => setShowAddModal(true) : undefined}
       />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
