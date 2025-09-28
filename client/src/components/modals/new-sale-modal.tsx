@@ -114,7 +114,8 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       // Generate PayPal QR code
       if (paymentMethod === "paypal" && paypalUser) {
         try {
-          const qrDataUrl = await QRCode.toDataURL(paypalUser, {
+          const paypalUrl = `https://paypal.me/${paypalUser}`;
+          const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
             width: 512,
             margin: 4,
             errorCorrectionLevel: 'M',
@@ -648,10 +649,10 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
                     )}
                     <div className="text-center">
                       <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-paypal-code">
-                        paypal.me/{paypalUsername || 'AxemenMCAZ'}
+                        @{paypalUsername || 'AxemenMCAZ'}
                       </div>
                       <p className="text-xs text-blue-600">
-                        Or visit this link
+                        Or search this username
                       </p>
                     </div>
                   </div>
