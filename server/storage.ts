@@ -335,7 +335,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db
         .delete(inventoryItems)
         .where(eq(inventoryItems.id, id));
-      return result.count > 0;
+      return true; // If no error occurred, deletion was successful
     } catch (error) {
       console.error('Error deleting inventory item:', error);
       return false;

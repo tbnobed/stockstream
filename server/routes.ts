@@ -762,6 +762,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete inventory item permanently
+  app.delete("/api/inventory/:id", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteInventoryItem(id);
+      if (deleted) {
+        res.json({ message: "Inventory item deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Inventory item not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting inventory item:", error);
+      res.status(500).json({ message: "Failed to delete inventory item" });
+    }
+  });
+
   app.post("/api/inventory/:id/add-stock", isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
