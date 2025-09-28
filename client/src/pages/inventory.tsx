@@ -261,13 +261,20 @@ export default function Inventory() {
     restoreMutation.mutate(item.id);
   };
 
+  // Only show add inventory for admins
+  const headerProps: any = {
+    title: "Inventory Management",
+    subtitle: "Track and manage your inventory items"
+  };
+
+  // Only add onAddInventory prop if user is an admin
+  if (user && user.role === 'admin') {
+    headerProps.onAddInventory = () => setShowAddModal(true);
+  }
+
   return (
     <>
-      <Header
-        title="Inventory Management"
-        subtitle="Track and manage your inventory items"
-        {...(user && user.role === 'admin' ? { onAddInventory: () => setShowAddModal(true) } : {})}
-      />
+      <Header {...headerProps} />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
         {/* Search and Filters */}

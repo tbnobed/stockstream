@@ -64,7 +64,7 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle="Welcome back! Here's what's happening today."
         onNewSale={() => setShowNewSaleModal(true)}
-        onAddInventory={() => setShowAddInventoryModal(true)}
+        {...(isAdmin ? { onAddInventory: () => setShowAddInventoryModal(true) } : {})}
       />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gradient-to-br from-background via-background to-muted/20">
