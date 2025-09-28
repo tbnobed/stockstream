@@ -1,0 +1,14 @@
+{
+  "name": "InventoryPro",
+  "short_name": "InventoryPro",
+  "description": "Retail Inventory Management System",
+  "dir": "auto",
+  "lang": "en-US",
+  "display": "standalone",
+  "orientation": "any",
+  "scope": "/",
+  "start_url": "/",
+  "background_color": "#2F2F2F",
+  "theme_color": "#DC2626",
+  "icons": []
+}
