@@ -330,6 +330,18 @@ export class DatabaseStorage implements IStorage {
     return restoredItem;
   }
 
+  async deleteInventoryItem(id: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(inventoryItems)
+        .where(eq(inventoryItems.id, id));
+      return result.count > 0;
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
+      return false;
+    }
+  }
+
   async getLowStockItems(): Promise<InventoryItemWithSupplier[]> {
     return db
       .select()
