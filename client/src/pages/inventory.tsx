@@ -272,6 +272,7 @@ export default function Inventory() {
     headerProps.onAddInventory = () => setShowAddModal(true);
   }
 
+
   return (
     <>
       <Header {...headerProps} />
