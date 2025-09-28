@@ -33,7 +33,7 @@ interface CartItem {
 }
 
 const transactionFormSchema = z.object({
-  paymentMethod: z.enum(["cash", "venmo"]),
+  paymentMethod: z.enum(["cash", "venmo", "paypal"]),
   salesAssociateId: z.string().min(1, "Sales associate is required"),
   customerName: z.string().optional(),
   customerEmail: z.string().email("Please enter a valid email").optional().or(z.literal("")),

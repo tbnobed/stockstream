@@ -46,7 +46,7 @@ export default function MobileSales() {
   const { user, logout } = useAuth();
   const [skuInput, setSkuInput] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo" | "paypal">("cash");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -579,7 +579,7 @@ export default function MobileSales() {
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="paymentMethod">Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={(value: "cash" | "venmo") => setPaymentMethod(value)}>
+              <Select value={paymentMethod} onValueChange={(value: "cash" | "venmo" | "paypal") => setPaymentMethod(value)}>
                 <SelectTrigger data-testid="select-payment-method">
                   <SelectValue />
                 </SelectTrigger>
