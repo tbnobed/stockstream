@@ -170,3 +170,101 @@ export function generateSKU(selections: {
   
   return `${typeCode}-${colorCode}-${sizeCode}-${randomNum}`;
 }
+
+// Helper function to generate abbreviations for categories
+export function generateAbbreviation(value: string, type: string): string {
+  if (!value || !type) return "";
+  
+  const cleanValue = value.trim().toUpperCase();
+  
+  switch (type.toLowerCase()) {
+    case 'color':
+      // Curated color mappings for common colors
+      const colorMap: Record<string, string> = {
+        'BLACK': 'BK',
+        'WHITE': 'WH', 
+        'RED': 'RD',
+        'BLUE': 'BL',
+        'GREEN': 'GR',
+        'YELLOW': 'YL',
+        'ORANGE': 'OR',
+        'PURPLE': 'PU',
+        'PINK': 'PK',
+        'GRAY': 'GY',
+        'GREY': 'GY',
+        'BROWN': 'BR',
+        'NAVY': 'NV',
+        'MAROON': 'MR',
+        'TEAL': 'TL',
+        'TURQUOISE': 'TQ',
+        'LIME': 'LM',
+        'GOLD': 'GD',
+        'SILVER': 'SL',
+        'MULTI-COLOR': 'MC',
+        'MULTI': 'MC'
+      };
+      
+      if (colorMap[cleanValue]) {
+        return colorMap[cleanValue];
+      }
+      
+      // Fallback: first consonant + first vowel, or first 2 letters
+      const consonants = cleanValue.match(/[BCDFGHJKLMNPQRSTVWXYZ]/g) || [];
+      const vowels = cleanValue.match(/[AEIOU]/g) || [];
+      
+      if (consonants.length > 0 && vowels.length > 0) {
+        return (consonants[0] || '') + (vowels[0] || '');
+      }
+      return cleanValue.substring(0, 2);
+      
+    case 'size':
+      // Normalize common size abbreviations
+      const sizeMap: Record<string, string> = {
+        'EXTRA SMALL': 'XS',
+        'SMALL': 'S',
+        'MEDIUM': 'M', 
+        'LARGE': 'L',
+        'XLARGE': 'XL',
+        'EXTRA LARGE': 'XL',
+        'XXLARGE': 'XXL',
+        'XX LARGE': 'XXL',
+        '2XL': 'XXL',
+        '3XL': '3XL',
+        '4XL': '4XL',
+        'ONE SIZE': 'OS',
+        'OSFA': 'OS',
+        'HUGE': 'HG'
+      };
+      
+      if (sizeMap[cleanValue]) {
+        return sizeMap[cleanValue];
+      }
+      
+      // For numeric sizes, keep as-is
+      if (/^\d+$/.test(cleanValue)) {
+        return cleanValue;
+      }
+      
+      return cleanValue.substring(0, 3);
+      
+    case 'category':
+    case 'design':
+    case 'group':
+    case 'style':
+      // Generate acronym from words
+      const words = cleanValue.split(/\s+/).filter(word => word.length > 0);
+      
+      if (words.length === 1) {
+        // Single word: first 2-3 letters
+        return cleanValue.substring(0, Math.min(3, cleanValue.length));
+      } else {
+        // Multiple words: first letter of each word, max 4 letters
+        const acronym = words.map(word => word[0]).join('').substring(0, 4);
+        return acronym;
+      }
+      
+    default:
+      // Default: first 2-3 letters
+      return cleanValue.substring(0, Math.min(3, cleanValue.length));
+  }
+}

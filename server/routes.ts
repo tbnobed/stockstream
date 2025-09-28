@@ -13,6 +13,7 @@ import {
   insertCategorySchema,
   insertMediaFileSchema
 } from "@shared/schema";
+import { generateAbbreviation } from "@shared/categories";
 import { z } from "zod";
 import multer from "multer";
 import csvParser from "csv-parser";
@@ -941,6 +942,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/categories", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const category = insertCategorySchema.parse(req.body);
+      
+      // Auto-generate abbreviation if not provided
+      if (!category.abbreviation || category.abbreviation.trim() === '') {
+        category.abbreviation = generateAbbreviation(category.value, category.type);
+      }
+      
       const newCategory = await storage.createCategory(category);
       res.status(201).json(newCategory);
     } catch (error) {
