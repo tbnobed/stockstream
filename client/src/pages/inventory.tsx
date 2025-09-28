@@ -636,16 +636,18 @@ export default function Inventory() {
                         <div className="grid grid-cols-3 gap-2">
                           {item.isActive ? (
                             <>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditItem(item)}
-                                data-testid={`edit-item-${item.id}`}
-                                className="h-9 text-xs"
-                              >
-                                <Edit size={14} className="mr-1" />
-                                Edit
-                              </Button>
+                              {user && user.role === 'admin' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleEditItem(item)}
+                                  data-testid={`edit-item-${item.id}`}
+                                  className="h-9 text-xs"
+                                >
+                                  <Edit size={14} className="mr-1" />
+                                  Edit
+                                </Button>
+                              )}
                               <Button 
                                 variant="outline" 
                                 size="sm"
@@ -685,17 +687,19 @@ export default function Inventory() {
                                 <Package size={14} className="mr-1" />
                                 Label
                               </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleArchiveItem(item)}
-                                data-testid={`archive-item-${item.id}`}
-                                disabled={archiveMutation.isPending}
-                                className="h-9 text-xs"
-                              >
-                                <Archive size={14} className="mr-1" />
-                                Archive
-                              </Button>
+                              {user && user.role === 'admin' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleArchiveItem(item)}
+                                  data-testid={`archive-item-${item.id}`}
+                                  disabled={archiveMutation.isPending}
+                                  className="h-9 text-xs"
+                                >
+                                  <Archive size={14} className="mr-1" />
+                                  Archive
+                                </Button>
+                              )}
                             </>
                           ) : (
                             <>
