@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn } from "lucide-react";
+import inventoryProLogo from "@assets/InventoryPro_1759049128877.png";
 
 export default function Login() {
   const [associateCode, setAssociateCode] = useState("");
@@ -43,9 +43,12 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-            <LogIn className="h-6 w-6" />
-            InventoryPro
+          <CardTitle className="text-2xl font-bold flex items-center justify-center">
+            <img 
+              src={inventoryProLogo} 
+              alt="InventoryPro" 
+              className="h-16 w-auto"
+            />
           </CardTitle>
           <CardDescription>
             Sign in to your account
