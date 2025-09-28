@@ -115,8 +115,9 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
         try {
           const paypalUrl = `https://paypal.me/${paypalUser}`;
           const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
-            width: 200,
-            margin: 2,
+            width: 300,
+            margin: 1,
+            errorCorrectionLevel: 'M',
             color: {
               dark: '#000000',
               light: '#ffffff'
