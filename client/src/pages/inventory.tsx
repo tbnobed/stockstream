@@ -713,17 +713,30 @@ export default function Inventory() {
                                 Label
                               </Button>
                               {user && user.role === 'admin' && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleArchiveItem(item)}
-                                  data-testid={`archive-item-${item.id}`}
-                                  disabled={archiveMutation.isPending}
-                                  className="h-9 text-xs"
-                                >
-                                  <Archive size={14} className="mr-1" />
-                                  Archive
-                                </Button>
+                                <>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleArchiveItem(item)}
+                                    data-testid={`archive-item-${item.id}`}
+                                    disabled={archiveMutation.isPending}
+                                    className="h-9 text-xs"
+                                  >
+                                    <Archive size={14} className="mr-1" />
+                                    Archive
+                                  </Button>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={() => handleDeleteItem(item)}
+                                    data-testid={`delete-item-${item.id}`}
+                                    disabled={deleteMutation.isPending}
+                                    className="h-9 text-xs"
+                                  >
+                                    <Trash size={14} className="mr-1" />
+                                    Delete
+                                  </Button>
+                                </>
                               )}
                             </>
                           ) : (
@@ -886,16 +899,28 @@ export default function Inventory() {
                                     <Package size={14} />
                                   </Button>
                                   {user && user.role === 'admin' && (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={() => handleArchiveItem(item)}
-                                      data-testid={`archive-item-${item.id}`}
-                                      disabled={archiveMutation.isPending}
-                                      className="text-destructive hover:text-destructive"
-                                    >
-                                      <Archive size={14} />
-                                    </Button>
+                                    <>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={() => handleArchiveItem(item)}
+                                        data-testid={`archive-item-${item.id}`}
+                                        disabled={archiveMutation.isPending}
+                                        className="text-destructive hover:text-destructive"
+                                      >
+                                        <Archive size={14} />
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={() => handleDeleteItem(item)}
+                                        data-testid={`delete-item-${item.id}`}
+                                        disabled={deleteMutation.isPending}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      >
+                                        <Trash size={14} />
+                                      </Button>
+                                    </>
                                   )}
                                 </>
                               ) : (
