@@ -813,14 +813,16 @@ export default function Inventory() {
                             <div className="flex items-center space-x-1">
                               {item.isActive ? (
                                 <>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => handleEditItem(item)}
-                                    data-testid={`edit-item-${item.id}`}
-                                  >
-                                    <Edit size={14} />
-                                  </Button>
+                                  {user && user.role === 'admin' && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => handleEditItem(item)}
+                                      data-testid={`edit-item-${item.id}`}
+                                    >
+                                      <Edit size={14} />
+                                    </Button>
+                                  )}
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
@@ -853,16 +855,18 @@ export default function Inventory() {
                                   >
                                     <Package size={14} />
                                   </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleArchiveItem(item)}
-                                    data-testid={`archive-item-${item.id}`}
-                                    disabled={archiveMutation.isPending}
-                                    className="text-destructive hover:text-destructive"
-                                  >
-                                    <Archive size={14} />
-                                  </Button>
+                                  {user && user.role === 'admin' && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handleArchiveItem(item)}
+                                      data-testid={`archive-item-${item.id}`}
+                                      disabled={archiveMutation.isPending}
+                                      className="text-destructive hover:text-destructive"
+                                    >
+                                      <Archive size={14} />
+                                    </Button>
+                                  )}
                                 </>
                               ) : (
                                 <>
@@ -874,16 +878,18 @@ export default function Inventory() {
                                   >
                                     <History size={14} />
                                   </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleRestoreItem(item)}
-                                    data-testid={`restore-item-${item.id}`}
-                                    disabled={restoreMutation.isPending}
-                                    className="text-primary hover:text-primary"
-                                  >
-                                    <ArchiveRestore size={14} />
-                                  </Button>
+                                  {user && user.role === 'admin' && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handleRestoreItem(item)}
+                                      data-testid={`restore-item-${item.id}`}
+                                      disabled={restoreMutation.isPending}
+                                      className="text-primary hover:text-primary"
+                                    >
+                                      <ArchiveRestore size={14} />
+                                    </Button>
+                                  )}
                                 </>
                               )}
                             </div>
