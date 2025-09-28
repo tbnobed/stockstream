@@ -65,6 +65,7 @@ export interface IStorage {
   updateInventoryItem(id: string, item: Partial<InventoryItem>): Promise<InventoryItem>;
   archiveInventoryItem(id: string): Promise<InventoryItem>;
   restoreInventoryItem(id: string): Promise<InventoryItem>;
+  deleteInventoryItem(id: string): Promise<boolean>;
   addStockToItem(itemId: string, quantity: number, reason: string, notes: string, userId: string): Promise<InventoryItem>;
   getLowStockItems(): Promise<InventoryItemWithSupplier[]>;
   
