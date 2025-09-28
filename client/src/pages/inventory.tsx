@@ -266,7 +266,7 @@ export default function Inventory() {
       <Header
         title="Inventory Management"
         subtitle="Track and manage your inventory items"
-        onAddInventory={user && user.role === 'admin' ? () => setShowAddModal(true) : undefined}
+        {...(user && user.role === 'admin' ? { onAddInventory: () => setShowAddModal(true) } : {})}
       />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
