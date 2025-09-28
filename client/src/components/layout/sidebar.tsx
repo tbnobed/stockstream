@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { 
   BarChart3, 
-  Box, 
   ScanBarcode, 
   QrCode, 
   Users, 
@@ -14,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import inventoryProLogo from "@assets/InventoryPro_1759049128877.png";
 
 const getNavigationForRole = (userRole: string) => {
   const baseNavigation = [
@@ -44,9 +44,12 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-surface shadow-lg border-r border-border hidden md:flex md:flex-col">
       <div className="p-6 border-b border-border">
-        <h1 className="text-xl font-bold text-secondary flex items-center">
-          <Box className="mr-3 text-primary" size={24} />
-          InventoryPro
+        <h1 className="text-xl font-bold text-secondary flex items-center justify-center">
+          <img 
+            src={inventoryProLogo} 
+            alt="InventoryPro" 
+            className="h-24 w-auto"
+          />
         </h1>
       </div>
       
