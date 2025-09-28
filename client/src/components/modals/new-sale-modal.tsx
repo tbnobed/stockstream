@@ -92,8 +92,9 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
         try {
           const venmoUrl = `https://venmo.com/u/${venmoUser}`;
           const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
-            width: 200,
-            margin: 2,
+            width: 512,
+            margin: 4,
+            errorCorrectionLevel: 'M',
             color: {
               dark: '#000000',
               light: '#ffffff'
@@ -113,10 +114,9 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       // Generate PayPal QR code
       if (paymentMethod === "paypal" && paypalUser) {
         try {
-          const paypalUrl = `https://paypal.me/${paypalUser}`;
-          const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
-            width: 300,
-            margin: 1,
+          const qrDataUrl = await QRCode.toDataURL(paypalUser, {
+            width: 512,
+            margin: 4,
             errorCorrectionLevel: 'M',
             color: {
               dark: '#000000',

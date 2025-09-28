@@ -82,8 +82,9 @@ export default function MobileSales() {
         try {
           const venmoUrl = `https://venmo.com/u/${venmoUser}`;
           const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
-            width: 200,
-            margin: 2,
+            width: 512,
+            margin: 4,
+            errorCorrectionLevel: 'M',
             color: {
               dark: '#000000',
               light: '#ffffff'
@@ -103,10 +104,9 @@ export default function MobileSales() {
       // Generate PayPal QR code
       if (paymentMethod === "paypal" && paypalUser) {
         try {
-          const paypalUrl = `https://paypal.me/${paypalUser}`;
-          const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
-            width: 300,
-            margin: 1,
+          const qrDataUrl = await QRCode.toDataURL(paypalUser, {
+            width: 512,
+            margin: 4,
             errorCorrectionLevel: 'M',
             color: {
               dark: '#000000',
@@ -645,7 +645,7 @@ export default function MobileSales() {
                         src={venmoQRCode} 
                         alt="Venmo QR Code"
                         className="mx-auto mb-2"
-                        style={{ width: '120px', height: '120px' }}
+                        style={{ width: '120px', height: '120px', imageRendering: 'crisp-edges' }}
                         data-testid="img-venmo-qr-mobile"
                       />
                       <p className="text-xs text-blue-600">Scan to pay</p>
@@ -674,7 +674,7 @@ export default function MobileSales() {
                         src={paypalQRCode} 
                         alt="PayPal QR Code"
                         className="mx-auto mb-2"
-                        style={{ width: '120px', height: '120px' }}
+                        style={{ width: '120px', height: '120px', imageRendering: 'crisp-edges' }}
                         data-testid="img-paypal-qr-mobile"
                       />
                       <p className="text-xs text-blue-600">Scan to pay</p>
