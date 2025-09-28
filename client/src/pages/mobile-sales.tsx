@@ -104,7 +104,7 @@ export default function MobileSales() {
       // Generate PayPal QR code
       if (paymentMethod === "paypal" && paypalUser) {
         try {
-          const paypalUrl = `https://paypal.me/${paypalUser}`;
+          const paypalUrl = `https://www.paypal.com/paypalme/${paypalUser}`;
           const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
             width: 512,
             margin: 4,
