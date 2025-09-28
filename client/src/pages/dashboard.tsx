@@ -22,6 +22,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Utility function to detect mobile devices
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 export default function Dashboard() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [showAddInventoryModal, setShowAddInventoryModal] = useState(false);
@@ -30,6 +36,17 @@ export default function Dashboard() {
   const [showReportsModal, setShowReportsModal] = useState(false);
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === 'admin';
+
+  // Handle New Sale button click
+  const handleNewSale = () => {
+    if (isMobileDevice()) {
+      // On mobile, navigate to mobile sales page
+      navigate('/mobile-sales');
+    } else {
+      // On desktop, show modal
+      setShowNewSaleModal(true);
+    }
+  };
 
   const { data: stats = {}, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["/api/dashboard/stats"],
@@ -63,7 +80,7 @@ export default function Dashboard() {
       <Header
         title="Dashboard"
         subtitle="Welcome back! Here's what's happening today."
-        onNewSale={() => setShowNewSaleModal(true)}
+        onNewSale={handleNewSale}
         {...(isAdmin ? { onAddInventory: () => setShowAddInventoryModal(true) } : {})}
       />
 
