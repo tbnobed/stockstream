@@ -47,7 +47,7 @@ export default function Login() {
             <img 
               src={inventoryProLogo} 
               alt="InventoryPro" 
-              className="h-16 w-auto"
+              className="h-48 w-auto"
             />
           </CardTitle>
           <CardDescription>
