@@ -114,7 +114,7 @@ export default function NewSaleModal({ open, onOpenChange }: NewSaleModalProps) 
       // Generate PayPal QR code
       if (paymentMethod === "paypal" && paypalUser) {
         try {
-          const paypalUrl = `https://www.paypal.com/paypalme/${paypalUser}`;
+          const paypalUrl = `https://paypal.me/${paypalUser}`;
           const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
             width: 512,
             margin: 4,
