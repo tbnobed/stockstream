@@ -13,7 +13,7 @@ import AdjustInventoryModal from "@/components/modals/adjust-inventory-modal";
 import TransactionHistoryModal from "@/components/modals/transaction-history-modal";
 import PrintLabelModal from "@/components/modals/print-label-modal";
 import QRScanner from "@/components/qr-scanner";
-import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Package, AlertTriangle, QrCode, Plus, Edit, History, Minus, Archive, ArchiveRestore, Trash, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -114,6 +114,25 @@ export default function Inventory() {
       toast({
         title: "Error",
         description: "Failed to restore the item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete item mutation
+  const deleteMutation = useMutation({
+    mutationFn: (itemId: string) => apiRequest("DELETE", `/api/inventory/${itemId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      toast({
+        title: "Item deleted",
+        description: "The inventory item has been permanently deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the item. Please try again.",
         variant: "destructive",
       });
     },
@@ -259,6 +278,12 @@ export default function Inventory() {
 
   const handleRestoreItem = (item: any) => {
     restoreMutation.mutate(item.id);
+  };
+
+  const handleDeleteItem = (item: any) => {
+    if (window.confirm(`Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(item.id);
+    }
   };
 
   // Only show add inventory for admins
