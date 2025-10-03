@@ -459,7 +459,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(sales)
       .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
-      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .leftJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
       .where(eq(sales.receiptToken, token));
     
     if (!result) return null;
@@ -469,7 +469,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(sales)
       .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
-      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .leftJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
       .where(eq(sales.orderNumber, result.sales.orderNumber));
     
     // Calculate total amount for the entire order
@@ -488,11 +488,12 @@ export class DatabaseStorage implements IStorage {
       })),
       totalAmount: totalAmount.toFixed(2),
       paymentMethod: result.sales.paymentMethod,
-      salesAssociate: {
+      salesAssociate: result.sales_associates ? {
         firstName: result.sales_associates.name.split(' ')[0] || '',
         lastName: result.sales_associates.name.split(' ').slice(1).join(' ') || '',
         associateCode: result.sales_associates.id.slice(0, 8), // Use first 8 chars of ID as code
-      },
+      } : null,
+      volunteerEmail: result.sales.volunteerEmail || null,
     };
   }
 
