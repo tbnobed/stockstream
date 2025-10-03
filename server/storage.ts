@@ -381,13 +381,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(sales)
       .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
-      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .leftJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
       .orderBy(desc(sales.saleDate))
       .then(rows => 
         rows.map(row => ({
           ...row.sales,
           item: row.inventory_items,
-          salesAssociate: row.sales_associates
+          salesAssociate: row.sales_associates || null
         }))
       );
   }
@@ -397,14 +397,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(sales)
       .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
-      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .leftJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
       .where(eq(sales.orderNumber, orderNumber))
       .orderBy(sales.saleDate)
       .then(rows => 
         rows.map(row => ({
           ...row.sales,
           item: row.inventory_items,
-          salesAssociate: row.sales_associates
+          salesAssociate: row.sales_associates || null
         }))
       );
   }
@@ -414,7 +414,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(sales)
       .innerJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
-      .innerJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .leftJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
       .where(eq(sales.id, id));
     
     if (!result) return undefined;
@@ -422,7 +422,7 @@ export class DatabaseStorage implements IStorage {
     return {
       ...result.sales,
       item: result.inventory_items,
-      salesAssociate: result.sales_associates
+      salesAssociate: result.sales_associates || null
     };
   }
 
