@@ -25,7 +25,9 @@ import {
 } from 'lucide-react';
 import QRScanner from "@/components/qr-scanner";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
+import QRCode from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import type { InventoryItem } from '@shared/schema';
 
 interface VolunteerSession {
@@ -62,7 +64,16 @@ export default function VolunteerSales() {
   const [showResults, setShowResults] = useState(false);
   const [receiptToken, setReceiptToken] = useState<string | null>(null);
   const [showReceiptQR, setShowReceiptQR] = useState(false);
+  const [venmoQRCode, setVenmoQRCode] = useState<string>("");
+  const [venmoUsername, setVenmoUsername] = useState<string>("");
+  const [paypalQRCode, setPaypalQRCode] = useState<string>("");
+  const [paypalUsername, setPaypalUsername] = useState<string>("");
   const { toast } = useToast();
+
+  // Fetch application configuration
+  const { data: config } = useQuery<{ venmoUsername: string; paypalUsername: string }>({
+    queryKey: ["/api/config"],
+  });
 
   // Check for existing session on load
   useEffect(() => {
@@ -78,6 +89,64 @@ export default function VolunteerSales() {
       loadInventory();
     }
   }, [session]);
+
+  // Generate payment QR codes when payment method changes or config loads
+  useEffect(() => {
+    const generatePaymentQRs = async () => {
+      const venmoUser = config?.venmoUsername;
+      const paypalUser = config?.paypalUsername;
+      
+      // Generate Venmo QR code
+      if (paymentMethod === "venmo" && venmoUser) {
+        try {
+          const venmoUrl = `https://venmo.com/u/${venmoUser}`;
+          const qrDataUrl = await QRCode.toDataURL(venmoUrl, {
+            width: 512,
+            margin: 4,
+            errorCorrectionLevel: 'M',
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          });
+          setVenmoQRCode(qrDataUrl);
+          setVenmoUsername(venmoUser);
+        } catch (error) {
+          console.error('Error generating Venmo QR code:', error);
+          setVenmoQRCode("");
+        }
+      } else {
+        setVenmoQRCode("");
+        setVenmoUsername("");
+      }
+
+      // Generate PayPal QR code
+      if (paymentMethod === "paypal" && paypalUser) {
+        try {
+          const paypalUrl = `https://paypal.me/${paypalUser}`;
+          const qrDataUrl = await QRCode.toDataURL(paypalUrl, {
+            width: 512,
+            margin: 4,
+            errorCorrectionLevel: 'M',
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          });
+          setPaypalQRCode(qrDataUrl);
+          setPaypalUsername(paypalUser);
+        } catch (error) {
+          console.error('Error generating PayPal QR code:', error);
+          setPaypalQRCode("");
+        }
+      } else {
+        setPaypalQRCode("");
+        setPaypalUsername("");
+      }
+    };
+
+    generatePaymentQRs();
+  }, [paymentMethod, config]);
 
   const validateSession = async (token: string) => {
     try {
@@ -672,6 +741,64 @@ export default function VolunteerSales() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Venmo QR Code Display */}
+              {paymentMethod === "venmo" && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Label className="text-sm font-medium text-blue-800">Venmo Payment</Label>
+                  <div className="flex items-center justify-center space-x-4 mt-3">
+                    {venmoQRCode && (
+                      <div className="text-center">
+                        <img 
+                          src={venmoQRCode} 
+                          alt="Venmo QR Code"
+                          className="mx-auto mb-2"
+                          style={{ width: '120px', height: '120px' }}
+                          data-testid="img-venmo-qr"
+                        />
+                        <p className="text-xs text-blue-600">Scan to pay</p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-venmo-code">
+                        @{venmoUsername || 'AxemenMCAZ'}
+                      </div>
+                      <p className="text-xs text-blue-600">
+                        Or search this username
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PayPal QR Code Display */}
+              {paymentMethod === "paypal" && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Label className="text-sm font-medium text-blue-800">PayPal Payment</Label>
+                  <div className="flex items-center justify-center space-x-4 mt-3">
+                    {paypalQRCode && (
+                      <div className="text-center">
+                        <img 
+                          src={paypalQRCode} 
+                          alt="PayPal QR Code"
+                          className="mx-auto mb-2"
+                          style={{ width: '120px', height: '120px' }}
+                          data-testid="img-paypal-qr"
+                        />
+                        <p className="text-xs text-blue-600">Scan to pay</p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-paypal-code">
+                        @{paypalUsername || 'AxemenMCAZ'}
+                      </div>
+                      <p className="text-xs text-blue-600">
+                        Or search this username
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="customer-name">Customer Name (Optional)</Label>
