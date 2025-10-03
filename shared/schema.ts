@@ -312,7 +312,7 @@ export type InventoryItemWithSupplier = InventoryItem & {
 
 export type SaleWithDetails = Sale & {
   item: InventoryItem;
-  salesAssociate: SalesAssociate;
+  salesAssociate: SalesAssociate | null;
 };
 
 export type MediaFileWithUploader = MediaFile & {

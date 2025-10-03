@@ -334,11 +334,11 @@ export class DatabaseStorage implements IStorage {
     try {
       // First check if this item has any sales associated with it
       const salesCount = await db
-        .select({ count: sql`count(*)` })
+        .select({ count: sql<number>`count(*)` })
         .from(sales)
         .where(eq(sales.itemId, id));
       
-      if (salesCount[0]?.count > 0) {
+      if (Number(salesCount[0]?.count) > 0) {
         return {
           success: false,
           error: "Cannot delete this item because it has sales history. Consider archiving it instead."
