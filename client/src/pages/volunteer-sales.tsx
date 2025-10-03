@@ -53,7 +53,7 @@ export default function VolunteerSales() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [skuInput, setSkuInput] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "venmo" | "paypal">("cash");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -661,13 +661,14 @@ export default function VolunteerSales() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="payment-method">Payment Method</Label>
-                <Select value={paymentMethod} onValueChange={(value: "cash" | "venmo") => setPaymentMethod(value)}>
+                <Select value={paymentMethod} onValueChange={(value: "cash" | "venmo" | "paypal") => setPaymentMethod(value)}>
                   <SelectTrigger data-testid="select-payment-method">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cash">Cash</SelectItem>
                     <SelectItem value="venmo">Venmo</SelectItem>
+                    <SelectItem value="paypal">PayPal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
