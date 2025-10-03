@@ -41,13 +41,17 @@ export default function Sales() {
 
   const filteredSales = sales.filter((sale: any) => {
     // Search filter
-    const matchesSearch = sale.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           sale.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           sale.salesAssociate?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = sale.item?.name?.toLowerCase().includes(searchLower) ||
+           sale.orderNumber?.toLowerCase().includes(searchLower) ||
+           (sale.salesAssociate?.name?.toLowerCase() || '').includes(searchLower) ||
+           (sale.volunteerEmail?.toLowerCase() || '').includes(searchLower);
     
     // Associate filter
-    const matchesAssociate = selectedAssociate === "all-associates" || 
-                            sale.salesAssociate?.id === selectedAssociate;
+    const matchesAssociate = 
+      selectedAssociate === "all-associates" || 
+      (selectedAssociate === "volunteers" && !sale.salesAssociateId && sale.volunteerEmail) ||
+      sale.salesAssociate?.id === selectedAssociate;
     
     // Payment method filter
     const matchesPayment = selectedPaymentMethod === "all-payments" || 
@@ -203,8 +207,8 @@ export default function Sales() {
         Number(sale.unitPrice || 0).toFixed(2),
         Number(sale.totalAmount || 0).toFixed(2),
         `"${sale.paymentMethod || 'Unknown'}"`,
-        `"${sale.salesAssociate?.name || 'Unknown'}"`,
-        `"${sale.salesAssociate?.code || 'N/A'}"`
+        `"${sale.salesAssociate?.name || sale.volunteerEmail || 'Unknown'}"`,
+        `"${sale.salesAssociate?.code || (sale.volunteerEmail ? 'Volunteer' : 'N/A')}"`
       ];
       csvContent += row.join(",") + "\n";
     });
@@ -309,6 +313,7 @@ export default function Sales() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-associates">All associates</SelectItem>
+                      <SelectItem value="volunteers">Volunteers</SelectItem>
                       {(salesAssociates as any[])?.map((associate: any) => (
                         <SelectItem key={associate.id} value={associate.id}>
                           {associate.name}
@@ -329,6 +334,7 @@ export default function Sales() {
                       <SelectItem value="all-payments">All payments</SelectItem>
                       <SelectItem value="cash">Cash</SelectItem>
                       <SelectItem value="venmo">Venmo</SelectItem>
+                      <SelectItem value="paypal">PayPal</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -508,7 +514,9 @@ export default function Sales() {
                         
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Associate:</span>
-                          <span className="font-medium">{sale.salesAssociate.name}</span>
+                          <span className="font-medium">
+                            {sale.salesAssociate ? sale.salesAssociate.name : sale.volunteerEmail || "Volunteer"}
+                          </span>
                         </div>
                       </div>
                       
@@ -584,7 +592,9 @@ export default function Sales() {
                           </td>
                         )}
                         <td className="py-3">
-                          <span className="text-sm text-secondary">{sale.salesAssociate.name}</span>
+                          <span className="text-sm text-secondary">
+                            {sale.salesAssociate ? sale.salesAssociate.name : sale.volunteerEmail || "Volunteer"}
+                          </span>
                         </td>
                         <td className="py-3">
                           <Badge variant={

@@ -248,7 +248,9 @@ export default function Dashboard() {
                                 </div>
                               </td>
                               <td className="py-3">
-                                <span className="text-sm text-secondary">{sale.salesAssociate.name}</span>
+                                <span className="text-sm text-secondary">
+                                  {sale.salesAssociate ? sale.salesAssociate.name : sale.volunteerEmail || "Volunteer"}
+                                </span>
                               </td>
                               <td className="py-3">
                                 <span className="text-sm font-medium text-secondary">
@@ -302,7 +304,7 @@ export default function Dashboard() {
                           <div className="flex justify-between items-center">
                             <div className="flex items-center space-x-3">
                               <span className="text-xs text-muted-foreground">
-                                {sale.salesAssociate.name}
+                                {sale.salesAssociate ? sale.salesAssociate.name : sale.volunteerEmail || "Volunteer"}
                               </span>
                               <span className={cn(
                                 "px-2 py-1 text-xs rounded-full font-medium",

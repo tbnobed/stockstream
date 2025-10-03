@@ -17,11 +17,12 @@ interface ReceiptData {
   }>;
   totalAmount: string;
   paymentMethod: string;
-  salesAssociate: {
+  salesAssociate?: {
     firstName: string;
     lastName: string;
     associateCode: string;
-  };
+  } | null;
+  volunteerEmail?: string | null;
   isExpired: boolean;
 }
 
@@ -170,11 +171,18 @@ export default function Receipt() {
               <div className="flex items-center gap-2">
                 <User className="text-blue-600" size={20} />
                 <div>
-                  <div className="text-sm text-gray-500">Sales Associate</div>
-                  <div className="font-semibold">
-                    {receipt.salesAssociate.firstName} {receipt.salesAssociate.lastName}
+                  <div className="text-sm text-gray-500">
+                    {receipt.salesAssociate ? "Sales Associate" : "Volunteer"}
                   </div>
-                  <div className="text-xs text-gray-500">ID: {receipt.salesAssociate.associateCode}</div>
+                  <div className="font-semibold">
+                    {receipt.salesAssociate 
+                      ? `${receipt.salesAssociate.firstName} ${receipt.salesAssociate.lastName}`
+                      : receipt.volunteerEmail || "Volunteer"
+                    }
+                  </div>
+                  {receipt.salesAssociate && (
+                    <div className="text-xs text-gray-500">ID: {receipt.salesAssociate.associateCode}</div>
+                  )}
                 </div>
               </div>
             </div>
