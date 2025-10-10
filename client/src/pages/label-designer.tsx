@@ -967,14 +967,14 @@ export default function LabelDesigner() {
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
                       <Command>
-                        <CommandInput placeholder="Search inventory..." className="h-9" />
+                        <CommandInput placeholder="Search by name or SKU..." className="h-9" />
                         <CommandList>
                           <CommandEmpty>No inventory items found.</CommandEmpty>
                           <CommandGroup>
                             {(inventoryItems as any[] || []).map((item: any) => (
                               <CommandItem
                                 key={item.id}
-                                value={item.name}
+                                value={`${item.name} ${item.sku}`}
                                 onSelect={() => handleInventorySelect(item)}
                                 data-testid={`inventory-item-${item.id}`}
                               >
