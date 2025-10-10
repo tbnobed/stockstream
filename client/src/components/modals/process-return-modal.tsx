@@ -41,8 +41,34 @@ export default function ProcessReturnModal({
   const returnMutation = useMutation({
     mutationFn: async (returnData: any) => {
       const endpoint = isVolunteer ? "/api/volunteer/returns" : "/api/returns";
-      const response = await apiRequest("POST", endpoint, returnData);
-      return response.json();
+      
+      if (isVolunteer) {
+        // For volunteers, use fetch with session token header
+        const sessionToken = localStorage.getItem('volunteer_session_token');
+        if (!sessionToken) {
+          throw new Error('Volunteer session not found');
+        }
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-volunteer-session': sessionToken
+          },
+          body: JSON.stringify(returnData)
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to process return');
+        }
+        
+        return response.json();
+      } else {
+        // For admin, use apiRequest which includes auth token
+        const response = await apiRequest("POST", endpoint, returnData);
+        return response.json();
+      }
     },
     onSuccess: () => {
       toast({
