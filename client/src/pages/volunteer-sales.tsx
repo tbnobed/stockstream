@@ -21,10 +21,12 @@ import {
   UserCheck, 
   Clock, 
   AlertCircle, 
-  CheckCircle 
+  CheckCircle,
+  RotateCcw 
 } from 'lucide-react';
 import QRScanner from "@/components/qr-scanner";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
+import ProcessReturnModal from "@/components/modals/process-return-modal";
 import QRCode from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -68,6 +70,10 @@ export default function VolunteerSales() {
   const [venmoUsername, setVenmoUsername] = useState<string>("");
   const [paypalQRCode, setPaypalQRCode] = useState<string>("");
   const [paypalUsername, setPaypalUsername] = useState<string>("");
+  const [mode, setMode] = useState<"sale" | "return">("sale");
+  const [orderNumberForReturn, setOrderNumberForReturn] = useState("");
+  const [saleForReturn, setSaleForReturn] = useState<any>(null);
+  const [showReturnModal, setShowReturnModal] = useState(false);
   const { toast } = useToast();
 
   // Fetch application configuration
@@ -253,6 +259,52 @@ export default function VolunteerSales() {
       toast({
         title: "Error",
         description: "Failed to load inventory",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const lookupSaleForReturn = async () => {
+    if (!orderNumberForReturn.trim()) {
+      toast({
+        title: "Order Number Required",
+        description: "Please enter an order number",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/volunteer/sales/${orderNumberForReturn}`, {
+        headers: {
+          'x-volunteer-session': session!.sessionToken
+        }
+      });
+
+      if (response.ok) {
+        const sales = await response.json();
+        if (sales.length > 0) {
+          // For now, just take the first item from the order
+          setSaleForReturn(sales[0]);
+          setShowReturnModal(true);
+        } else {
+          toast({
+            title: "Not Found",
+            description: "No sale found with that order number",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to lookup sale",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to lookup sale",
         variant: "destructive"
       });
     }
@@ -556,10 +608,71 @@ export default function VolunteerSales() {
           <Clock size={14} className="mr-1" />
           Session expires: {new Date(session.expiresAt).toLocaleString()}
         </div>
+
+        {/* Mode Switcher */}
+        <div className="mt-4 flex gap-2">
+          <Button 
+            variant={mode === "sale" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMode("sale")}
+            className="flex-1"
+            data-testid="button-mode-sale"
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            New Sale
+          </Button>
+          <Button 
+            variant={mode === "return" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMode("return")}
+            className="flex-1"
+            data-testid="button-mode-return"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Process Return
+          </Button>
+        </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* SKU Input & QR Scanner */}
+        {mode === "return" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RotateCcw size={20} />
+                Process Return
+              </CardTitle>
+              <CardDescription>
+                Enter the order number to look up and process a return
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="order-number">Order Number</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="order-number"
+                    placeholder="Enter order number"
+                    value={orderNumberForReturn}
+                    onChange={(e) => setOrderNumberForReturn(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && lookupSaleForReturn()}
+                    className="flex-1"
+                    data-testid="input-return-order-number"
+                  />
+                  <Button 
+                    onClick={lookupSaleForReturn}
+                    disabled={!orderNumberForReturn.trim()}
+                    data-testid="button-lookup-return"
+                  >
+                    Lookup
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+          {/* SKU Input & QR Scanner */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -842,6 +955,9 @@ export default function VolunteerSales() {
             </CardContent>
           </Card>
         )}
+          </div>
+        )
+        }
       </div>
 
       {/* QR Scanner Modal */}
@@ -903,6 +1019,19 @@ export default function VolunteerSales() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ProcessReturnModal
+        sale={saleForReturn}
+        open={showReturnModal}
+        onOpenChange={(open) => {
+          setShowReturnModal(open);
+          if (!open) {
+            setSaleForReturn(null);
+            setOrderNumberForReturn("");
+          }
+        }}
+        isVolunteer={true}
+      />
     </div>
   );
 }

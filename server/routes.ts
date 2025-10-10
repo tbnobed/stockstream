@@ -469,6 +469,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch sales" });
     }
   });
+
+  app.get("/api/volunteer/sales/:orderNumber", validateVolunteerSession, async (req, res) => {
+    try {
+      const { orderNumber } = req.params;
+      const orderSales = await storage.getSalesByOrderNumber(orderNumber);
+      if (orderSales.length === 0) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(orderSales);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order details" });
+    }
+  });
   
   // Dashboard Stats
   app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
