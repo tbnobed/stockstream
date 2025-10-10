@@ -474,12 +474,16 @@ export class DatabaseStorage implements IStorage {
     
     return returnRecords.map(row => ({
       ...row.returns,
+      volunteerEmail: row.returns?.volunteerEmail || null,
       sale: row.sales ? {
         ...row.sales,
         item: row.inventory_items,
         salesAssociate: row.sales_associates || null
       } : null,
-      processedByUser: row.users || null
+      processedByUser: row.users ? {
+        ...row.users,
+        name: `${row.users.firstName} ${row.users.lastName}`.trim()
+      } : null
     }));
   }
 
