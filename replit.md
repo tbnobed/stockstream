@@ -24,7 +24,7 @@ The system is built as a monorepo with shared TypeScript types and schemas for e
 - **Development**: tsx for TypeScript execution
 
 ### Database Design
-A relational schema is used with four main entities: Sales Associates, Suppliers, Inventory Items, and Sales. UUIDs are used for primary keys and proper foreign key relationships are established.
+A relational schema is used with five main entities: Sales Associates, Suppliers, Inventory Items, Sales, and Returns. UUIDs are used for primary keys and proper foreign key relationships are established. The Returns table tracks refund transactions, inventory restoration, and supports both admin and volunteer-processed returns.
 
 ### API Structure
 A RESTful API design is implemented with clear endpoint patterns for dashboard statistics, sales associate management, supplier management, inventory item management (including low stock alerts), and sales transaction processing. Endpoints feature error handling, Zod validation, and JSON responses.
@@ -32,12 +32,13 @@ A RESTful API design is implemented with clear endpoint patterns for dashboard s
 ### Feature Specifications
 - **Inventory Management**: SKU generation, stock level monitoring, supplier tracking, multi-item transaction support, QR code scanning for adding items to cart, inventory categorization with dynamic category management system, archive/disable functionality, pagination, and enhanced search.
 - **Sales Processing**: Order number generation, payment method tracking, inventory updates, real-time stock validation during cart operations, multi-item transactions, sales associate management, and mobile terminal QR integration.
-- **Reporting**: Dashboard analytics including revenue, sales volume, and stock alerts. Includes comprehensive sales filtering (sales associate, payment method, date range), enhanced category-based reporting, and contextual report system based on sales/inventory/revenue.
+- **Returns Processing**: Complete returns system with order lookup (auto-adds "ORD-" prefix), inventory restoration, refund tracking, reason selection, admin and volunteer processing support, cumulative validation, and financial reporting integration.
+- **Reporting**: Dashboard analytics including revenue, sales volume, and stock alerts. Includes comprehensive sales filtering (sales associate, payment method, date range), enhanced category-based reporting, and contextual report system based on sales/inventory/revenue. Dashboard stats account for returns (Net Revenue = Sales - Refunds, Net Profit accounts for refund amounts).
 - **QR Code Generation**: Label printing system for inventory tracking.
 - **Category Management**: Dynamic category system with GUI for managing 6 category types (type, color, size, design, groupType, styleGroup), CRUD operations, search functionality, and bulk actions. Categories are database-driven replacing hardcoded constants.
 
 ### Deployment Architecture
-The application uses Docker for containerization, with multi-stage builds for optimized images. Docker Compose orchestrates services. Production deployment includes Nginx for reverse proxying with SSL/TLS, PostgreSQL with connection pooling, application monitoring, Systemd service management, and firewall configuration. Security implementations include environment variable management, database access controls, SSL certificate automation (Let's Encrypt), and Fail2ban protection. Automated database schema updates and data migrations are integrated into the Docker entrypoint.
+The application uses Docker for containerization, with multi-stage builds for optimized images. Docker Compose orchestrates services. Production deployment includes Nginx for reverse proxying with SSL/TLS, PostgreSQL with connection pooling, application monitoring, Systemd service management, and firewall configuration. Security implementations include environment variable management, database access controls, SSL certificate automation (Let's Encrypt), and Fail2ban protection. Automated database schema updates and data migrations are integrated into the Docker entrypoint, including automatic creation of the returns table for returns processing support.
 
 ## External Dependencies
 

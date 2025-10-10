@@ -107,6 +107,22 @@ if [ "$USERS_EXISTS" = "f" ] || [ "$USERS_EXISTS" = "false" ] || [ -z "$USERS_EX
     );
     " >/dev/null 2>&1 && echo "✅ Volunteer sessions table verified" || echo "⚠️  Volunteer sessions table creation warning"
     
+    # Ensure returns table exists (for returns processing system)
+    echo "↩️  Ensuring returns table exists..."
+    psql "$DATABASE_URL" -c "
+    CREATE TABLE IF NOT EXISTS returns (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sale_id UUID NOT NULL REFERENCES sales(id),
+        quantity_returned INTEGER NOT NULL,
+        refund_amount DECIMAL(10, 2) NOT NULL,
+        reason TEXT NOT NULL,
+        notes TEXT,
+        processed_by UUID REFERENCES users(id),
+        volunteer_email TEXT,
+        return_date TIMESTAMP DEFAULT NOW()
+    );
+    " >/dev/null 2>&1 && echo "✅ Returns table verified" || echo "⚠️  Returns table creation warning"
+    
     # Verify multi-item transaction schema
     echo "🛒 Verifying multi-item transaction schema..."
     UNIQUE_CONSTRAINT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_name = 'sales' AND constraint_type = 'UNIQUE' AND constraint_name LIKE '%order_number%';" 2>/dev/null | tr -d ' \n' || echo "0")
@@ -242,6 +258,26 @@ BEGIN
             created_at TIMESTAMP DEFAULT NOW()
         );
         RAISE NOTICE 'Created missing volunteer_sessions table';
+    END IF;
+    
+    -- 0d. Ensure returns table exists (for returns processing system)
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'returns' 
+        AND table_schema = 'public'
+    ) THEN
+        CREATE TABLE returns (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            sale_id UUID NOT NULL REFERENCES sales(id),
+            quantity_returned INTEGER NOT NULL,
+            refund_amount DECIMAL(10, 2) NOT NULL,
+            reason TEXT NOT NULL,
+            notes TEXT,
+            processed_by UUID REFERENCES users(id),
+            volunteer_email TEXT,
+            return_date TIMESTAMP DEFAULT NOW()
+        );
+        RAISE NOTICE 'Created missing returns table';
     END IF;
     
     -- 1. Ensure all users have corresponding sales_associate records
@@ -532,7 +568,7 @@ BEGIN
     
     RAISE NOTICE 'Production constraint fixes and schema updates applied successfully';
 END \$\$;
-" && echo "✅ Production constraints and schema configured for multi-item transactions, category fields, volunteer system, and QR code receipts" || echo "⚠️  Constraint and schema configuration completed with warnings"
+" && echo "✅ Production constraints and schema configured for multi-item transactions, category fields, volunteer system, QR code receipts, and returns processing" || echo "⚠️  Constraint and schema configuration completed with warnings"
 
 # Final health check
 echo "🔍 Performing final health check..."
