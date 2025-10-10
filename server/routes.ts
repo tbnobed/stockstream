@@ -472,7 +472,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/volunteer/sales/:orderNumber", validateVolunteerSession, async (req, res) => {
     try {
-      const { orderNumber } = req.params;
+      let { orderNumber } = req.params;
+      
+      // Normalize order number: add "ORD-" prefix if not present
+      if (!orderNumber.startsWith("ORD-")) {
+        orderNumber = `ORD-${orderNumber}`;
+      }
+      
       const orderSales = await storage.getSalesByOrderNumber(orderNumber);
       if (orderSales.length === 0) {
         return res.status(404).json({ message: "Order not found" });
@@ -854,7 +860,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/sales/order/:orderNumber", isAuthenticated, async (req, res) => {
     try {
-      const { orderNumber } = req.params;
+      let { orderNumber } = req.params;
+      
+      // Normalize order number: add "ORD-" prefix if not present
+      if (!orderNumber.startsWith("ORD-")) {
+        orderNumber = `ORD-${orderNumber}`;
+      }
+      
       const orderSales = await storage.getSalesByOrderNumber(orderNumber);
       if (orderSales.length === 0) {
         return res.status(404).json({ message: "Order not found" });
