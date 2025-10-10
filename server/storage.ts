@@ -657,10 +657,15 @@ export class DatabaseStorage implements IStorage {
       today.setHours(0, 0, 0, 0);
       const todayISOString = today.toISOString();
       
-      // Calculate total revenue (convert string to number)
+      // Calculate total revenue from sales
       const [revenueResult] = await db
         .select({ total: sql<string>`COALESCE(SUM(CAST(${sales.totalAmount} AS NUMERIC)), 0)::text` })
         .from(sales);
+      
+      // Calculate total refunds from returns
+      const [refundsResult] = await db
+        .select({ total: sql<string>`COALESCE(SUM(CAST(${returns.refundAmount} AS NUMERIC)), 0)::text` })
+        .from(returns);
       
       // Calculate total profit by joining sales with inventory items to get cost data
       const [profitResult] = await db
@@ -669,6 +674,13 @@ export class DatabaseStorage implements IStorage {
         })
         .from(sales)
         .leftJoin(inventoryItems, eq(sales.itemId, inventoryItems.id));
+      
+      // Calculate profit lost from returns (refund amount minus cost of returned items)
+      const [returnProfitLossResult] = await db
+        .select({
+          profitLoss: sql<string>`COALESCE(SUM(CAST(${returns.refundAmount} AS NUMERIC)), 0)::text`
+        })
+        .from(returns);
       
       const [itemsResult] = await db
         .select({ total: sql<number>`COALESCE(SUM(${inventoryItems.quantity}), 0)` })
@@ -684,9 +696,14 @@ export class DatabaseStorage implements IStorage {
         .from(inventoryItems)
         .where(sql`${inventoryItems.quantity} <= ${inventoryItems.minStockLevel}`);
       
+      const grossRevenue = Number(revenueResult.total) || 0;
+      const totalRefunds = Number(refundsResult.total) || 0;
+      const grossProfit = Number(profitResult.totalProfit) || 0;
+      const profitLoss = Number(returnProfitLossResult.profitLoss) || 0;
+      
       return {
-        totalRevenue: Number(revenueResult.total) || 0,
-        totalProfit: Number(profitResult.totalProfit) || 0,
+        totalRevenue: grossRevenue - totalRefunds, // Net revenue after refunds
+        totalProfit: grossProfit - profitLoss, // Net profit after refund losses
         totalItems: Number(itemsResult.total) || 0,
         salesToday: Number(salesTodayResult.count) || 0,
         lowStockCount: Number(lowStockResult.count) || 0,
