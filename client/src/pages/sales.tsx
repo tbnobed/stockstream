@@ -41,6 +41,10 @@ export default function Sales() {
     queryKey: ['/api/associates']
   });
 
+  const { data: returns = [], isLoading: returnsLoading } = useQuery<any[]>({
+    queryKey: ["/api/returns"],
+  });
+
   const filteredSales = sales.filter((sale: any) => {
     // Search filter
     const searchLower = searchTerm.toLowerCase();
@@ -724,6 +728,129 @@ export default function Sales() {
             )}
           </div>
         </Card>
+
+        {/* Returns Section - Admin Only */}
+        {isAdmin && returns.length > 0 && (
+          <Card className="mt-6 border-border shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30 dark:from-card dark:to-orange-500/5">
+            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border/50 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30">
+              <h3 className="text-base md:text-lg font-semibold text-secondary">Returns History</h3>
+            </div>
+            <div className="p-4 md:p-6">
+              {returnsLoading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading returns...</div>
+              ) : (
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left text-sm font-medium text-muted-foreground">
+                          <th className="pb-3">Order ID</th>
+                          <th className="pb-3">Item</th>
+                          <th className="pb-3">Quantity</th>
+                          <th className="pb-3">Refund</th>
+                          <th className="pb-3">Reason</th>
+                          <th className="pb-3">Processed By</th>
+                          <th className="pb-3">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {returns.map((returnItem: any) => (
+                          <tr key={returnItem.id} className="border-b border-border/30 hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-orange-100/20 transition-all duration-200">
+                            <td className="py-3">
+                              <span className="font-mono text-sm text-secondary" data-testid={`return-order-${returnItem.id}`}>
+                                #{returnItem.sale?.orderNumber}
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <div>
+                                <p className="text-sm font-medium text-secondary">{returnItem.sale?.item?.name}</p>
+                                <p className="text-xs text-muted-foreground">SKU: {returnItem.sale?.item?.sku}</p>
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              <span className="text-sm text-secondary">{returnItem.quantityReturned}</span>
+                            </td>
+                            <td className="py-3">
+                              <span className="text-sm font-medium text-error">
+                                -${Number(returnItem.refundAmount).toFixed(2)}
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <span className="text-sm text-secondary">{returnItem.reason}</span>
+                            </td>
+                            <td className="py-3">
+                              <span className="text-sm text-secondary">
+                                {returnItem.processedByUser?.name || returnItem.volunteerEmail || "N/A"}
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(returnItem.returnDate).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: '2-digit',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true,
+                                })}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {returns.map((returnItem: any) => (
+                      <div key={returnItem.id} className="bg-gradient-to-br from-orange-50/30 to-red-50/30 dark:from-orange-950/20 dark:to-red-950/20 rounded-xl p-3 border border-border/30 shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-secondary text-sm">
+                              {returnItem.sale?.item?.name}
+                            </h4>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              #{returnItem.sale?.orderNumber}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-sm text-error">
+                              -${Number(returnItem.refundAmount).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Qty: {returnItem.quantityReturned}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-2 pt-2 border-t border-border/30">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            <span className="font-medium">Reason:</span> {returnItem.reason}
+                          </p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              By: {returnItem.processedByUser?.name || returnItem.volunteerEmail || "N/A"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(returnItem.returnDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </Card>
+        )}
       </main>
 
       <NewSaleModal
