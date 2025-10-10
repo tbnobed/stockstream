@@ -109,6 +109,19 @@ export const sales = pgTable("sales", {
   receiptExpiresAt: timestamp("receipt_expires_at"),
 });
 
+export const returns = pgTable("returns", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  saleId: uuid("sale_id").notNull().references(() => sales.id),
+  quantityReturned: integer("quantity_returned").notNull(),
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }).notNull(),
+  reason: text("reason").notNull(), // "defective", "wrong_item", "customer_request", "other"
+  notes: text("notes"),
+  // Who processed the return
+  processedBy: uuid("processed_by").references(() => users.id),
+  volunteerEmail: text("volunteer_email"), // For volunteer-processed returns
+  returnDate: timestamp("return_date").defaultNow(),
+});
+
 export const mediaFiles = pgTable("media_files", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   fileName: text("file_name").notNull(),
@@ -237,6 +250,11 @@ export const insertSaleSchema = createInsertSchema(sales).omit({
   saleDate: true,
 });
 
+export const insertReturnSchema = createInsertSchema(returns).omit({
+  id: true,
+  returnDate: true,
+});
+
 export const insertInventoryTransactionSchema = createInsertSchema(inventoryTransactions).omit({
   id: true,
   createdAt: true,
@@ -295,6 +313,9 @@ export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransacti
 
 export type Sale = typeof sales.$inferSelect;
 export type InsertSale = z.infer<typeof insertSaleSchema>;
+
+export type Return = typeof returns.$inferSelect;
+export type InsertReturn = z.infer<typeof insertReturnSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
