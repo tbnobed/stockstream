@@ -910,6 +910,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Returns
+  app.get("/api/returns", isAuthenticated, async (req, res) => {
+    try {
+      const returns = await storage.getReturns();
+      res.json(returns);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch returns" });
+    }
+  });
+
+  app.get("/api/returns/sale/:saleId", isAuthenticated, async (req, res) => {
+    try {
+      const { saleId } = req.params;
+      const returns = await storage.getReturnsBySaleId(saleId);
+      res.json(returns);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch returns for sale" });
+    }
+  });
+
+  app.post("/api/returns", isAuthenticated, async (req: any, res) => {
+    try {
+      const { saleId, quantityReturned, refundAmount, reason, notes } = req.body;
+      
+      const returnData = {
+        saleId,
+        quantityReturned,
+        refundAmount,
+        reason,
+        notes: notes || null,
+        processedBy: req.user?.id || null,
+        volunteerEmail: null,
+      };
+      
+      const newReturn = await storage.createReturn(returnData);
+      res.status(201).json(newReturn);
+    } catch (error) {
+      console.error("Return creation error:", error);
+      res.status(500).json({ message: "Failed to process return", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.post("/api/volunteer/returns", validateVolunteerSession, async (req: any, res) => {
+    try {
+      const { saleId, quantityReturned, refundAmount, reason, notes } = req.body;
+      const volunteerEmail = req.volunteerSession.email;
+      
+      const returnData = {
+        saleId,
+        quantityReturned,
+        refundAmount,
+        reason,
+        notes: notes || null,
+        processedBy: null,
+        volunteerEmail,
+      };
+      
+      const newReturn = await storage.createReturn(returnData);
+      res.status(201).json(newReturn);
+    } catch (error) {
+      console.error("Volunteer return creation error:", error);
+      res.status(500).json({ message: "Failed to process return", error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   // Receipt Endpoint (Public - no authentication required)
   app.get("/api/receipts/:token", async (req, res) => {
     try {
