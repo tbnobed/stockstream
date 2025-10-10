@@ -137,7 +137,11 @@ export default function ProcessReturnModal({
                 min={1}
                 max={sale.quantity}
                 value={quantityReturned}
-                onChange={(e) => setQuantityReturned(Math.min(parseInt(e.target.value) || 1, sale.quantity))}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 1;
+                  const clamped = Math.max(1, Math.min(value, sale.quantity));
+                  setQuantityReturned(clamped);
+                }}
                 data-testid="input-return-quantity"
               />
             </div>

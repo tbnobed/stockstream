@@ -947,6 +947,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { saleId, quantityReturned, refundAmount, reason, notes } = req.body;
       
+      // Get the sale to validate against
+      const sale = await storage.getSale(saleId);
+      if (!sale) {
+        return res.status(404).json({ message: "Sale not found" });
+      }
+      
+      // Get all previous returns for this sale
+      const previousReturns = await storage.getReturnsBySaleId(saleId);
+      const totalReturnedToDate = previousReturns.reduce((sum, ret) => sum + ret.quantityReturned, 0);
+      const remainingQuantity = sale.quantity - totalReturnedToDate;
+      
+      // Validate quantity and refund amount
+      if (quantityReturned <= 0) {
+        return res.status(400).json({ message: "Quantity returned must be greater than 0" });
+      }
+      
+      if (quantityReturned > remainingQuantity) {
+        return res.status(400).json({ 
+          message: `Cannot return ${quantityReturned} units. Only ${remainingQuantity} units remaining (${totalReturnedToDate} already returned)` 
+        });
+      }
+      
+      // Calculate expected refund and validate
+      const expectedRefund = (sale.unitPrice * quantityReturned).toFixed(2);
+      if (Math.abs(parseFloat(refundAmount) - parseFloat(expectedRefund)) > 0.01) {
+        return res.status(400).json({ message: "Refund amount does not match quantity returned" });
+      }
+      
+      if (refundAmount < 0) {
+        return res.status(400).json({ message: "Refund amount cannot be negative" });
+      }
+      
       const returnData = {
         saleId,
         quantityReturned,
@@ -969,6 +1001,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { saleId, quantityReturned, refundAmount, reason, notes } = req.body;
       const volunteerEmail = req.volunteerSession.email;
+      
+      // Get the sale to validate against
+      const sale = await storage.getSale(saleId);
+      if (!sale) {
+        return res.status(404).json({ message: "Sale not found" });
+      }
+      
+      // Get all previous returns for this sale
+      const previousReturns = await storage.getReturnsBySaleId(saleId);
+      const totalReturnedToDate = previousReturns.reduce((sum, ret) => sum + ret.quantityReturned, 0);
+      const remainingQuantity = sale.quantity - totalReturnedToDate;
+      
+      // Validate quantity and refund amount
+      if (quantityReturned <= 0) {
+        return res.status(400).json({ message: "Quantity returned must be greater than 0" });
+      }
+      
+      if (quantityReturned > remainingQuantity) {
+        return res.status(400).json({ 
+          message: `Cannot return ${quantityReturned} units. Only ${remainingQuantity} units remaining (${totalReturnedToDate} already returned)` 
+        });
+      }
+      
+      // Calculate expected refund and validate
+      const expectedRefund = (sale.unitPrice * quantityReturned).toFixed(2);
+      if (Math.abs(parseFloat(refundAmount) - parseFloat(expectedRefund)) > 0.01) {
+        return res.status(400).json({ message: "Refund amount does not match quantity returned" });
+      }
+      
+      if (refundAmount < 0) {
+        return res.status(400).json({ message: "Refund amount cannot be negative" });
+      }
       
       const returnData = {
         saleId,
