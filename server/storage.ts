@@ -5,6 +5,7 @@ import {
   inventoryItems,
   inventoryTransactions,
   sales,
+  returns,
   categories,
   mediaFiles,
   labelTemplates,
@@ -23,6 +24,8 @@ import {
   type Sale,
   type InsertSale,
   type SaleWithDetails,
+  type Return,
+  type InsertReturn,
   type Category,
   type InsertCategory,
   type MediaFile,
@@ -78,6 +81,11 @@ export interface IStorage {
   getSale(id: string): Promise<SaleWithDetails | undefined>;
   getSalesByOrderNumber(orderNumber: string): Promise<SaleWithDetails[]>;
   createSale(sale: InsertSale): Promise<Sale>;
+  
+  // Returns
+  getReturns(): Promise<any[]>;
+  getReturnsBySaleId(saleId: string): Promise<any[]>;
+  createReturn(returnData: InsertReturn): Promise<Return>;
   
   // Receipts
   getReceiptByToken(token: string): Promise<any>;
@@ -452,6 +460,76 @@ export class DatabaseStorage implements IStorage {
     });
     
     return newSale;
+  }
+
+  async getReturns(): Promise<any[]> {
+    const returnRecords = await db
+      .select()
+      .from(returns)
+      .leftJoin(sales, eq(returns.saleId, sales.id))
+      .leftJoin(inventoryItems, eq(sales.itemId, inventoryItems.id))
+      .leftJoin(salesAssociates, eq(sales.salesAssociateId, salesAssociates.id))
+      .leftJoin(users, eq(returns.processedBy, users.id))
+      .orderBy(desc(returns.returnDate));
+    
+    return returnRecords.map(row => ({
+      ...row.returns,
+      sale: row.sales ? {
+        ...row.sales,
+        item: row.inventory_items,
+        salesAssociate: row.sales_associates || null
+      } : null,
+      processedByUser: row.users || null
+    }));
+  }
+
+  async getReturnsBySaleId(saleId: string): Promise<any[]> {
+    const returnRecords = await db
+      .select()
+      .from(returns)
+      .where(eq(returns.saleId, saleId))
+      .orderBy(desc(returns.returnDate));
+    
+    return returnRecords;
+  }
+
+  async createReturn(returnData: InsertReturn): Promise<Return> {
+    // Get the sale to find the item
+    const [saleRecord] = await db
+      .select()
+      .from(sales)
+      .where(eq(sales.id, returnData.saleId));
+    
+    if (!saleRecord) {
+      throw new Error("Sale not found");
+    }
+
+    // Create the return record
+    const [newReturn] = await db
+      .insert(returns)
+      .values(returnData)
+      .returning();
+    
+    // Restore inventory quantity
+    await db
+      .update(inventoryItems)
+      .set({ 
+        quantity: sql`${inventoryItems.quantity} + ${returnData.quantityReturned}`,
+        updatedAt: new Date()
+      })
+      .where(eq(inventoryItems.id, saleRecord.itemId));
+    
+    // Record the inventory transaction
+    await this.createInventoryTransaction({
+      itemId: saleRecord.itemId,
+      transactionType: "addition",
+      quantity: returnData.quantityReturned,
+      reason: "return",
+      notes: `Return from sale ${saleRecord.orderNumber}: ${returnData.reason}`,
+      userId: returnData.processedBy || null,
+    });
+    
+    return newReturn;
   }
 
   async getReceiptByToken(token: string): Promise<any> {
