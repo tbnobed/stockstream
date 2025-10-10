@@ -982,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Calculate expected refund and validate
-      const expectedRefund = (sale.unitPrice * quantityReturned).toFixed(2);
+      const expectedRefund = (Number(sale.unitPrice) * quantityReturned).toFixed(2);
       if (Math.abs(parseFloat(refundAmount) - parseFloat(expectedRefund)) > 0.01) {
         return res.status(400).json({ message: "Refund amount does not match quantity returned" });
       }
@@ -1037,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Calculate expected refund and validate
-      const expectedRefund = (sale.unitPrice * quantityReturned).toFixed(2);
+      const expectedRefund = (Number(sale.unitPrice) * quantityReturned).toFixed(2);
       if (Math.abs(parseFloat(refundAmount) - parseFloat(expectedRefund)) > 0.01) {
         return res.status(400).json({ message: "Refund amount does not match quantity returned" });
       }
