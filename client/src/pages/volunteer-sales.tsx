@@ -866,17 +866,17 @@ export default function VolunteerSales() {
                           src={venmoQRCode} 
                           alt="Venmo QR Code"
                           className="mx-auto mb-2"
-                          style={{ width: '120px', height: '120px' }}
+                          style={{ width: '200px', height: '200px' }}
                           data-testid="img-venmo-qr"
                         />
-                        <p className="text-xs text-blue-600">Scan to pay</p>
+                        <p className="text-[10px] text-blue-600">Scan to pay</p>
                       </div>
                     )}
                     <div className="text-center">
-                      <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-venmo-code">
+                      <div className="text-sm font-bold text-blue-900 mb-1" data-testid="text-venmo-code">
                         @{venmoUsername || 'AxemenMCAZ'}
                       </div>
-                      <p className="text-xs text-blue-600">
+                      <p className="text-[10px] text-blue-600">
                         Or search this username
                       </p>
                     </div>
@@ -895,17 +895,17 @@ export default function VolunteerSales() {
                           src={paypalQRCode} 
                           alt="PayPal QR Code"
                           className="mx-auto mb-2"
-                          style={{ width: '120px', height: '120px' }}
+                          style={{ width: '200px', height: '200px' }}
                           data-testid="img-paypal-qr"
                         />
-                        <p className="text-xs text-blue-600">Scan to pay</p>
+                        <p className="text-[10px] text-blue-600">Scan to pay</p>
                       </div>
                     )}
                     <div className="text-center">
-                      <div className="text-xl font-bold text-blue-900 mb-1" data-testid="text-paypal-code">
+                      <div className="text-sm font-bold text-blue-900 mb-1" data-testid="text-paypal-code">
                         @{paypalUsername || 'AxemenMCAZ'}
                       </div>
-                      <p className="text-xs text-blue-600">
+                      <p className="text-[10px] text-blue-600">
                         Or search this username
                       </p>
                     </div>
