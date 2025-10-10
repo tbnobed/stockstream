@@ -67,8 +67,7 @@ export default function PrintLabelModal({ open, onOpenChange, item }: PrintLabel
         text-align: center;
       ">
         <h3 style="margin: 0 0 5px 0; font-size: 12px; font-weight: bold;">${item.name}</h3>
-        <p style="margin: 0 0 5px 0; font-size: 10px;">SKU: ${item.sku}</p>
-        <p style="margin: 0 0 10px 0; font-size: 11px; font-weight: bold;">$${Number(item.price || 0).toFixed(2)}</p>
+        <p style="margin: 0 0 10px 0; font-size: 10px;">SKU: ${item.sku}</p>
         <img src="${qrCodeUrl}" style="width: 80px; height: 80px;" />
       </div>
     `).join('');
@@ -128,8 +127,7 @@ export default function PrintLabelModal({ open, onOpenChange, item }: PrintLabel
               <p className="text-sm text-muted-foreground mb-2">Preview</p>
               <div className="border border-dashed border-muted p-4 inline-block bg-white">
                 <h3 className="font-bold text-sm mb-1">{item.name}</h3>
-                <p className="text-xs text-muted-foreground mb-1">SKU: {item.sku}</p>
-                <p className="text-sm font-bold mb-2">${Number(item.price || 0).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mb-2">SKU: {item.sku}</p>
                 {qrCodeUrl && (
                   <img src={qrCodeUrl} alt="QR Code" className="w-16 h-16 mx-auto" />
                 )}
