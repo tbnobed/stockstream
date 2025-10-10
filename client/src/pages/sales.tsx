@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import NewSaleModal from "@/components/modals/new-sale-modal";
 import SaleDetailsModal from "@/components/modals/sale-details-modal";
 import ReceiptModal from "@/components/receipt/receipt-modal";
+import ProcessReturnModal from "@/components/modals/process-return-modal";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, Download, ChevronLeft, ChevronRight, Filter, X, Calendar } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Filter, X, Calendar, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -18,6 +19,7 @@ export default function Sales() {
   const [showNewSaleModal, setShowNewSaleModal] = useState(false);
   const [showSaleDetailsModal, setShowSaleDetailsModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -166,6 +168,11 @@ export default function Sales() {
   const handleShowReceipt = (sale: any) => {
     setSelectedSale(sale);
     setShowReceiptModal(true);
+  };
+
+  const handleShowReturn = (sale: any) => {
+    setSelectedSale(sale);
+    setShowReturnModal(true);
   };
 
   const exportSales = () => {
@@ -539,6 +546,18 @@ export default function Sales() {
                         >
                           Receipt
                         </Button>
+                        {isAdmin && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1" 
+                            onClick={() => handleShowReturn(sale)}
+                            data-testid={`return-sale-${sale.id}`}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            Return
+                          </Button>
+                        )}
                       </div>
                     </Card>
                   ))}
@@ -626,6 +645,16 @@ export default function Sales() {
                             >
                               Receipt
                             </Button>
+                            {isAdmin && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleShowReturn(sale)}
+                                data-testid={`return-sale-${sale.id}`}
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -713,6 +742,13 @@ export default function Sales() {
         sale={selectedSale}
         open={showReceiptModal}
         onOpenChange={setShowReceiptModal}
+      />
+
+      <ProcessReturnModal
+        sale={selectedSale}
+        open={showReturnModal}
+        onOpenChange={setShowReturnModal}
+        isVolunteer={false}
       />
     </>
   );
